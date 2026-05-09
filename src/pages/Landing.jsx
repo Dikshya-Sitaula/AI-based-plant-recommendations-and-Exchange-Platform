@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   ArrowRight,
@@ -23,9 +24,20 @@ import {
 } from 'lucide-react';
 import './Landing.css';
 import logo from "../assets/Leaf and Life logo.png";
+import AuthModal from '../components/AuthModal';
 
 export default function Landing() {
   const navigate = useNavigate();
+  const [authOpen, setAuthOpen] = useState(false);
+
+  useEffect(() => {
+    if (!authOpen) return undefined;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [authOpen]);
 
   return (
     <div className="lp-root">
@@ -34,7 +46,7 @@ export default function Landing() {
         <div className="lp-nav-inner">
           <Link to="/" className="lp-brand" aria-label="Leaf & Life Home">
             <span className="lp-brand-mark" aria-hidden="true">
-              <Leaf size={18} />
+              <img src={logo} alt="" className="lp-brand-img" />
             </span>
             <span className="lp-brand-text">Leaf &amp; Life</span>
           </Link>
@@ -50,12 +62,21 @@ export default function Landing() {
           <button
             type="button"
             className="lp-btn lp-btn-primary"
-            onClick={() => navigate('/marketplace')}
+            onClick={() => setAuthOpen(true)}
           >
             Get Started
           </button>
         </div>
       </nav>
+
+      <AuthModal
+        open={authOpen}
+        onClose={() => setAuthOpen(false)}
+        onSuccess={() => {
+          setAuthOpen(false);
+          navigate('/marketplace');
+        }}
+      />
 
       {/* Hero Section */}
       <section className="lp-hero">
