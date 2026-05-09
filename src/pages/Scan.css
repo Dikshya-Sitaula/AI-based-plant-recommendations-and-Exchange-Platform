@@ -374,6 +374,7 @@
   font-weight: 500;
 }
 
+.btn-outline:hover {
   border-color: var(--primary);
   background: var(--bg-secondary);
   color: var(--primary);

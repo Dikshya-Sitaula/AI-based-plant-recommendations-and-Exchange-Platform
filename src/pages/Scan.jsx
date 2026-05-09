@@ -238,7 +238,13 @@ export default function Scan() {
           <div className="recommendations">
             {[1, 2].map(i => (
               <div key={i} className="plant-card" onClick={() => navigate('/marketplace')}>
-                <div className="plant-img-placeholder">🪴</div>
+                <div className="plant-img-placeholder" style={{ overflow: 'hidden' }}>
+                  <img 
+                    src={i === 1 ? "https://images.unsplash.com/photo-1613145451296-6d601b0b3d88?auto=format&fit=crop&w=400&q=80" : "https://images.unsplash.com/photo-1599598425947-33001c402cd0?auto=format&fit=crop&w=400&q=80"} 
+                    alt="Philodendron" 
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                  />
+                </div>
                 <div className="plant-info">
                   <h4>Philodendron</h4>
                   <p>$25 • Thrift</p>
