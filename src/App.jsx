@@ -6,12 +6,14 @@ import Rewards from './pages/Rewards';
 import Dashboard from './pages/Dashboard';
 import Landing from './pages/Landing';
 import Recommendation from './pages/Recommendation';
+import AboutUs from './pages/AboutUs';
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Landing />} />
+        <Route path="/about" element={<AboutUs />} />
         <Route element={<Layout />}>
           <Route path="marketplace" element={<Marketplace />} />
           <Route path="scan" element={<Scan />} />

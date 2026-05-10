@@ -6,10 +6,8 @@ import {
   Camera,
   Check,
   CheckCircle2,
-  Droplets,
   Flame,
   Globe,
-  HeartPulse,
   Info,
   Leaf,
   Mail,
@@ -19,6 +17,7 @@ import {
   Search,
   ShoppingBag,
   ShoppingCart,
+  Sparkles,
   Users,
   Wind,
 } from 'lucide-react';
@@ -29,6 +28,40 @@ import AuthModal from '../components/AuthModal';
 export default function Landing() {
   const navigate = useNavigate();
   const [authOpen, setAuthOpen] = useState(false);
+  const [redirectPath, setRedirectPath] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('leafLifeAuthenticated') === 'true';
+  });
+
+  const openAuthModal = () => {
+    setAuthOpen(true);
+  };
+
+  const handleSwitchAccount = () => {
+    localStorage.removeItem('leafLifeAuthenticated');
+    setIsAuthenticated(false);
+    setRedirectPath('/dashboard');
+    openAuthModal();
+  };
+
+  const handleProtectedNav = (path) => {
+    if (isAuthenticated) {
+      navigate(path);
+      return;
+    }
+    setRedirectPath(path);
+    openAuthModal();
+  };
+
+  const handleGetStarted = () => {
+    if (isAuthenticated) {
+      navigate('/dashboard');
+      return;
+    }
+    setRedirectPath('/dashboard');
+    openAuthModal();
+  };
 
   useEffect(() => {
     if (!authOpen) return undefined;
@@ -52,20 +85,37 @@ export default function Landing() {
           </Link>
 
           <div className="lp-nav-links">
-            <Link className="lp-nav-link" to="/marketplace">Marketplace</Link>
-            <Link className="lp-nav-link" to="/scan">Smart Scan</Link>
-            <Link className="lp-nav-link" to="/rewards">Community</Link>
-            <Link className="lp-nav-link" to="/dashboard">Dashboard</Link>
-            <Link className="lp-nav-link" to="/recommendation">Recommendation</Link>
+            {!isAuthenticated ? (
+              <>
+                <Link className="lp-nav-link" to="/">Home</Link>
+                <Link className="lp-nav-link" to="/about">About Us</Link>
+                <a className="lp-nav-link" href="#footer">Contact</a>
+              </>
+            ) : (
+              <>
+                <Link className="lp-nav-link" to="/marketplace">Marketplace</Link>
+                <Link className="lp-nav-link" to="/scan">Smart Scan</Link>
+                <Link className="lp-nav-link" to="/rewards">Community</Link>
+                <Link className="lp-nav-link" to="/dashboard">Dashboard</Link>
+                <Link className="lp-nav-link" to="/recommendation">Smart Recommendation</Link>
+              </>
+            )}
           </div>
 
-          <button
-            type="button"
-            className="lp-btn lp-btn-primary"
-            onClick={() => setAuthOpen(true)}
-          >
-            Get Started
-          </button>
+          <div className="lp-nav-actions">
+            {isAuthenticated && (
+              <button type="button" className="lp-btn lp-btn-ghost lp-btn-sm" onClick={handleSwitchAccount}>
+                Switch Account
+              </button>
+            )}
+            <button
+              type="button"
+              className="lp-btn lp-btn-primary"
+              onClick={handleGetStarted}
+            >
+              Get Started
+            </button>
+          </div>
         </div>
       </nav>
 
@@ -73,8 +123,12 @@ export default function Landing() {
         open={authOpen}
         onClose={() => setAuthOpen(false)}
         onSuccess={() => {
+          localStorage.setItem('leafLifeAuthenticated', 'true');
+          setIsAuthenticated(true);
           setAuthOpen(false);
-          navigate('/marketplace');
+          const destination = redirectPath || '/dashboard';
+          setRedirectPath(null);
+          navigate(destination);
         }}
       />
 
@@ -101,14 +155,14 @@ export default function Landing() {
               <button
                 type="button"
                 className="lp-btn lp-btn-primary lp-btn-lg"
-                onClick={() => navigate('/marketplace')}
+                onClick={() => handleProtectedNav('/marketplace')}
               >
                 Explore Plants <ArrowRight size={18} />
               </button>
               <button
                 type="button"
                 className="lp-btn lp-btn-ghost lp-btn-lg"
-                onClick={() => navigate('/marketplace')}
+                onClick={() => handleProtectedNav('/marketplace')}
               >
                 Join Marketplace
               </button>
@@ -206,9 +260,9 @@ export default function Landing() {
                     <p className="lp-mini-sub">99.8% Accuracy</p>
                   </div>
                   <div className="lp-mini lp-mini-solid lp-float-up-delayed">
-                    <Droplets size={26} />
-                    <p className="lp-mini-title">Smart Watering</p>
-                    <p className="lp-mini-sub">Next: 2 days</p>
+                    <Sparkles size={32} />
+                    <p className="lp-mini-title">Smart Recommendation</p>
+                    <p className="lp-mini-sub"> & Specialized Care Tips</p>
                   </div>
                 </div>
                 <div className="lp-mini-col lp-mini-col-offset">
@@ -237,7 +291,7 @@ export default function Landing() {
             <div className="lp-bullets">
               {[
                 'AI Plant Identification',
-                'Smart Space Recs',
+                'Smart Recommendations',
                 'Hyperlocal Marketplace',
                 'Personalized Care',
                 'Air Quality Awareness',
@@ -262,37 +316,37 @@ export default function Landing() {
           </div>
 
           <div className="lp-grid lp-grid-3">
-            <Link to="/scan" className="lp-feature">
+            <button type="button" className="lp-feature" onClick={() => handleProtectedNav('/scan')}>
               <Camera size={28} className="lp-feature-icon" />
               <h3 className="lp-h3">AI Identification</h3>
               <p className="lp-p">
                 Snap a photo and instantly know your plant&apos;s name, needs, and ideal location in your home based on light and space.
               </p>
-            </Link>
+            </button>
 
-            <Link to="/recommendation" className="lp-feature">
+            <button type="button" className="lp-feature" onClick={() => handleProtectedNav('/recommendation')}>
               <MapPin size={28} className="lp-feature-icon" />
               <h3 className="lp-h3">Space &amp; Location-Based Recommendation</h3>
               <p className="lp-p">
                 Tell us about your space, and we&apos;ll recommend the perfect plants for your environment. No photos required!
               </p>
-            </Link>
+            </button>
 
-            <Link to="/marketplace" className="lp-feature">
+            <button type="button" className="lp-feature" onClick={() => handleProtectedNav('/marketplace')}>
               <ShoppingBag size={28} className="lp-feature-icon" />
               <h3 className="lp-h3">Hyperlocal Marketplace</h3>
               <p className="lp-p">
                 Buy, sell, swap, or thrift plants with people in your neighborhood. Support local nurseries and reduce waste.
               </p>
-            </Link>
+            </button>
 
-            <Link to="/rewards" className="lp-feature">
+            <button type="button" className="lp-feature" onClick={() => handleProtectedNav('/rewards')}>
               <Award size={28} className="lp-feature-icon" />
               <h3 className="lp-h3">Community Rewards</h3>
               <p className="lp-p">
                 Track your air quality impact, join eco-challenges, and earn badges for sustainable plant parenting.
               </p>
-            </Link>
+            </button>
           </div>
         </div>
       </section>
@@ -317,7 +371,7 @@ export default function Landing() {
             </div>
             <div className="lp-step">
               <div className="lp-step-num">3</div>
-              <h4 className="lp-h4">Get Recs</h4>
+              <h4 className="lp-h4">Get Recommendations</h4>
               <p className="lp-p">Discover suitable plants and care.</p>
             </div>
             <div className="lp-step">
@@ -379,10 +433,10 @@ export default function Landing() {
             Make your living space greener, healthier, and smarter with AI-powered plant guidance and a connected plant community.
           </p>
           <div className="lp-hero-actions lp-cta-actions">
-            <button type="button" className="lp-btn lp-btn-primary lp-btn-xl" onClick={() => navigate('/marketplace')}>
+            <button type="button" className="lp-btn lp-btn-primary lp-btn-xl" onClick={() => handleProtectedNav('/dashboard')}>
               Get Started Now
             </button>
-            <button type="button" className="lp-btn lp-btn-ghost lp-btn-xl" onClick={() => navigate('/marketplace')}>
+            <button type="button" className="lp-btn lp-btn-ghost lp-btn-xl" onClick={() => handleProtectedNav('/marketplace')}>
               Explore Marketplace
             </button>
           </div>
