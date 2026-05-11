@@ -130,21 +130,9 @@ export default function AboutUs() {
           </Link>
 
           <div className="lp-nav-links">
-            {!isAuthenticated ? (
-              <>
-                <Link className="lp-nav-link" to="/">Home</Link>
-                <Link className="lp-nav-link" to="/about">About Us</Link>
-                <a className="lp-nav-link" href="#footer">Contact</a>
-              </>
-            ) : (
-              <>
-                <Link className="lp-nav-link" to="/marketplace">Marketplace</Link>
-                <Link className="lp-nav-link" to="/scan">Smart Scan</Link>
-                <Link className="lp-nav-link" to="/rewards">Community</Link>
-                <Link className="lp-nav-link" to="/dashboard">Dashboard</Link>
-                <Link className="lp-nav-link" to="/recommendation">Smart Recommendation</Link>
-              </>
-            )}
+            <Link className="lp-nav-link" to="/">Home</Link>
+            <Link className="lp-nav-link" to="/about">About Us</Link>
+            <a className="lp-nav-link" href="#footer">Contact</a>
           </div>
 
           <div className="lp-nav-actions">

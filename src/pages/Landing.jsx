@@ -68,6 +68,7 @@ export default function Landing() {
     setIsSubmitted(true);
     setActiveNav('features');
     setShowModal(false);
+    navigate('/dashboard');
   };
 
   return (
@@ -95,8 +96,8 @@ export default function Landing() {
                 <button type="button" className="lp-nav-link" onClick={() => handleFeatureNav('/marketplace')}>Marketplace</button>
                 <button type="button" className="lp-nav-link" onClick={() => handleFeatureNav('/recommendation')}>Smart Recommendation</button>
                 <button type="button" className="lp-nav-link" onClick={() => handleFeatureNav('/scan')}>Smart Scan</button>
-                <button type="button" className="lp-nav-link" onClick={() => handleFeatureNav('/dashboard')}>Dashboard</button>
                 <button type="button" className="lp-nav-link" onClick={() => handleFeatureNav('/rewards')}>Community</button>
+                <button type="button" className="lp-nav-link" onClick={() => handleFeatureNav('/dashboard')}>Dashboard</button>
               </>
             )}
           </div>
