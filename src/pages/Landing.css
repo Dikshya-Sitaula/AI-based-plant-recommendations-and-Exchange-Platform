@@ -79,8 +79,144 @@
   color: var(--lp-muted);
 }
 
+.lp-nav-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  flex: 1;
+}
+
+.lp-nav-link {
+  background: none;
+  border: none;
+  color: var(--lp-foreground);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
 .lp-nav-link:hover {
   color: var(--lp-primary);
+  transform: translateY(-1px);
+}
+
+.lp-brand-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--lp-primary);
+  font: inherit;
+  font-weight: 800;
+  padding: 0;
+}
+
+.lp-dropdown-arrow {
+  display: inline-flex;
+  transition: transform 0.2s ease;
+}
+
+.lp-dropdown-arrow.open {
+  transform: rotate(180deg);
+}
+
+.lp-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(24, 40, 24, 0.65);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+  z-index: 100;
+}
+
+.lp-modal {
+  width: min(560px, 100%);
+  background: #ffffff;
+  border-radius: 28px;
+  padding: 32px;
+  box-shadow: 0 32px 80px rgba(26, 47, 26, 0.12);
+}
+
+.lp-modal-close {
+  border: none;
+  background: transparent;
+  color: var(--lp-muted);
+  font-size: 1.5rem;
+  line-height: 1;
+  position: absolute;
+  top: 22px;
+  right: 22px;
+  cursor: pointer;
+}
+
+.lp-modal-copy {
+  margin: 0 0 22px;
+  color: var(--lp-muted);
+}
+
+.lp-modal-form {
+  display: grid;
+  gap: 16px;
+}
+
+.lp-modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lp-modal-field input,
+.lp-modal-field textarea {
+  width: 100%;
+  border: 1px solid var(--lp-border);
+  border-radius: 16px;
+  padding: 14px 16px;
+  font: inherit;
+  color: var(--lp-foreground);
+  background: var(--lp-card);
+}
+
+.lp-modal-field textarea {
+  min-height: 110px;
+}
+
+.lp-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.lp-modal-submit,
+.lp-modal-close {
+  border: none;
+  border-radius: 9999px;
+  padding: 12px 18px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.lp-modal-submit {
+  background: var(--lp-primary);
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.lp-modal-close {
+  background: rgba(45, 90, 39, 0.1);
+  color: var(--lp-foreground);
+}
+
+.lp-modal-error {
+  color: #b8282c;
+  font-weight: 700;
+  margin-top: 4px;
 }
 
 .lp-btn {

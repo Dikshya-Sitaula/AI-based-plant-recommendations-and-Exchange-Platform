@@ -291,7 +291,7 @@
 .impact-circle-inner {
   width: 192px;
   height: 192px;
-  background: rgba(255, 255, 255, 0.1);`
+  background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
   border-radius: 50%;
   display: flex;

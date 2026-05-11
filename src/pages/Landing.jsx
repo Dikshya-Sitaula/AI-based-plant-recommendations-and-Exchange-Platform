@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   ArrowRight,
@@ -27,92 +27,82 @@ import AuthModal from '../components/AuthModal';
 
 export default function Landing() {
   const navigate = useNavigate();
-  const [authOpen, setAuthOpen] = useState(false);
-  const [redirectPath, setRedirectPath] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+  const [showModal, setShowModal] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(() => {
     if (typeof window === 'undefined') return false;
-    return localStorage.getItem('leafLifeAuthenticated') === 'true';
+    return localStorage.getItem('leafLifeSubmitted') === 'true';
+  });
+  const [activeNav, setActiveNav] = useState(() => {
+    if (typeof window === 'undefined') return 'landing';
+    return localStorage.getItem('leafLifeSubmitted') === 'true' ? 'features' : 'landing';
   });
 
-  const openAuthModal = () => {
-    setAuthOpen(true);
+  const openModal = () => {
+    setShowModal(true);
   };
 
-  const handleSwitchAccount = () => {
-    localStorage.removeItem('leafLifeAuthenticated');
-    setIsAuthenticated(false);
-    setRedirectPath('/dashboard');
-    openAuthModal();
-  };
-
-  const handleProtectedNav = (path) => {
-    if (isAuthenticated) {
-      navigate(path);
-      return;
+  const handleLogoClick = () => {
+    if (isSubmitted) {
+      setActiveNav('landing');
     }
-    setRedirectPath(path);
-    openAuthModal();
   };
 
   const handleGetStarted = () => {
-    if (isAuthenticated) {
-      navigate('/dashboard');
+    if (!isSubmitted) {
+      openModal();
       return;
     }
-    setRedirectPath('/dashboard');
-    openAuthModal();
+    setActiveNav('features');
   };
 
-  useEffect(() => {
-    if (!authOpen) return undefined;
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = prevOverflow;
-    };
-  }, [authOpen]);
+  const handleFeatureNav = (path) => {
+    if (!isSubmitted) {
+      openModal();
+      return;
+    }
+    navigate(path);
+  };
+
+  const handleModalSubmit = () => {
+    localStorage.setItem('leafLifeSubmitted', 'true');
+    setIsSubmitted(true);
+    setActiveNav('features');
+    setShowModal(false);
+  };
 
   return (
     <div className="lp-root">
       {/* Navbar */}
       <nav className="lp-nav">
         <div className="lp-nav-inner">
-          <Link to="/" className="lp-brand" aria-label="Leaf & Life Home">
+          <button type="button" className="lp-brand lp-brand-action" onClick={handleLogoClick}>
             <span className="lp-brand-mark" aria-hidden="true">
-              <img src={logo} alt="" className="lp-brand-img" />
+              <img src={logo} alt="Leaf & Life logo" className="lp-brand-img" />
             </span>
             <span className="lp-brand-text">Leaf &amp; Life</span>
-          </Link>
+            {isSubmitted && <span className={`lp-dropdown-arrow ${activeNav === 'landing' ? 'open' : ''}`} aria-hidden="true">▾</span>}
+          </button>
 
-          <div className="lp-nav-links">
-            {!isAuthenticated ? (
+          <div className="lp-nav-center">
+            {activeNav === 'landing' ? (
               <>
-                <Link className="lp-nav-link" to="/">Home</Link>
-                <Link className="lp-nav-link" to="/about">About Us</Link>
-                <a className="lp-nav-link" href="#footer">Contact</a>
+                <button type="button" className="lp-nav-link" onClick={() => navigate('/?landing=1')}>Home</button>
+                <button type="button" className="lp-nav-link" onClick={() => navigate('/about')}>About Us</button>
+                <button type="button" className="lp-nav-link" onClick={() => document.getElementById('footer')?.scrollIntoView({ behavior: 'smooth' })}>Contact</button>
               </>
             ) : (
               <>
-                <Link className="lp-nav-link" to="/marketplace">Marketplace</Link>
-                <Link className="lp-nav-link" to="/scan">Smart Scan</Link>
-                <Link className="lp-nav-link" to="/rewards">Community</Link>
-                <Link className="lp-nav-link" to="/dashboard">Dashboard</Link>
-                <Link className="lp-nav-link" to="/recommendation">Smart Recommendation</Link>
+                <button type="button" className="lp-nav-link" onClick={() => handleFeatureNav('/marketplace')}>Marketplace</button>
+                <button type="button" className="lp-nav-link" onClick={() => handleFeatureNav('/recommendation')}>Smart Recommendation</button>
+                <button type="button" className="lp-nav-link" onClick={() => handleFeatureNav('/scan')}>Smart Scan</button>
+                <button type="button" className="lp-nav-link" onClick={() => handleFeatureNav('/dashboard')}>Dashboard</button>
+                <button type="button" className="lp-nav-link" onClick={() => handleFeatureNav('/rewards')}>Community</button>
               </>
             )}
           </div>
 
           <div className="lp-nav-actions">
-            {isAuthenticated && (
-              <button type="button" className="lp-btn lp-btn-ghost lp-btn-sm" onClick={handleSwitchAccount}>
-                Switch Account
-              </button>
-            )}
-            <button
-              type="button"
-              className="lp-btn lp-btn-primary"
-              onClick={handleGetStarted}
-            >
+            <button type="button" className="lp-btn lp-btn-primary" onClick={handleGetStarted}>
               Get Started
             </button>
           </div>
@@ -120,16 +110,9 @@ export default function Landing() {
       </nav>
 
       <AuthModal
-        open={authOpen}
-        onClose={() => setAuthOpen(false)}
-        onSuccess={() => {
-          localStorage.setItem('leafLifeAuthenticated', 'true');
-          setIsAuthenticated(true);
-          setAuthOpen(false);
-          const destination = redirectPath || '/dashboard';
-          setRedirectPath(null);
-          navigate(destination);
-        }}
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        onSuccess={handleModalSubmit}
       />
 
       {/* Hero Section */}
@@ -155,14 +138,14 @@ export default function Landing() {
               <button
                 type="button"
                 className="lp-btn lp-btn-primary lp-btn-lg"
-                onClick={() => handleProtectedNav('/marketplace')}
+                onClick={() => handleFeatureNav('/marketplace')}
               >
                 Explore Plants <ArrowRight size={18} />
               </button>
               <button
                 type="button"
                 className="lp-btn lp-btn-ghost lp-btn-lg"
-                onClick={() => handleProtectedNav('/marketplace')}
+                onClick={() => handleFeatureNav('/marketplace')}
               >
                 Join Marketplace
               </button>
@@ -316,7 +299,7 @@ export default function Landing() {
           </div>
 
           <div className="lp-grid lp-grid-3">
-            <button type="button" className="lp-feature" onClick={() => handleProtectedNav('/scan')}>
+            <button type="button" className="lp-feature" onClick={() => handleFeatureNav('/scan')}>
               <Camera size={28} className="lp-feature-icon" />
               <h3 className="lp-h3">AI Identification</h3>
               <p className="lp-p">
@@ -324,7 +307,7 @@ export default function Landing() {
               </p>
             </button>
 
-            <button type="button" className="lp-feature" onClick={() => handleProtectedNav('/recommendation')}>
+            <button type="button" className="lp-feature" onClick={() => handleFeatureNav('/recommendation')}>
               <MapPin size={28} className="lp-feature-icon" />
               <h3 className="lp-h3">Space &amp; Location-Based Recommendation</h3>
               <p className="lp-p">
@@ -332,7 +315,7 @@ export default function Landing() {
               </p>
             </button>
 
-            <button type="button" className="lp-feature" onClick={() => handleProtectedNav('/marketplace')}>
+            <button type="button" className="lp-feature" onClick={() => handleFeatureNav('/marketplace')}>
               <ShoppingBag size={28} className="lp-feature-icon" />
               <h3 className="lp-h3">Hyperlocal Marketplace</h3>
               <p className="lp-p">
@@ -340,7 +323,7 @@ export default function Landing() {
               </p>
             </button>
 
-            <button type="button" className="lp-feature" onClick={() => handleProtectedNav('/rewards')}>
+            <button type="button" className="lp-feature" onClick={() => handleFeatureNav('/rewards')}>
               <Award size={28} className="lp-feature-icon" />
               <h3 className="lp-h3">Community Rewards</h3>
               <p className="lp-p">
@@ -433,10 +416,10 @@ export default function Landing() {
             Make your living space greener, healthier, and smarter with AI-powered plant guidance and a connected plant community.
           </p>
           <div className="lp-hero-actions lp-cta-actions">
-            <button type="button" className="lp-btn lp-btn-primary lp-btn-xl" onClick={() => handleProtectedNav('/dashboard')}>
+            <button type="button" className="lp-btn lp-btn-primary lp-btn-xl" onClick={() => handleFeatureNav('/dashboard')}>
               Get Started Now
             </button>
-            <button type="button" className="lp-btn lp-btn-ghost lp-btn-xl" onClick={() => handleProtectedNav('/marketplace')}>
+            <button type="button" className="lp-btn lp-btn-ghost lp-btn-xl" onClick={() => handleFeatureNav('/marketplace')}>
               Explore Marketplace
             </button>
           </div>
