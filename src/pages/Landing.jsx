@@ -52,7 +52,7 @@ export default function Landing() {
       openModal();
       return;
     }
-    setActiveNav('features');
+    navigate('/dashboard');
   };
 
   const handleFeatureNav = (path) => {

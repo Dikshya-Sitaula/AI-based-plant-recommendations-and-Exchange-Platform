@@ -58,10 +58,10 @@ export default function Layout() {
         </Link>
         <div className="desktop-nav">
           <NavLink to="/marketplace" className={({isActive}) => isActive ? "desktop-nav-item active" : "desktop-nav-item"}>Marketplace</NavLink>
+          <NavLink to="/recommendation" className={({isActive}) => isActive ? "desktop-nav-item active" : "desktop-nav-item"}>Smart Recommendation</NavLink>
           <NavLink to="/scan" className={({isActive}) => isActive ? "desktop-nav-item active" : "desktop-nav-item"}>Smart Scan</NavLink>
           <NavLink to="/rewards" className={({isActive}) => isActive ? "desktop-nav-item active" : "desktop-nav-item"}>Community</NavLink>
           <NavLink to="/dashboard" className={({isActive}) => isActive ? "desktop-nav-item active" : "desktop-nav-item"}>Dashboard</NavLink>
-          <NavLink to="/recommendation" className={({isActive}) => isActive ? "desktop-nav-item active" : "desktop-nav-item"}>Smart Recommendation</NavLink>
         </div>
         <div className="nav-actions">
           {isAuthenticated && (
