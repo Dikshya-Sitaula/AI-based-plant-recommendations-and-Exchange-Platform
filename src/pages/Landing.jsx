@@ -103,6 +103,19 @@ export default function Landing() {
           </div>
 
           <div className="lp-nav-actions">
+            {isSubmitted && (
+              <button
+                type="button"
+                className="lp-nav-link lp-nav-switch"
+                onClick={() => {
+                  localStorage.removeItem('leafLifeSubmitted');
+                  localStorage.removeItem('leafLifeAuthenticated');
+                  window.location.reload();
+                }}
+              >
+                Switch Acc
+              </button>
+            )}
             <button type="button" className="lp-btn lp-btn-primary" onClick={handleGetStarted}>
               Get Started
             </button>
