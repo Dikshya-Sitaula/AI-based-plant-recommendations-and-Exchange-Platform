@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   Flame,
   Globe,
+  HeartPulse,
   Info,
   Leaf,
   Mail,
@@ -304,7 +305,7 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Features Section (reusing your current Landing page cards) */}
+      {/* Features Section */}
       <section className="lp-section lp-section-card" id="features">
         <div className="lp-container">
           <div className="lp-section-head">
@@ -312,37 +313,41 @@ export default function Landing() {
             <h2 className="lp-h2">Everything You Need for Greener Living.</h2>
           </div>
 
-          <div className="lp-grid lp-grid-3">
-            <button type="button" className="lp-feature" onClick={() => handleFeatureNav('/scan')}>
-              <Camera size={28} className="lp-feature-icon" />
-              <h3 className="lp-h3">AI Identification</h3>
-              <p className="lp-p">
-                Snap a photo and instantly know your plant&apos;s name, needs, and ideal location in your home based on light and space.
-              </p>
+          <div className="lp-feat-grid">
+            <button type="button" className="lp-feat-card" onClick={() => handleFeatureNav('/scan')}>
+              <div className="lp-feat-icon-wrap"><Camera size={28} className="lp-feat-icon" /></div>
+              <h3 className="lp-feat-title">AI-Based Plant Identification</h3>
+              <p className="lp-feat-desc">Upload a plant image and instantly identify the plant along with care tips and environmental benefits.</p>
             </button>
 
-            <button type="button" className="lp-feature" onClick={() => handleFeatureNav('/recommendation')}>
-              <MapPin size={28} className="lp-feature-icon" />
-              <h3 className="lp-h3">Space &amp; Location-Based Recommendation</h3>
-              <p className="lp-p">
-                Tell us about your space, and we&apos;ll recommend the perfect plants for your environment. No photos required!
-              </p>
+            <button type="button" className="lp-feat-card" onClick={() => handleFeatureNav('/recommendation')}>
+              <div className="lp-feat-icon-wrap"><MapPin size={28} className="lp-feat-icon" /></div>
+              <h3 className="lp-feat-title">Smart Space &amp; Location</h3>
+              <p className="lp-feat-desc">Receive personalized plant suggestions based on available space, sunlight conditions, and your location.</p>
             </button>
 
-            <button type="button" className="lp-feature" onClick={() => handleFeatureNav('/marketplace')}>
-              <ShoppingBag size={28} className="lp-feature-icon" />
-              <h3 className="lp-h3">Hyperlocal Marketplace</h3>
-              <p className="lp-p">
-                Buy, sell, swap, or thrift plants with people in your neighborhood. Support local nurseries and reduce waste.
-              </p>
+            <button type="button" className="lp-feat-card" onClick={() => handleFeatureNav('/marketplace')}>
+              <div className="lp-feat-icon-wrap"><ShoppingBag size={28} className="lp-feat-icon" /></div>
+              <h3 className="lp-feat-title">Hyperlocal Marketplace</h3>
+              <p className="lp-feat-desc">Buy, sell, swap, or thrift plants within your nearby community with ease.</p>
             </button>
 
-            <button type="button" className="lp-feature" onClick={() => handleFeatureNav('/rewards')}>
-              <Award size={28} className="lp-feature-icon" />
-              <h3 className="lp-h3">Community Rewards</h3>
-              <p className="lp-p">
-                Track your air quality impact, join eco-challenges, and earn badges for sustainable plant parenting.
-              </p>
+            <button type="button" className="lp-feat-card" onClick={() => handleFeatureNav('/dashboard')}>
+              <div className="lp-feat-icon-wrap"><HeartPulse size={28} className="lp-feat-icon" /></div>
+              <h3 className="lp-feat-title">Personalized Care Guidance</h3>
+              <p className="lp-feat-desc">Get customized watering, placement, and maintenance instructions for healthier plants.</p>
+            </button>
+
+            <button type="button" className="lp-feat-card" onClick={() => handleFeatureNav('/dashboard')}>
+              <div className="lp-feat-icon-wrap"><Leaf size={28} className="lp-feat-icon" /></div>
+              <h3 className="lp-feat-title">Air Quality Impact</h3>
+              <p className="lp-feat-desc">Track how your plant collection contributes to improving indoor air quality and your health.</p>
+            </button>
+
+            <button type="button" className="lp-feat-card" onClick={() => handleFeatureNav('/rewards')}>
+              <div className="lp-feat-icon-wrap"><Award size={28} className="lp-feat-icon" /></div>
+              <h3 className="lp-feat-title">Challenges &amp; Rewards</h3>
+              <p className="lp-feat-desc">Participate in eco-friendly challenges and earn rewards through plant-related activities.</p>
             </button>
           </div>
         </div>
