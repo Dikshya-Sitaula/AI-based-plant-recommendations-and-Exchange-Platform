@@ -474,3 +474,55 @@
 .about-root {
   background: var(--lp-background);
 }
+
+/* ── Stats Counter (Hero) ───────────────────────── */
+.au-stats-counter {
+  width: 100%;
+  margin-top: 48px;
+  padding-top: 40px;
+  border-top: 1px solid rgba(226, 232, 206, 0.6);
+}
+
+.au-stats-counter-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 28px 24px;
+  text-align: left;
+}
+
+.au-stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.au-stat-number {
+  font-size: 2.25rem;
+  font-weight: 900;
+  color: var(--lp-primary);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.au-stat-label {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--lp-muted);
+}
+
+.au-stat-growing {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.au-stat-trending {
+  color: #22c55e;
+}
+
+@media (min-width: 560px) {
+  .au-stats-counter-grid { grid-template-columns: repeat(4, 1fr); }
+}
+

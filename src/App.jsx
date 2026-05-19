@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import Landing from './pages/Landing';
 import Recommendation from './pages/Recommendation';
 import AboutUs from './pages/AboutUs';
+import Contact from './pages/Contact';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/about" element={<AboutUs />} />
+        <Route path="/contact" element={<Contact />} />
         <Route element={<Layout />}>
           <Route path="marketplace" element={<Marketplace />} />
           <Route path="scan" element={<Scan />} />

@@ -86,35 +86,23 @@ export default function Landing() {
           </button>
 
           <div className="lp-nav-center">
-            {activeNav === 'landing' ? (
-              <>
-                <button type="button" className="lp-nav-link" onClick={() => navigate('/?landing=1')}>Home</button>
-                <button type="button" className="lp-nav-link" onClick={() => navigate('/about')}>About Us</button>
-                <button type="button" className="lp-nav-link" onClick={() => document.getElementById('footer')?.scrollIntoView({ behavior: 'smooth' })}>Contact</button>
-              </>
-            ) : (
-              <>
-                <button type="button" className="lp-nav-link" onClick={() => handleFeatureNav('/marketplace')}>Marketplace</button>
-                <button type="button" className="lp-nav-link" onClick={() => handleFeatureNav('/recommendation')}>Smart Recommendation</button>
-                <button type="button" className="lp-nav-link" onClick={() => handleFeatureNav('/scan')}>Smart Scan</button>
-                <button type="button" className="lp-nav-link" onClick={() => handleFeatureNav('/rewards')}>Community</button>
-                <button type="button" className="lp-nav-link" onClick={() => handleFeatureNav('/dashboard')}>Dashboard</button>
-              </>
-            )}
+            <button type="button" className="lp-nav-link" onClick={() => navigate('/?landing=1')}>Home</button>
+            <button type="button" className="lp-nav-link" onClick={() => navigate('/about')}>About Us</button>
+            <button type="button" className="lp-nav-link" onClick={() => navigate('/contact')}>Contact</button>
           </div>
 
           <div className="lp-nav-actions">
             {isSubmitted && (
               <button
                 type="button"
-                className="lp-nav-link lp-nav-switch"
+                className="lp-btn lp-btn-ghost lp-btn-sm"
                 onClick={() => {
                   localStorage.removeItem('leafLifeSubmitted');
                   localStorage.removeItem('leafLifeAuthenticated');
                   window.location.reload();
                 }}
               >
-                Switch Acc
+                Switch Account
               </button>
             )}
             <button type="button" className="lp-btn lp-btn-primary" onClick={handleGetStarted}>
@@ -134,10 +122,6 @@ export default function Landing() {
       <section className="lp-hero">
         <div className="lp-container lp-hero-grid">
           <div className="lp-hero-copy">
-            <div className="lp-pill">
-              <span className="lp-pill-icon" aria-hidden="true"><ZapLike /></span>
-              AI-POWERED ECO SYSTEM
-            </div>
 
             <h1 className="lp-hero-title">
               Grow Smarter,<br />
@@ -166,20 +150,6 @@ export default function Landing() {
               </button>
             </div>
 
-            <div className="lp-checklist">
-              <div className="lp-check">
-                <CheckCircle2 size={16} className="lp-check-icon" />
-                <span>AI-Based Recommendations</span>
-              </div>
-              <div className="lp-check">
-                <CheckCircle2 size={16} className="lp-check-icon" />
-                <span>Hyperlocal Plant Exchange</span>
-              </div>
-              <div className="lp-check">
-                <CheckCircle2 size={16} className="lp-check-icon" />
-                <span>Beginner-Friendly Plant Care</span>
-              </div>
-            </div>
           </div>
 
           <div className="lp-hero-media">

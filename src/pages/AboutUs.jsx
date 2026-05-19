@@ -12,6 +12,7 @@ import {
   Mail,
   Quote,
   Target,
+  TrendingUp,
   Users,
   Wind,
 } from 'lucide-react';
@@ -85,9 +86,9 @@ function RevealRight({ children, delay = 0 }) {
 export default function AboutUs() {
   const navigate = useNavigate();
   const [authOpen, setAuthOpen] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+  const [isSubmitted, setIsSubmitted] = useState(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('leafLifeAuthenticated') === 'true';
+      return localStorage.getItem('leafLifeSubmitted') === 'true';
     }
     return false;
   });
@@ -95,17 +96,18 @@ export default function AboutUs() {
   const openAuthModal = () => { setAuthOpen(true); };
 
   const handleGetStarted = () => {
-    if (isAuthenticated) {
+    if (isSubmitted) {
       navigate('/dashboard');
     } else {
       openAuthModal();
     }
   };
 
-  const handleSwitchAccount = () => {
-    localStorage.removeItem('leafLifeAuthenticated');
-    setIsAuthenticated(false);
-    openAuthModal();
+  const handleModalSubmit = () => {
+    localStorage.setItem('leafLifeSubmitted', 'true');
+    setIsSubmitted(true);
+    setAuthOpen(false);
+    navigate('/dashboard');
   };
 
   useEffect(() => {
@@ -130,12 +132,20 @@ export default function AboutUs() {
           <div className="lp-nav-links">
             <Link className="lp-nav-link" to="/">Home</Link>
             <Link className="lp-nav-link" to="/about">About Us</Link>
-            <a className="lp-nav-link" href="#footer">Contact</a>
+            <Link className="lp-nav-link" to="/contact">Contact</Link>
           </div>
 
           <div className="lp-nav-actions">
-            {isAuthenticated && (
-              <button type="button" className="lp-btn lp-btn-ghost lp-btn-sm" onClick={handleSwitchAccount}>
+            {isSubmitted && (
+              <button
+                type="button"
+                className="lp-btn lp-btn-ghost lp-btn-sm"
+                onClick={() => {
+                  localStorage.removeItem('leafLifeSubmitted');
+                  localStorage.removeItem('leafLifeAuthenticated');
+                  window.location.reload();
+                }}
+              >
                 Switch Account
               </button>
             )}
@@ -149,12 +159,7 @@ export default function AboutUs() {
       <AuthModal
         open={authOpen}
         onClose={() => setAuthOpen(false)}
-        onSuccess={() => {
-          setAuthOpen(false);
-          setIsAuthenticated(true);
-          localStorage.setItem('leafLifeAuthenticated', 'true');
-          navigate('/dashboard');
-        }}
+        onSuccess={handleModalSubmit}
       />
 
       {/* Hero Section */}
@@ -176,6 +181,33 @@ export default function AboutUs() {
             <p className="au-hero-subtitle">
               We are a passionate team of innovators and creators dedicated to bridging the gap between nature and technology, making sustainable living accessible for everyone.
             </p>
+          </RevealUp>
+
+          {/* Stats Counter */}
+          <RevealUp delay={200}>
+            <div className="au-stats-counter">
+              <div className="au-stats-counter-grid">
+                <div className="au-stat-item">
+                  <span className="au-stat-number">10K+</span>
+                  <span className="au-stat-label">Plant Recommendations</span>
+                </div>
+                <div className="au-stat-item">
+                  <span className="au-stat-number">500+</span>
+                  <span className="au-stat-label">Plant Listings</span>
+                </div>
+                <div className="au-stat-item">
+                  <span className="au-stat-number">100+</span>
+                  <span className="au-stat-label">Local Nurseries</span>
+                </div>
+                <div className="au-stat-item">
+                  <div className="au-stat-growing">
+                    <span className="au-stat-number">Growing</span>
+                    <TrendingUp size={24} className="au-stat-trending" />
+                  </div>
+                  <span className="au-stat-label">Eco Community</span>
+                </div>
+              </div>
+            </div>
           </RevealUp>
         </div>
       </section>
@@ -312,7 +344,25 @@ export default function AboutUs() {
         </div>
       </section>
 
-      {/* Footer — unchanged */}
+      {/* ── Final CTA ─────────── */}
+      <section className="lp-section lp-cta">
+        <div className="lp-container lp-cta-inner">
+          <h2 className="lp-cta-title">Ready to Start Your Green Journey?</h2>
+          <p className="lp-lead">
+            Make your living space greener, healthier, and smarter with AI-powered plant guidance and a connected plant community.
+          </p>
+          <div className="lp-hero-actions lp-cta-actions">
+            <button type="button" className="lp-btn lp-btn-primary lp-btn-xl" onClick={handleGetStarted}>
+              Get Started Now
+            </button>
+            <button type="button" className="lp-btn lp-btn-ghost lp-btn-xl" onClick={() => navigate('/marketplace')}>
+              Explore Marketplace
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
       <footer id="footer" className="lp-footer">
         <div className="lp-container">
           <div className="lp-footer-grid">

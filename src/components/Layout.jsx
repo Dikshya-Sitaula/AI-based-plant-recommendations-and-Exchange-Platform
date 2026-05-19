@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Outlet, NavLink, Link, useNavigate } from 'react-router-dom';
-import { Store, Camera, Trophy, LayoutDashboard, MapPin } from 'lucide-react';
+import { Store, Camera, Trophy, LayoutDashboard, MapPin, LogOut, Settings } from 'lucide-react';
 import './Layout.css';
 import logo from "../assets/Leaf and Life logo.png";
 import AuthModal from './AuthModal';
@@ -39,8 +39,7 @@ export default function Layout() {
   }, [authOpen]);
 
   return (
-    <div className="app-container">
-      {/* Top Navbar */}
+    <div className="app-container dashboard-layout">
       <AuthModal
         open={authOpen}
         onClose={() => setAuthOpen(false)}
@@ -51,29 +50,57 @@ export default function Layout() {
           navigate('/dashboard');
         }}
       />
-      <header className="top-nav">
-        <Link to="/" className="logo-link" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none', color: 'inherit' }}>
-          <img src={logo} alt="Leaf and Life" className="app-logo" />
-          <h1 className="logo-text">Leaf and Life</h1>
-        </Link>
-        <div className="desktop-nav">
-          <NavLink to="/marketplace" className={({isActive}) => isActive ? "desktop-nav-item active" : "desktop-nav-item"}>Marketplace</NavLink>
-          <NavLink to="/recommendation" className={({isActive}) => isActive ? "desktop-nav-item active" : "desktop-nav-item"}>Smart Recommendation</NavLink>
-          <NavLink to="/scan" className={({isActive}) => isActive ? "desktop-nav-item active" : "desktop-nav-item"}>Smart Scan</NavLink>
-          <NavLink to="/rewards" className={({isActive}) => isActive ? "desktop-nav-item active" : "desktop-nav-item"}>Community</NavLink>
-          <NavLink to="/dashboard" className={({isActive}) => isActive ? "desktop-nav-item active" : "desktop-nav-item"}>Dashboard</NavLink>
+      
+      {/* Sidebar Navigation */}
+      <aside className="sidebar">
+        <div className="sidebar-top">
+          <Link to="/" className="sidebar-logo">
+            <img src={logo} alt="Leaf and Life" className="sidebar-logo-img" />
+            <span className="sidebar-logo-text">Leaf &amp; Life</span>
+          </Link>
+          
+          <nav className="sidebar-nav">
+            <NavLink to="/dashboard" className="sidebar-nav-item">
+              <LayoutDashboard size={20} />
+              <span>Dashboard</span>
+            </NavLink>
+            <NavLink to="/scan" className="sidebar-nav-item">
+              <Camera size={20} />
+              <span>Smart Scan</span>
+            </NavLink>
+            <NavLink to="/marketplace" className="sidebar-nav-item">
+              <Store size={20} />
+              <span>Marketplace</span>
+            </NavLink>
+            <NavLink to="/rewards" className="sidebar-nav-item">
+              <Trophy size={20} />
+              <span>Community</span>
+            </NavLink>
+            <NavLink to="/recommendation" className="sidebar-nav-item">
+              <MapPin size={20} />
+              <span>Smart Recs</span>
+            </NavLink>
+          </nav>
         </div>
-        <div className="nav-actions">
-          {isAuthenticated && (
-            <button type="button" className="lp-btn lp-btn-ghost lp-btn-sm" onClick={handleSwitchAccount}>
-              Switch Account
+        
+        <div className="sidebar-bottom">
+          <div className="user-profile">
+            <img src="https://ui-avatars.com/api/?name=Alex&background=E2E8CE&color=2D5A27" alt="Alex" className="user-avatar" />
+            <div className="user-info">
+              <span className="user-name">Alex</span>
+              <span className="user-role">Plant Parent</span>
+            </div>
+          </div>
+          <div className="sidebar-actions">
+            <button className="sidebar-action-btn">
+              <Settings size={18} />
             </button>
-          )}
-          <button type="button" className="lp-btn lp-btn-primary" onClick={handleGetStarted}>
-            Get Started
-          </button>
+            <button className="sidebar-action-btn" onClick={handleSwitchAccount}>
+              <LogOut size={18} />
+            </button>
+          </div>
         </div>
-      </header>
+      </aside>
 
       {/* Main Content Area */}
       <main className="main-content">
@@ -102,7 +129,7 @@ export default function Layout() {
         </NavLink>
         <NavLink to="/rewards" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
           <Trophy size={24} />
-          <span>Community</span>
+          <span>Rewards</span>
         </NavLink>
       </nav>
     </div>
