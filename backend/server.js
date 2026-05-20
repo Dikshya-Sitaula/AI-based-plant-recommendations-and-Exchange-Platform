@@ -155,6 +155,7 @@ app.post('/api/verify-password', async (req, res) => {
 
     res.json({ success: true, message: 'Password verified' });
   } catch (error) {
+    console.error('API ERROR:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -164,15 +165,21 @@ app.post('/api/signup', async (req, res) => {
     const { fullName, email, password } = req.body;
     if (!fullName || !email || !password) return res.status(400).json({ error: 'All fields are required' });
 
+    console.log(`[SIGNUP] Attempt for: ${email}`);
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
     const newUser = { id: Date.now().toString(), fullName, email, password: hashedPassword, createdAt: new Date().toISOString() };
     await dbRun('INSERT INTO users (id, fullName, email, password, createdAt) VALUES (?, ?, ?, ?, ?)', [newUser.id, newUser.fullName, newUser.email, newUser.password, newUser.createdAt]);
 
+    console.log(`[SIGNUP] Success: ${email}`);
     const { password: _, ...userWithoutPassword } = newUser;
     res.status(201).json({ message: 'User created successfully', user: userWithoutPassword });
   } catch (error) {
+    console.error('SIGNUP ERROR:', error.message);
+    if (error.code === 'ER_DUP_ENTRY') {
+      return res.status(400).json({ error: 'Email already exists' });
+    }
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -182,15 +189,24 @@ app.post('/api/login', async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ error: 'Email and password are required' });
 
+    console.log(`[LOGIN] Attempt for: ${email}`);
     const user = await dbGet('SELECT * FROM users WHERE email = ?', [email]);
-    if (!user) return res.status(400).json({ error: 'Incorrect password or username' });
+    if (!user) {
+      console.log(`[LOGIN] User not found: ${email}`);
+      return res.status(400).json({ error: 'Incorrect password or username' });
+    }
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ error: 'Incorrect password or username' });
+    if (!isMatch) {
+      console.log(`[LOGIN] Password mismatch for: ${email}`);
+      return res.status(400).json({ error: 'Incorrect password or username' });
+    }
 
+    console.log(`[LOGIN] Success: ${email}`);
     const { password: _, ...userWithoutPassword } = user;
     res.json({ message: 'Login successful', user: userWithoutPassword });
   } catch (error) {
+    console.error('LOGIN ERROR:', error.message);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -216,19 +232,17 @@ app.get('/api/recommend', async (req, res) => {
     
     // 1. Fetch Temperature based on Location
     const detectedTemp = await getMonthlyAverage(location);
+    console.log(`[RECOMMEND] Request: Space=${space}, Light=${sunlight}, Location=${location}, Temp=${detectedTemp}°C`);
     
-    // 2. Build Dynamic Query to match arrangements
-    // Filters plants where is_sold=0 AND matches climate AND matches space AND matches light
+    // 2. Build Dynamic Query
     let query = 'SELECT * FROM plants WHERE is_sold = 0';
     const params = [];
 
-    // Arrangement Logic: Space Match (Partial string match in space_tag)
     if (space && space !== 'Any') {
       query += ' AND LOWER(space_tag) LIKE ?';
       params.push(`%${space.toLowerCase()}%`);
     }
 
-    // Arrangement Logic: Light Match (Sunlight need is stored as 1, 2, 3)
     if (sunlight && sunlight !== 'Any') {
       const lightMap = { 'Low': 1, 'Medium': 2, 'High': 3 };
       const lightVal = lightMap[sunlight] || sunlight;
@@ -236,21 +250,31 @@ app.get('/api/recommend', async (req, res) => {
       params.push(lightVal);
     }
 
-    // Arrangement Logic: Climate Match
-    query += ' AND ? BETWEEN min_temp AND max_temp';
-    params.push(Math.round(detectedTemp));
-
-    console.log(`QUERYING RECOMMENDATIONS: Space=${space}, Light=${sunlight}, Temp=${detectedTemp}`);
+    // Climate Match
+    const finalQuery = query + ' AND ? BETWEEN min_temp AND max_temp';
+    const finalParams = [...params, Math.round(detectedTemp)];
     
-    let plants = await dbAll(query, params);
+    let plants = await dbAll(finalQuery, finalParams);
+    let note = "Found perfect environmental matches.";
 
-    // Dynamic Fallback: If exact arrangement yields no results, relax the climate constraint
-    let fallbackUsed = false;
+    // 3. Fallback Logic: Relax Climate
     if (plants.length === 0) {
-      console.log('RELAXING CLIMATE CONSTRAINT FOR ARRANGEMENTS');
-      const fallbackQuery = 'SELECT * FROM plants WHERE is_sold = 0 AND LOWER(space_tag) LIKE ? AND CAST(sunlight_need AS UNSIGNED) <= ?';
-      plants = await dbAll(fallbackQuery, params.slice(0, 2));
-      fallbackUsed = true;
+      console.log('[RECOMMEND] No climate matches. Relaxing climate constraint.');
+      plants = await dbAll(query, params);
+      note = "Climate threshold relaxed to find suitable arrangements.";
+    }
+
+    // 4. Fallback Logic: Relax Sunlight
+    if (plants.length === 0) {
+      console.log('[RECOMMEND] Still no matches. Relaxing sunlight constraint.');
+      let basicQuery = 'SELECT * FROM plants WHERE is_sold = 0';
+      const basicParams = [];
+      if (space && space !== 'Any') {
+        basicQuery += ' AND LOWER(space_tag) LIKE ?';
+        basicParams.push(`%${space.toLowerCase()}%`);
+      }
+      plants = await dbAll(basicQuery, basicParams);
+      note = "Search broadened to find any suitable plants for your space.";
     }
 
     res.json({
@@ -259,12 +283,12 @@ app.get('/api/recommend', async (req, res) => {
         averageTemp: `${Math.round(detectedTemp)}°C`,
         space: space || 'Indoor',
         sunlight: sunlight || 'Medium',
-        note: fallbackUsed ? "Climate threshold relaxed to find suitable arrangements." : "Found perfect environmental matches."
+        note: note
       },
       plants: plants
     });
   } catch (error) {
-    console.error('Recommendation Error:', error);
+    console.error('[RECOMMEND] Error:', error);
     res.status(500).json({ error: 'Failed to generate plant arrangements' });
   }
 });
@@ -348,5 +372,5 @@ app.post('/api/payment/complete/:sessionId', (req, res) => {
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`SERVER RUNNING ON ALL INTERFACES: http://192.168.23.42:${PORT}`);
+  console.log(`SERVER RUNNING ON ALL INTERFACES: http://192.168.23.81:${PORT}`);
 });

@@ -1,10 +1,20 @@
-import { Outlet, NavLink, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Outlet, NavLink, Link, useNavigate } from 'react-router-dom';
 import { Store, Camera, Trophy, LayoutDashboard, Sparkles } from 'lucide-react';
 import './Layout.css';
 import logo from "../assets/Leaf and Life logo.png";
 
 
 export default function Layout() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const user = localStorage.getItem('user');
+    if (!user) {
+      navigate('/login');
+    }
+  }, [navigate]);
+
   return (
     <div className="app-container">
       {/* Top Navbar */}

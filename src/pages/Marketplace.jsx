@@ -20,6 +20,18 @@ export default function Marketplace() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
 
+  // Restore session from localStorage on mount
+  useEffect(() => {
+    const savedSession = localStorage.getItem('pendingMarketplacePurchase');
+    if (savedSession) {
+      const { sessionId, plant, quantity: savedQuantity } = JSON.parse(savedSession);
+      setPaymentSessionId(sessionId);
+      setSelectedPlant(plant);
+      setQuantity(savedQuantity);
+      setShowQRPrompt(true);
+    }
+  }, []);
+
   useEffect(() => {
     const fetchPlants = async () => {
       try {
@@ -47,6 +59,10 @@ export default function Marketplace() {
             setPaymentStatus('completed');
             clearInterval(interval);
             handleFinalizePurchase();
+          } else if (data.status === 'expired') {
+            clearInterval(interval);
+            closeModals();
+            alert("Payment session expired. Please try again.");
           }
         } catch (err) {
           console.error("Polling error:", err);
@@ -86,6 +102,14 @@ export default function Marketplace() {
         body: JSON.stringify({ plantId: selectedPlant.id, userId: user.id, quantity, amount })
       });
       const data = await response.json();
+
+      // Save to localStorage for persistence
+      localStorage.setItem('pendingMarketplacePurchase', JSON.stringify({
+        sessionId: data.sessionId,
+        plant: selectedPlant,
+        quantity: quantity
+      }));
+
       setPaymentSessionId(data.sessionId);
       setPaymentStatus('pending');
       setShowQuantitySelector(false);
@@ -107,6 +131,7 @@ export default function Marketplace() {
       });
 
       if (buyResponse.ok) {
+        localStorage.removeItem('pendingMarketplacePurchase'); // Clear session
         setShowQRPrompt(false);
         setSuccess(true);
         // Refresh plants
@@ -120,6 +145,9 @@ export default function Marketplace() {
   };
 
   const closeModals = () => {
+    if (showQRPrompt) {
+      localStorage.removeItem('pendingMarketplacePurchase');
+    }
     setShowQuantitySelector(false);
     setShowQRPrompt(false);
     setSuccess(false);
@@ -128,9 +156,9 @@ export default function Marketplace() {
   };
 
   // Determine local IP for mobile access
-  // ✅ Dynamically use whatever IP the desktop browser is on
-const localIP = window.location.hostname;
-const paymentURL = `http://${localIP}:5173/payment-mobile/${paymentSessionId}`;
+  // ✅ Dynamically use IP for mobile reachability
+  const localIP = window.location.hostname === 'localhost' ? '192.168.23.81' : window.location.hostname;
+  const paymentURL = `http://${localIP}:5173/payment-mobile/${paymentSessionId}`;
   return (
     <div className="animate-fade-in marketplace-container">
       <div className="marketplace-header">

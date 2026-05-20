@@ -15,37 +15,72 @@ export default function Landing() {
   const navigate = useNavigate();
 
   const requestLocation = () => {
+    setLoading(true);
+    
+    // First try IP-based location (faster, works without prompt usually)
+    const fetchIpLocation = async () => {
+      try {
+        const response = await fetch('https://ipapi.co/json/');
+        const data = await response.json();
+        if (data.city) {
+          setLocation(`${data.city}, ${data.country_name || 'Nepal'}`);
+          setLoading(false);
+          return true;
+        }
+      } catch (err) {
+        console.error("IP Location Error:", err);
+      }
+      return false;
+    };
+
     if ("geolocation" in navigator) {
-      setLoading(true);
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           try {
             const { latitude, longitude } = position.coords;
-            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`);
             const data = await response.json();
             
-            // Enhanced precision logic
-            const address = data.address;
-            const place = address.suburb || address.neighbourhood || address.city_district || address.village || address.town;
-            const city = address.city || address.county || "";
+            const addr = data.address;
+            // Prioritize neighborhood or suburb for high precision
+            const neighborhood = addr.neighbourhood || addr.suburb || addr.village || addr.city_district || addr.town;
+            const city = addr.city || addr.county || addr.state || "";
             
-            // Only join if place and city are different
-            const cityName = place && city && place !== city ? `${place}, ${city}` : (place || city || "Nepal");
+            // Format as "Neighborhood, City"
+            let preciseLocation = "";
+            if (neighborhood && city && neighborhood !== city) {
+              preciseLocation = `${neighborhood}, ${city}`;
+            } else {
+              preciseLocation = neighborhood || city || "Kathmandu";
+            }
             
-            setLocation(cityName);
+            setLocation(preciseLocation);
           } catch (error) {
             console.error("Geocoding error:", error);
-            setLocation("Kathmandu");
+            await fetchIpLocation();
           } finally {
             setLoading(false);
           }
         },
-        (error) => {
+        async (error) => {
           console.error("Location error", error);
-          alert("Could not detect location. Please enter manually.");
+          const success = await fetchIpLocation();
+          if (!success) {
+            setLocation("Kathmandu");
+          }
           setLoading(false);
+        },
+        { 
+          enableHighAccuracy: true, // Forces GPS for neighborhood-level precision
+          timeout: 10000, 
+          maximumAge: 0 
         }
       );
+    } else {
+      fetchIpLocation().then(success => {
+        if (!success) setLocation("Kathmandu");
+        setLoading(false);
+      });
     }
   };
 

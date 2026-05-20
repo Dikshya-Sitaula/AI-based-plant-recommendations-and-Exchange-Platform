@@ -20,6 +20,19 @@ export default function Purchase() {
   const [paymentSessionId, setPaymentSessionId] = useState(null);
   const [paymentStatus, setPaymentStatus] = useState('pending'); // pending, completed
 
+  // Restore session from localStorage on mount
+  useEffect(() => {
+    const savedSession = localStorage.getItem('pendingPurchase');
+    if (savedSession) {
+      const { sessionId, plantId: savedPlantId, quantity: savedQuantity } = JSON.parse(savedSession);
+      if (savedPlantId === parseInt(id)) {
+        setPaymentSessionId(sessionId);
+        setQuantity(savedQuantity);
+        setShowQRPrompt(true);
+      }
+    }
+  }, [id]);
+
   useEffect(() => {
     const fetchPlant = async () => {
       try {
@@ -48,6 +61,10 @@ export default function Purchase() {
             setPaymentStatus('completed');
             clearInterval(interval);
             handleFinalizePurchase();
+          } else if (data.status === 'expired') {
+            clearInterval(interval);
+            handleCloseQRPrompt();
+            alert("Payment session expired. Please try again.");
           }
         } catch (err) {
           console.error("Polling error:", err);
@@ -76,6 +93,14 @@ export default function Purchase() {
         body: JSON.stringify({ plantId: plant.id, userId: user.id, quantity, amount })
       });
       const data = await response.json();
+      
+      // Save to localStorage for persistence
+      localStorage.setItem('pendingPurchase', JSON.stringify({
+        sessionId: data.sessionId,
+        plantId: plant.id,
+        quantity: quantity
+      }));
+
       setPaymentSessionId(data.sessionId);
       setPaymentStatus('pending');
       setShowQuantitySelector(false);
@@ -97,6 +122,7 @@ export default function Purchase() {
       });
 
       if (buyResponse.ok) {
+        localStorage.removeItem('pendingPurchase'); // Clear session
         setShowQRPrompt(false);
         setSuccess(true);
       }
@@ -105,6 +131,11 @@ export default function Purchase() {
     } finally {
       setPurchasing(false);
     }
+  };
+
+  const handleCloseQRPrompt = () => {
+    setShowQRPrompt(false);
+    localStorage.removeItem('pendingPurchase');
   };
 
   if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading plant details...</div>;
@@ -118,7 +149,7 @@ export default function Purchase() {
   };
 
   // Determine local IP for mobile access
-  const localIP = "192.168.23.42"; // Updated current IP
+  const localIP = window.location.hostname === 'localhost' ? '192.168.23.81' : window.location.hostname;
   const paymentURL = `http://${localIP}:5173/payment-mobile/${paymentSessionId}`;
 
   return (
@@ -300,7 +331,7 @@ export default function Purchase() {
             width: '100%', maxWidth: '400px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', position: 'relative',
             textAlign: 'center'
           }}>
-            <button onClick={() => setShowQRPrompt(false)} style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={20} /></button>
+            <button onClick={handleCloseQRPrompt} style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={20} /></button>
             
             <div style={{ width: '48px', height: '48px', backgroundColor: 'var(--bg-secondary)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
               <QrCode size={24} color="var(--primary)" />

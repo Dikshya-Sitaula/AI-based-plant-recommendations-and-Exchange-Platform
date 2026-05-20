@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, Lock, Mail } from 'lucide-react';
 import logo from "../assets/Leaf and Life logo.png";
 
 export default function Login() {
   const [formData, setFormData] = useState({
-    email: '',
+    email: localStorage.getItem('savedEmail') || '',
     password: ''
   });
   const [error, setError] = useState('');
@@ -34,6 +34,7 @@ export default function Login() {
         setError(data.error || 'Login failed');
       } else {
         localStorage.setItem('user', JSON.stringify(data.user));
+        localStorage.setItem('savedEmail', formData.email);
         navigate('/dashboard');
       }
     } catch (err) {
