@@ -157,7 +157,7 @@ export default function Marketplace() {
 
   // Determine local IP for mobile access
   // ✅ Dynamically use IP for mobile reachability
-  const localIP = window.location.hostname === 'localhost' ? '192.168.23.81' : window.location.hostname;
+  const localIP = window.location.hostname === 'localhost' ? '10.59.51.193' : window.location.hostname;
   const paymentURL = `http://${localIP}:5173/payment-mobile/${paymentSessionId}`;
   return (
     <div className="animate-fade-in marketplace-container">

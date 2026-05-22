@@ -1,7 +1,9 @@
 # PlantApp Project Memory
 
 ## Features Implemented
-- **Data Persistence & "Save Forever"**:
+- **Enhanced Auth Experience**:
+  - **Confirm Password Validation**: Added a "Confirm Password" field to Signup, ensuring users type their password correctly before account creation.
+  - **Password Visibility Toggle**: Added an interactive "Eye" icon to Login and Signup pages, allowing users to safely view their typed passwords.
   - **Auth Persistence**: Implemented `localStorage` session management. Users stay logged in across browser restarts.
   - **QR Session Persistence**: Pending payment sessions are saved to `localStorage`. If the site is closed and reopened during payment, the QR prompt automatically restores.
   - **MySQL User Sync**: Integrated backend with MySQL database to store user credentials (Full Name, Email, Password) permanently.
@@ -23,7 +25,7 @@
 - **Dashboard Collection Sync**: Resolved issue where purchased plants were not appearing on the Dashboard.
 
 ## Local Configuration
-- **Active IP**: `192.168.23.81` (Update this in `server.js`, `Purchase.jsx`, and `Marketplace.jsx` if Wi-Fi changes).
+L26: - **Active IP**: `10.59.51.193` (Update this in `server.js`, `Purchase.jsx`, and `Marketplace.jsx` if Wi-Fi changes).
 - **Backend Port**: `5000`
 - **Frontend Port**: `5173`
 - **Database**: MySQL `plant_app` database on `localhost`.

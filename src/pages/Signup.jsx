@@ -1,16 +1,19 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Lock, Mail, User } from 'lucide-react';
+import { ArrowRight, Lock, Mail, User, Eye, EyeOff } from 'lucide-react';
 import logo from "../assets/Leaf and Life logo.png";
 
 export default function Signup() {
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
-    password: ''
+    password: '',
+    confirmPassword: ''
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -27,6 +30,11 @@ export default function Signup() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
 
     if (!validatePassword(formData.password)) {
       setError('Password must be at least 6 characters, contain letters, numbers, and at least one special character.');
@@ -106,16 +114,73 @@ export default function Signup() {
 
             <div className="form-group" style={{ margin: 0 }}>
               <label>Password</label>
-              <div className="input-with-icon">
+              <div className="input-with-icon" style={{ position: 'relative' }}>
                 <Lock size={18} className="icon" />
                 <input 
-                  type="password" 
+                  type={showPassword ? "text" : "password"} 
                   name="password"
                   placeholder="Min 6 chars, 1 special, alphanumeric" 
                   value={formData.password}
                   onChange={handleChange}
                   required
+                  style={{ paddingRight: '2.5rem' }}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: 'absolute',
+                    right: '0.75rem',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--text-secondary)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: 0
+                  }}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
+
+            <div className="form-group" style={{ margin: 0 }}>
+              <label>Confirm Password</label>
+              <div className="input-with-icon" style={{ position: 'relative' }}>
+                <Lock size={18} className="icon" />
+                <input 
+                  type={showConfirmPassword ? "text" : "password"} 
+                  name="confirmPassword"
+                  placeholder="Repeat your password" 
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  required
+                  style={{ paddingRight: '2.5rem' }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  style={{
+                    position: 'absolute',
+                    right: '0.75rem',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--text-secondary)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: 0
+                  }}
+                >
+                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
             </div>
 

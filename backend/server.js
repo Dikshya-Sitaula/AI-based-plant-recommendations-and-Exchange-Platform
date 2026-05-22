@@ -372,5 +372,5 @@ app.post('/api/payment/complete/:sessionId', (req, res) => {
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`SERVER RUNNING ON ALL INTERFACES: http://192.168.23.81:${PORT}`);
+  console.log(`SERVER RUNNING ON ALL INTERFACES: http://10.59.51.193:${PORT}`);
 });
