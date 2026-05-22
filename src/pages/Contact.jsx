@@ -1,56 +1,50 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { 
+  ArrowRight, 
+  Camera, 
+  Globe, 
+  Users, 
+  Mail, 
+  CheckCircle2, 
+  ShieldCheck, 
+  Loader2, 
+  Send, 
+  ChevronDown,
+  Building2,
+  PhoneCall,
+  Newspaper,
+  Plus,
+  Minus
+} from 'lucide-react';
 import './Contact.css';
 import logo from "../assets/Leaf and Life logo.png";
+import AuthModal from '../components/AuthModal';
 
 export default function Contact() {
   const navigate = useNavigate();
-  const [charCount, setCharCount] = useState(0);
-  const [nameValid, setNameValid] = useState(false);
-  const [emailState, setEmailState] = useState({ show: false, ok: false });
-  const [formSubmitted, setFormSubmitted] = useState(false);
-  const [sending, setSending] = useState(false);
-  const [btnText, setBtnText] = useState('Send Message');
-  const [btnIcon, setBtnIcon] = useState('ph:arrow-right');
-  const [activeFaq, setActiveFaq] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  
   const [isSubmitted, setIsSubmitted] = useState(() => {
     if (typeof window === 'undefined') return false;
     return localStorage.getItem('leafLifeSubmitted') === 'true';
   });
 
-  // Form Field Refs
-  const nameRef = useRef(null);
-  const emailRef = useRef(null);
-  const subjectRef = useRef(null);
-  const msgRef = useRef(null);
-  const btnBarRef = useRef(null);
-  const dotGridRef = useRef(null);
-  const heroRightRef = useRef(null);
+  // Accordion active element tracking state
+  const [openFaq, setOpenFaq] = useState(null);
 
-  // Field filled state classes helpers
-  const [filledFields, setFilledFields] = useState({
-    name: false,
-    email: false,
-    subject: false,
-    msg: false,
-  });
+  // Form interactive handling states
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [topic, setTopic] = useState('general');
+  const [message, setMessage] = useState('');
+  const [errors, setErrors] = useState({ name: false, email: false, message: false });
+  const [isSending, setIsSending] = useState(false);
+  const [sendProgress, setSendProgress] = useState(0);
+  const [sendSuccess, setSendSuccess] = useState(false);
 
-  const handleInputChange = (e, field) => {
-    const value = e.target.value;
-    setFilledFields((prev) => ({ ...prev, [field]: !!value }));
-
-    if (field === 'name') {
-      setNameValid(value.trim().length > 1);
-    }
-
-    if (field === 'email') {
-      const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-      setEmailState({ show: value.length > 0, ok });
-    }
-
-    if (field === 'msg') {
-      setCharCount(value.length);
-    }
+  const toggleFaq = (index) => {
+    setOpenFaq(openFaq === index ? null : index);
   };
 
   const handleLogoClick = () => {
@@ -59,643 +53,436 @@ export default function Contact() {
 
   const handleGetStarted = () => {
     if (!isSubmitted) {
-      navigate('/');
+      setShowModal(true);
       return;
     }
     navigate('/dashboard');
   };
 
-  const handleNavClick = (path) => {
-    if (!isSubmitted) {
-      navigate('/');
+  const handleModalSubmit = () => {
+    localStorage.setItem('leafLifeSubmitted', 'true');
+    setIsSubmitted(true);
+    setShowModal(false);
+    navigate('/dashboard');
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+    
+    const newErrors = {
+      name: !name.trim(),
+      email: !email.trim() || !emailOk,
+      message: !message.trim()
+    };
+
+    setErrors(newErrors);
+
+    if (newErrors.name || newErrors.email || newErrors.message) {
       return;
     }
-    navigate(path);
-  };
 
-  const handleFaqToggle = (index) => {
-    setActiveFaq(activeFaq === index ? null : index);
-  };
-
-  const scrollToForm = (e) => {
-    e.preventDefault();
-    if (heroRightRef.current) {
-      heroRightRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
-  const handleSubmit = () => {
-    const n = nameRef.current.value.trim();
-    const em = emailRef.current.value.trim();
-    const ms = msgRef.current.value.trim();
-    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em);
-
-    let bad = false;
-
-    const validationArray = [
-      { el: nameRef.current, v: n },
-      { el: emailRef.current, v: em, extra: emailOk },
-      { el: msgRef.current, v: ms },
-    ];
-
-    validationArray.forEach((f) => {
-      const fail = !f.v || f.extra === false;
-      if (fail) {
-        f.el.classList.add('err');
-        f.el.addEventListener(
-          'input',
-          () => f.el.classList.remove('err'),
-          { once: true }
-        );
-        bad = true;
-      }
-    });
-
-    if (bad) return;
-
-    setSending(true);
-    setBtnText('Sending…');
-    setBtnIcon('ph:spinner-gap');
-
-    let w = 0;
-    const iv = setInterval(() => {
-      w = Math.min(w + Math.random() * 9, 90);
-      if (btnBarRef.current) btnBarRef.current.style.width = w + '%';
-    }, 110);
+    setIsSending(true);
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress = Math.min(progress + Math.random() * 15, 90);
+      setSendProgress(progress);
+    }, 70);
 
     setTimeout(() => {
-      clearInterval(iv);
-      if (btnBarRef.current) btnBarRef.current.style.width = '100%';
+      clearInterval(interval);
+      setSendProgress(100);
       setTimeout(() => {
-        setFormSubmitted(true);
-        setSending(false);
-      }, 300);
-    }, 2000);
+        setIsSending(false);
+        setSendSuccess(true);
+      }, 150);
+    }, 1200);
   };
 
-  useEffect(() => {
-    // --- CUSTOM CURSOR INTERACTION ---
-    const cur = document.getElementById('cursor');
-    const ring = document.getElementById('cursor-ring');
-    let cx = 0, cy = 0, rx = 0, ry = 0;
-
-    const handleMouseMove = (e) => {
-      cx = e.clientX;
-      cy = e.clientY;
-      if (cur) {
-        cur.style.left = cx + 'px';
-        cur.style.top = cy + 'px';
-      }
-    };
-
-    document.addEventListener('mousemove', handleMouseMove, { passive: true });
-
-    let animationFrameId;
-    const loop = () => {
-      rx += (cx - rx) * 0.1;
-      ry += (cy - ry) * 0.1;
-      if (ring) {
-        ring.style.left = rx + 'px';
-        ring.style.top = ry + 'px';
-      }
-      animationFrameId = requestAnimationFrame(loop);
-    };
-    loop();
-
-    const growTargets = document.querySelectorAll('a, button, .way-card, .sup-item, .faq-trig, .loc-item');
-    growTargets.forEach((el) => {
-      el.addEventListener('mouseenter', () => document.body.classList.add('cursor-grow'));
-      el.addEventListener('mouseleave', () => document.body.classList.remove('cursor-grow'));
-    });
-
-    const textTargets = document.querySelectorAll('input, textarea, select');
-    textTargets.forEach((el) => {
-      el.addEventListener('focus', () => document.body.classList.add('cursor-text'));
-      el.addEventListener('blur', () => document.body.classList.remove('cursor-text'));
-    });
-
-    const handleMouseLeave = () => {
-      if (cur && ring) {
-        cur.style.opacity = '0';
-        ring.style.opacity = '0';
-      }
-    };
-    const handleMouseEnter = () => {
-      if (cur && ring) {
-        cur.style.opacity = '1';
-        ring.style.opacity = '1';
-      }
-    };
-
-    document.addEventListener('mouseleave', handleMouseLeave);
-    document.addEventListener('mouseenter', handleMouseEnter);
-
-    // --- PAGE BAR & SCROLL SCRIPT ---
-    const bar = document.getElementById('pageBar');
-    const handleScroll = () => {
-      if (bar) {
-        bar.style.width = (window.scrollY / (document.body.scrollHeight - window.innerHeight) * 100) + '%';
-      }
-      document.getElementById('mainNav')?.classList.toggle('scrolled', window.scrollY > 40);
-      if (dotGridRef.current) {
-        dotGridRef.current.style.transform = `translateY(${window.scrollY * 0.18}px)`;
-      }
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-
-    // --- INTERSECTION OBSERVER (SCROLL REVEAL) ---
-    const io = new IntersectionObserver((entries) => {
-      entries.forEach((e) => {
-        if (e.isIntersecting) {
-          e.target.classList.add('in');
-          io.unobserve(e.target);
-        }
-      });
-    }, { threshold: 0.1 });
-    document.querySelectorAll('.sr').forEach((el) => io.observe(el));
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      cancelAnimationFrame(animationFrameId);
-      window.removeEventListener('scroll', handleScroll);
-      document.removeEventListener('mouseleave', handleMouseLeave);
-      document.removeEventListener('mouseenter', handleMouseEnter);
-    };
-  }, []);
-
-  const faqs = [
-    { q: "How does plant recommendation work?", a: "Our recommendation system suggests plants based on your space, sunlight conditions, and location. The AI analyzes your inputs and curates the most suitable options tailored to your living environment." },
-    { q: "Can I swap plants with nearby users?", a: "Yes. Users can buy, sell, thrift, and swap plants through our hyperlocal marketplace. The platform connects you with plant lovers nearby for an easy and sustainable exchange experience." },
-    { q: "Can nurseries join the platform?", a: "Absolutely. Local nurseries can join and promote their plants digitally to reach a wider audience. We offer dedicated tools for nurseries to manage listings and connect efficiently with customers." },
-    { q: "How does plant identification work?", a: "Simply upload a plant image and our AI-powered system identifies the plant and provides detailed care guidance. Trained on thousands of species, it delivers accurate results within seconds." },
-    { q: "Is this platform beginner friendly?", a: "Yes. Designed especially for beginners who want smarter plant care guidance. Step-by-step recommendations, visual guides, and community support make it simple for everyone to start their green journey." }
+  // Content mapped accurately directly from your contact.html layout
+  const faqData = [
+    {
+      q: "How fast do teams respond through the transmission channel?",
+      a: "Tickets routed via our direct channel options clear ingestion queues instantly. You will hear back from a representative within 12 to 24 standard operation business hours."
+    },
+    {
+      q: "Can I coordinate hardware modifications directly with engineers?",
+      a: "Yes! If you select 'Smart Garden IoT Hardware Modules' as your inquiry topic, your structural ticket is routed to our hardware engineering department for firmware or sensor customization talks."
+    },
+    {
+      q: "Are there platform transaction safeguards for local trading operations?",
+      a: "Absolutely. Leaf & Life operates fully isolated cryptographic escrow contracts for decentralized local garden swaps to guarantee secure item exchanges across active neighborhoods."
+    },
+    {
+      q: "Do you facilitate university research or community project grants?",
+      a: "Yes, we prioritize structural educational initiatives. Reach out through our 'Institutional Ecosystem Partnerships' option for streamlined grant evaluations and hardware testing sponsorships."
+    }
   ];
 
   return (
-    <div className="contact-page-wrapper">
-      <div id="pageBar"></div>
-      <div id="cursor"></div>
-      <div id="cursor-ring"></div>
-
-      {/* NAV */}
-      <nav className="nav" id="mainNav">
-        <div className="nav-logo">
-          <button type="button" className="nav-logo-btn" onClick={handleLogoClick}>
-            <span className="logo-mark"><img src={logo} alt="Leaf & Life logo" style={{ width: '20px', height: 'auto' }} /></span>
-            <span>Leaf &amp; Life</span>
+    <div className="lp-root contact-page-root">
+      
+      {/* ─── 1. NAVBAR (UNTOUCHED) ─── */}
+      <nav className="lp-nav">
+        <div className="lp-nav-inner">
+          <button type="button" className="lp-brand lp-brand-action" onClick={handleLogoClick}>
+            <span className="lp-brand-mark" aria-hidden="true">
+              <img src={logo} alt="Leaf & Life logo" className="lp-brand-img" />
+            </span>
+            <span className="lp-brand-text">Leaf &amp; Life</span>
           </button>
-        </div>
-        <div className="nav-center">
-          <button type="button" className="nav-link" onClick={() => navigate('/')}>Home</button>
-          <button type="button" className="nav-link" onClick={() => handleNavClick('/about')}>About Us</button>
-          <button type="button" className="nav-link active" onClick={() => navigate('/contact')}>Contact</button>
-        </div>
-        <div className="nav-actions">
-          {isSubmitted && (
-            <button
-              type="button"
-              className="btn-ghost"
-              onClick={() => {
-                localStorage.removeItem('leafLifeSubmitted');
-                setIsSubmitted(false);
-                navigate('/');
-              }}
-            >
-              Switch Account
+
+          <div className="lp-nav-center">
+            <button type="button" className="lp-nav-link" onClick={() => navigate('/')}>Home</button>
+            <button type="button" className="lp-nav-link" onClick={() => navigate('/about')}>About Us</button>
+            <button type="button" className="lp-nav-link lp-nav-link-active" onClick={() => navigate('/contact')}>Contact</button>
+          </div>
+
+          <div className="lp-nav-actions">
+            {isSubmitted && (
+              <button
+                type="button"
+                className="lp-btn lp-btn-ghost lp-btn-sm"
+                onClick={() => {
+                  localStorage.removeItem('leafLifeSubmitted');
+                  localStorage.removeItem('leafLifeAuthenticated');
+                  window.location.reload();
+                }}
+              >
+                Switch Account
+              </button>
+            )}
+            <button type="button" className="lp-btn lp-btn-primary" onClick={handleGetStarted}>
+              Get Started
             </button>
-          )}
-          <button type="button" className="btn-solid" onClick={handleGetStarted}><span>Get Started</span></button>
+          </div>
         </div>
       </nav>
 
-      {/* HERO */}
-      <div className="hero">
-        <div className="hero-left">
-          <div className="blob blob1"></div>
-          <div className="blob blob2"></div>
-          <div className="dot-grid" id="dotGrid" ref={dotGridRef}></div>
-          <div>
-            <div className="hero-eyebrow"><span className="ey-line"></span> Get In Touch</div>
-            <h1 className="hero-h1" id="heroH1">
-              <span className="word" style={{ animationDelay: '.15s' }}>We'd</span>&nbsp;
-              <span className="word" style={{ animationDelay: '.23s' }}>love</span><br />
-              <span className="word" style={{ animationDelay: '.31s' }}>to</span>&nbsp;
-              <span className="word" style={{ animationDelay: '.39s' }}>hear</span><br />
-              <span className="word" style={{ animationDelay: '.47s' }}>from</span>&nbsp;
-              <em><span className="word" style={{ animationDelay: '.55s' }}>you.</span></em>
-            </h1>
-            <p className="hero-desc">Whether it's a plant question, a partnership inquiry, or a technical issue — our team is here to help you grow.</p>
-            <div className="hero-chips">
-              <div className="chip" style={{ animationDelay: '.85s' }}><iconify-icon icon="ph:lightning-fill" width="13"></iconify-icon>24–48hr response</div>
-              <div className="chip" style={{ animationDelay: '.93s' }}><iconify-icon icon="ph:users-three-fill" width="13"></iconify-icon>450+ active users</div>
-              <div className="chip" style={{ animationDelay: '1.01s' }}><iconify-icon icon="ph:storefront-fill" width="13"></iconify-icon>80+ nurseries</div>
-              <div className="chip" style={{ animationDelay: '1.09s' }}><iconify-icon icon="ph:clock-fill" width="13"></iconify-icon>Mon–Sat 9am–6pm</div>
-            </div>
-          </div>
-          <div className="hero-scroll"><span className="sline"></span><span className="sdot"></span>Scroll to explore</div>
-        </div>
+      <AuthModal
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        onSuccess={handleModalSubmit}
+      />
 
-        {/* FORM */}
-        <div className="hero-right" id="heroRight" ref={heroRightRef}>
-          <div className="form-anim fa1">
-            <div className="pill-label">
-              <div className="pill-dot"><iconify-icon icon="ph:paper-plane-tilt-fill" width="11"></iconify-icon></div>
-              Send a Message
-            </div>
-          </div>
-          <h2 className="form-title form-anim fa2">Start a<br /><em>conversation.</em></h2>
-          <p className="form-sub form-anim fa3">Fill out the form and our team will get back to you as soon as possible.</p>
-
-          {!formSubmitted ? (
-            <div id="form-content">
-              <div className="f-row">
-                <div className="f-wrap">
-                  <input
-                    className={`f-input ${filledFields.name ? 'filled' : ''}`}
-                    type="text"
-                    id="f-name"
-                    ref={nameRef}
-                    placeholder=" "
-                    autoComplete="off"
-                    onChange={(e) => handleInputChange(e, 'name')}
-                  />
-                  <label className="f-lbl" htmlFor="f-name">Full Name</label>
-                  <iconify-icon
-                    className={`v-ico ${nameValid ? 'show' : ''}`}
-                    id="vi-name"
-                    icon="ph:check-circle-fill"
-                    style={{ color: 'var(--g500)' }}
-                  ></iconify-icon>
+      {/* ─── 2. CONTACT HERO FORM SECTOR FROM CONTACT.HTML ─── */}
+      <main className="contact-hero-section">
+        <div className="lp-container">
+          <div className="contact-hero-grid">
+            
+            {/* Left Brand Identity Card */}
+            <div className="contact-hero-left">
+              <div className="contact-blob contact-blob1" aria-hidden="true"></div>
+              <div className="contact-blob contact-blob2" aria-hidden="true"></div>
+              <div className="contact-dot-grid" aria-hidden="true"></div>
+              
+              <div className="contact-left-content">
+                <div className="contact-hero-eyebrow">
+                  <span className="contact-ey-line"></span>Get In Touch
                 </div>
-                <div className="f-wrap">
-                  <input
-                    className={`f-input ${filledFields.email ? 'filled' : ''}`}
-                    type="email"
-                    id="f-email"
-                    ref={emailRef}
-                    placeholder=" "
-                    autoComplete="off"
-                    onChange={(e) => handleInputChange(e, 'email')}
-                  />
-                  <label className="f-lbl" htmlFor="f-email">Email Address</label>
-                  <iconify-icon
-                    className={`v-ico ${emailState.show ? 'show' : ''}`}
-                    id="vi-email"
-                    icon={emailState.ok ? 'ph:check-circle-fill' : 'ph:x-circle-fill'}
-                    style={{ color: emailState.ok ? 'var(--g500)' : '#e74c3c' }}
-                  ></iconify-icon>
-                </div>
-              </div>
-
-              <div className="f-group">
-                <div className="f-wrap">
-                  <select
-                    className={`f-input f-select ${filledFields.subject ? 'filled' : ''}`}
-                    id="f-subject"
-                    ref={subjectRef}
-                    defaultValue=""
-                    onChange={(e) => handleInputChange(e, 'subject')}
-                  >
-                    <option value="" disabled></option>
-                    <option>Plant Recommendation Help</option>
-                    <option>Marketplace Support</option>
-                    <option>Nursery Partnership</option>
-                    <option>Technical Assistance</option>
-                    <option>General Inquiry</option>
-                    <option>Feedback &amp; Suggestions</option>
-                  </select>
-                  <label className="f-lbl" htmlFor="f-subject">How can we help?</label>
-                  <span className="sel-arrow"><iconify-icon icon="ph:caret-down" width="14"></iconify-icon></span>
-                </div>
-              </div>
-
-              <div className="f-group">
-                <div className="f-wrap f-ta-wrap">
-                  <textarea
-                    className={`f-input f-textarea ${filledFields.msg ? 'filled' : ''}`}
-                    id="f-msg"
-                    ref={msgRef}
-                    placeholder=" "
-                    maxLength="500"
-                    onChange={(e) => handleInputChange(e, 'msg')}
-                  ></textarea>
-                  <label className="f-lbl" htmlFor="f-msg">Your Message</label>
-                  <span className={`char-cnt ${charCount > 450 ? (charCount > 490 ? 'over' : 'warn') : ''}`} id="charCnt">
-                    {charCount} / 500
-                  </span>
-                </div>
-                <div className="f-err" id="err-msg">
-                  <iconify-icon icon="ph:warning-circle-fill" width="13"></iconify-icon>
-                  Please write your message
-                </div>
-              </div>
-
-              <div className="form-ft">
-                <p className="form-note">
-                  <iconify-icon icon="ph:shield-check-fill" width="13" style={{ color: 'var(--g500)' }}></iconify-icon>
-                  Response within 24–48 hours.
+                <h1 className="contact-hero-h1">
+                  Let's cultivate <br />something <em>together</em>.
+                </h1>
+                <p className="contact-hero-desc">
+                  Have questions about our smart garden solutions, community marketplace channels, or partnership models? Reach our technical teams instantly.
                 </p>
-                <button
-                  className="btn-send"
-                  id="submitBtn"
-                  disabled={sending}
-                  onClick={handleSubmit}
-                >
-                  <div className="btn-bar" id="btnBar" ref={btnBarRef}></div>
-                  <span id="btnTxt">{btnText}</span>
-                  <iconify-icon
-                    icon={btnIcon}
-                    className="arr"
-                    id="btnIco"
-                    width="16"
-                    style={sending ? { animation: 'spin .65s linear infinite' } : {}}
-                  ></iconify-icon>
-                </button>
               </div>
-            </div>
-          ) : (
-            <div className="form-success" id="formSuccess" style={{ display: 'block' }}>
-              <div className="s-ring"><iconify-icon icon="ph:check-bold" width="30"></iconify-icon></div>
-              <div className="s-title">Message Sent!</div>
-              <div className="s-sub">Thank you for reaching out. We'll get back to you within 24–48 hours.</div>
-            </div>
-          )}
-        </div>
-      </div>
 
-      {/* WAYS */}
-      <section className="ways-section">
-        <div className="hatch"></div>
-        <div className="wrap">
-          <div className="sec-head sr">
-            <div className="s-ey">Reach Out</div>
-            <h2 className="s-h2">We're always <em>here for you.</em></h2>
+              <div className="contact-hero-chips">
+                <span className="contact-chip">🌱 Smart Agriculture</span>
+                <span className="contact-chip">🏪 Local Trade Help</span>
+                <span className="contact-chip">✨ Plant Diagnosis AI</span>
+              </div>
+
+              <div className="contact-hero-scroll">
+                <span className="contact-sdot"></span>
+                <span className="contact-sline"></span>
+                Direct Response Channel
+              </div>
+            </div>
+
+            {/* Right Ingestion Dynamic Form Component */}
+            <div className="contact-hero-right">
+              {!sendSuccess ? (
+                <form className="contact-form-anim" onSubmit={handleSubmit} noValidate>
+                  <div className="contact-pill-label">
+                    <span className="contact-pill-dot">
+                      <Mail size={10} strokeWidth={3} />
+                    </span>
+                    Direct Channel
+                  </div>
+                  
+                  <h2 className="contact-form-title">Send a <em>message</em></h2>
+                  <p className="contact-form-sub">Expect responses within standard business operation slots.</p>
+
+                  <div className="contact-f-group">
+                    <div className="contact-f-wrap">
+                      <input 
+                        type="text" 
+                        id="nameInput"
+                        className={`contact-f-input ${name ? 'contact-filled' : ''} ${errors.name ? 'contact-err' : ''}`}
+                        placeholder="Your Name"
+                        value={name}
+                        onChange={(e) => {
+                          setName(e.target.value);
+                          if(errors.name) setErrors(prev => ({...prev, name: false}));
+                        }}
+                      />
+                      <label className="contact-f-lbl" htmlFor="nameInput">Full Name</label>
+                      <span className={`contact-v-ico contact-valid-tick ${(!errors.name && name.trim()) ? 'contact-show' : ''}`}>
+                        <CheckCircle2 size={16} fill="#2d5a27" color="#ffffff" />
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="contact-f-group">
+                    <div className="contact-f-wrap">
+                      <input 
+                        type="email" 
+                        id="emailInput"
+                        className={`contact-f-input ${email ? 'contact-filled' : ''} ${errors.email ? 'contact-err' : ''}`}
+                        placeholder="Email address"
+                        value={email}
+                        onChange={(e) => {
+                          setEmail(e.target.value);
+                          if(errors.email) setErrors(prev => ({...prev, email: false}));
+                        }}
+                      />
+                      <label className="contact-f-lbl" htmlFor="emailInput">Email Address</label>
+                      <span className={`contact-v-ico contact-valid-tick ${(!errors.email && email.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) ? 'contact-show' : ''}`}>
+                        <CheckCircle2 size={16} fill="#2d5a27" color="#ffffff" />
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="contact-f-group">
+                    <div className="contact-f-wrap">
+                      <select 
+                        id="topicSelect"
+                        className={`contact-f-input contact-f-select ${topic ? 'contact-filled' : ''}`}
+                        value={topic}
+                        onChange={(e) => setTopic(e.target.value)}
+                      >
+                        <option value="general">General Support inquiry</option>
+                        <option value="marketplace">Marketplace & Trading Escrow</option>
+                        <option value="hardware">Smart Garden IoT Hardware Modules</option>
+                        <option value="partnership">Institutional Ecosystem Partnerships</option>
+                      </select>
+                      <label className="contact-f-lbl" htmlFor="topicSelect">Inquiry Topic</label>
+                      <span className="contact-sel-arrow">
+                        <ChevronDown size={16} />
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="contact-f-group contact-f-ta-wrap">
+                    <div className="contact-f-wrap">
+                      <textarea 
+                        id="msgInput"
+                        maxLength="1000"
+                        className={`contact-f-input contact-f-textarea ${message ? 'contact-filled' : ''} ${errors.message ? 'contact-err' : ''}`}
+                        placeholder="Write your brief message here..."
+                        value={message}
+                        onChange={(e) => {
+                          setMessage(e.target.value);
+                          if(errors.message) setErrors(prev => ({...prev, message: false}));
+                        }}
+                      ></textarea>
+                      <label className="contact-f-lbl" htmlFor="msgInput">Your Message</label>
+                      <span className={`contact-char-cnt ${message.length > 900 ? 'contact-warn' : ''}`}>
+                        {message.length}/1000
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="contact-form-ft">
+                    <div className="contact-form-note">
+                      <ShieldCheck size={16} color="#2d5a27" />
+                      Data secure & encrypted
+                    </div>
+                    
+                    <button type="submit" className="contact-btn-send" disabled={isSending}>
+                      <div className="contact-btn-bar" style={{ width: `${sendProgress}%` }}></div>
+                      <span>{isSending ? 'Sending…' : 'Transmit Request'}</span>
+                      {isSending ? <Loader2 size={16} className="contact-spin" /> : <Send size={14} />}
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div className="contact-form-success">
+                  <div className="contact-s-ring">
+                    <CheckCircle2 size={24} color="#2d5a27" />
+                  </div>
+                  <h3 className="contact-succ-h">Transmission Complete</h3>
+                  <p className="contact-succ-p">Your support ticket has cleared internal ingestion pathways successfully.</p>
+                  <button type="button" className="contact-btn-ghost" onClick={() => setSendSuccess(false)}>
+                    Send New Ticket
+                  </button>
+                </div>
+              )}
+            </div>
+
           </div>
-          <div className="ways-grid">
-            <div className="way-card sr d1">
-              <div className="way-reveal"></div>
-              <div className="way-arr"><iconify-icon icon="ph:arrow-up-right-bold" width="14"></iconify-icon></div>
-              <div className="way-inner">
-                <div className="way-num">01</div>
-                <div className="way-ico"><iconify-icon icon="ph:envelope-simple-fill" width="23"></iconify-icon></div>
-                <div className="way-title">Email Support</div>
-                <div className="way-desc">For inquiries, feedback, technical help, or general support from our team.</div>
-                <div className="way-val">support@leafandlife.com</div>
+        </div>
+      </main>
+
+      {/* ─── 3. ALTERNATIVE CHANNELS BLOCK FROM CONTACT.HTML ─── */}
+      <section className="contact-channels-section">
+        <div className="lp-container">
+          <div className="contact-section-header">
+            <span className="contact-sub-eyebrow">Alternative Options</span>
+            <h2 className="contact-section-h2">Other ways to <em>connect</em></h2>
+            <p className="contact-section-p">Skip the queue lines if your requirements align with these operational desks directly.</p>
+          </div>
+
+          <div className="contact-channels-grid">
+            <div className="contact-chan-card">
+              <div className="contact-chan-icon-box">
+                <Building2 size={22} color="#2d5a27" />
               </div>
+              <h3 className="contact-chan-title">Central HQ Office</h3>
+              <p className="contact-chan-desc">Stop by our collaborative campus hubs for physical hardware system prototype viewings.</p>
+              <span className="contact-chan-detail">Jalan Universiti, Bandar Sunway, MY</span>
             </div>
-            <div className="way-card sr d2">
-              <div className="way-reveal"></div>
-              <div className="way-arr"><iconify-icon icon="ph:arrow-up-right-bold" width="14"></iconify-icon></div>
-              <div className="way-inner">
-                <div className="way-num">02</div>
-                <div className="way-ico"><iconify-icon icon="ph:phone-call-fill" width="23"></iconify-icon></div>
-                <div className="way-title">Phone Support</div>
-                <div className="way-desc">Available Monday through Saturday during working hours for direct assistance.</div>
-                <div className="way-val">+977 98XXXXXXXX</div>
+
+            <div className="contact-chan-card">
+              <div className="contact-chan-icon-box">
+                <PhoneCall size={22} color="#2d5a27" />
               </div>
+              <h3 className="contact-chan-title">Urgent Hotline</h3>
+              <p className="contact-chan-desc">Immediate telephone infrastructure integration support for emergency grower system outages.</p>
+              <span className="contact-chan-detail">+60 (3) 7491-8622</span>
             </div>
-            <div className="way-card sr d3">
-              <div className="way-reveal"></div>
-              <div className="way-arr"><iconify-icon icon="ph:arrow-up-right-bold" width="14"></iconify-icon></div>
-              <div className="way-inner">
-                <div className="way-num">03</div>
-                <div className="way-ico"><iconify-icon icon="ph:map-pin-fill" width="23"></iconify-icon></div>
-                <div className="way-title">Our Location</div>
-                <div className="way-desc">Building greener communities from the heart of the Himalayas.</div>
-                <div className="way-val">Kathmandu, Nepal</div>
+
+            <div className="contact-chan-card">
+              <div className="contact-chan-icon-box">
+                <Newspaper size={22} color="#2d5a27" />
               </div>
-            </div>
-            <div className="way-card sr d4">
-              <div className="way-reveal"></div>
-              <div className="way-arr"><iconify-icon icon="ph:arrow-up-right-bold" width="14"></iconify-icon></div>
-              <div className="way-inner">
-                <div className="way-num">04</div>
-                <div className="way-ico"><iconify-icon icon="ph:share-network-fill" width="23"></iconify-icon></div>
-                <div className="way-title">Community &amp; Socials</div>
-                <div className="way-desc">Stay connected and grow alongside our plant-loving community online.</div>
-                <div className="way-val">Instagram · Facebook · LinkedIn</div>
-              </div>
+              <h3 className="contact-chan-title">Press &amp; Media</h3>
+              <p className="contact-chan-desc">Download digital brand assets, view media reports, or submit editorial presentation requests.</p>
+              <span className="contact-chan-detail">media@leafandlife.org</span>
             </div>
           </div>
         </div>
       </section>
 
-      {/* SUPPORT */}
-      <section className="support-section">
-        <div className="wrap">
-          <div className="sup-intro sr">
-            <div>
-              <div className="s-ey">Support Areas</div>
-              <h2 className="s-h2">How can we<br /><em>help you?</em></h2>
+      {/* ─── 4. FAQ ACCORDION SECTION FROM CONTACT.HTML ─── */}
+      <section className="contact-faq-section">
+        <div className="lp-container">
+          <div className="contact-faq-inner-grid">
+            
+            <div className="contact-faq-sticky-left">
+              <span className="contact-sub-eyebrow">Got Questions?</span>
+              <h2 className="contact-section-h2">Frequently Asked <em>Inquiries</em></h2>
+              <p className="contact-section-p">Quick answers regarding technical configurations, system integration latency, and marketplace security mechanics.</p>
             </div>
-            <div style={{ paddingBottom: '6px' }}>
-              <p style={{ fontSize: '.95rem', color: 'var(--txt2)', lineHeight: '1.82' }}>
-                We are committed to making your plant journey simple, smart, and enjoyable every step of the way.
+
+            <div className="contact-faq-list">
+              {faqData.map((faq, idx) => {
+                const isOpen = openFaq === idx;
+                return (
+                  <div 
+                    key={idx} 
+                    className={`contact-faq-item ${isOpen ? 'contact-faq-open' : ''}`}
+                    onClick={() => toggleFaq(idx)}
+                  >
+                    <div className="contact-faq-top">
+                      <h4 className="contact-faq-q">{faq.q}</h4>
+                      <button type="button" className="contact-faq-toggle-btn" aria-label="Toggle accordion view">
+                        {isOpen ? <Minus size={18} /> : <Plus size={18} />}
+                      </button>
+                    </div>
+                    <div className="contact-faq-answer-pane">
+                      <p className="contact-faq-a">{faq.a}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* ─── 5. FINAL CTA SECTION (UNTOUCHED LOGIC) ─── */}
+      <section className="lp-cta">
+        <div className="lp-container">
+          <div className="lp-cta-box">
+            <div className="lp-cta-content">
+              <h2 className="lp-cta-h2">Ready to cultivate your smart lifestyle?</h2>
+              <p className="lp-cta-p">
+                Join thousands of urban growers transforming their spaces today. No green thumb required.
+              </p>
+              <button type="button" className="lp-btn lp-btn-white" onClick={handleGetStarted}>
+                Get Started Now <ArrowRight size={16} style={{ marginLeft: '6px' }} />
+              </button>
+            </div>
+            <div className="lp-cta-decor" aria-hidden="true">
+              <div className="lp-decor-circle"></div>
+              <div className="lp-decor-circle-2"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── 6. FOOTER SECTION (UNTOUCHED LOGIC) ─── */}
+      <footer className="lp-footer">
+        <div className="lp-container">
+          <div className="lp-footer-grid">
+            <div className="lp-footer-brand">
+              <div className="lp-brand">
+                <span className="lp-brand-mark" aria-hidden="true">
+                  <img src={logo} alt="Leaf & Life logo" className="lp-brand-img" />
+                </span>
+                <span className="lp-brand-text">Leaf &amp; Life</span>
+              </div>
+              <p className="lp-footer-tagline">
+                Bridging nature and technology for sustainable, smarter urban living communities.
               </p>
             </div>
-          </div>
-          <div className="sup-list">
-            <div className="sup-item sr d1">
-              <div className="si-l">
-                <div className="si-ico"><iconify-icon icon="ph:plant-fill" width="24"></iconify-icon></div>
-                <div className="si-title">Plant Recommendation Help</div>
-              </div>
-              <div className="si-r">
-                <div className="si-desc">Need help finding plants suitable for your space, sunlight, or environment? Our AI-powered system guides you with tailored suggestions perfectly matched to your living space.</div>
-                <div className="si-link">Learn more <iconify-icon icon="ph:arrow-right" width="12"></iconify-icon></div>
-              </div>
-            </div>
-            <div className="sup-item sr d2">
-              <div className="si-l">
-                <div className="si-ico"><iconify-icon icon="ph:storefront-fill" width="24"></iconify-icon></div>
-                <div className="si-title">Marketplace Support</div>
-              </div>
-              <div className="si-r">
-                <div className="si-desc">Questions about buying, selling, swapping, or thrifting plants? Our team assists with listings, connections, and all marketplace-related queries efficiently.</div>
-                <div className="si-link">Learn more <iconify-icon icon="ph:arrow-right" width="12"></iconify-icon></div>
-              </div>
-            </div>
-            <div className="sup-item sr d3">
-              <div className="si-l">
-                <div className="si-ico"><iconify-icon icon="ph:handshake-fill" width="24"></iconify-icon></div>
-                <div className="si-title">Nursery Partnerships</div>
-              </div>
-              <div className="si-r">
-                <div className="si-desc">Are you a nursery owner looking to go digital? Let's help your business grow by reaching more plant enthusiasts through our hyperlocal platform with dedicated tools.</div>
-                <div className="si-link">Learn more <iconify-icon icon="ph:arrow-right" width="12"></iconify-icon></div>
-              </div>
-            </div>
-            <div className="sup-item sr d4">
-              <div className="si-l">
-                <div className="si-ico"><iconify-icon icon="ph:gear-six-fill" width="24"></iconify-icon></div>
-                <div className="si-title">Technical Assistance</div>
-              </div>
-              <div className="si-r">
-                <div className="si-desc">Experiencing technical issues or account problems? Our dedicated support team will resolve them quickly so your green journey stays smooth and uninterrupted.</div>
-                <div className="si-link">Learn more <iconify-icon icon="ph:arrow-right" width="12"></iconify-icon></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      {/* FAQ */}
-      <section className="faq-section">
-        <div className="faq-mesh"></div>
-        <div className="faq-dots-bg"></div>
-        <div className="wrap">
-          <div className="faq-layout">
-            <div className="sr">
-              <div className="faq-pill">
-                <div className="faq-pd"><iconify-icon icon="ph:question-fill" width="11"></iconify-icon></div>
-                Common Questions
+            <div className="lp-footer-links-group">
+              <h5 className="lp-footer-h">Platform</h5>
+              <div className="lp-footer-links">
+                <button type="button" className="lp-footer-link" onClick={() => navigate('/marketplace')}>Marketplace</button>
+                <button type="button" className="lp-footer-link" onClick={() => navigate('/scan')}>AI Plant Scanner</button>
+                <button type="button" className="lp-footer-link" onClick={() => navigate('/recommendation')}>Smart Finder</button>
               </div>
-              <h2 className="faq-h2">Frequently<br /><em>Asked.</em></h2>
-              <p className="faq-sub">Everything you need to know. Can't find an answer? Reach out directly.</p>
-              <div className="faq-nudge">
-                <div className="faq-nudge-t">Still have questions?</div>
-                <div className="faq-nudge-s">Our team is always happy to help. Send us a message and we'll respond promptly.</div>
-                <a href="#" className="faq-nudge-btn" onClick={scrollToForm}>
-                  Contact Support <iconify-icon icon="ph:arrow-right" width="14"></iconify-icon>
+            </div>
+
+            <div className="lp-footer-links-group">
+              <h5 className="lp-footer-h">Company</h5>
+              <div className="lp-footer-links">
+                <button type="button" className="lp-footer-link" onClick={() => navigate('/about')}>About Us</button>
+                <button type="button" className="lp-footer-link" onClick={() => navigate('/contact')}>Contact</button>
+              </div>
+            </div>
+
+            <div className="lp-footer-links-group">
+              <h5 className="lp-footer-h">Connect</h5>
+              <div className="lp-social">
+                <a className="lp-social-btn" href="#" onClick={(e) => e.preventDefault()} aria-label="Instagram">
+                  <Camera size={18} />
+                </a>
+                <a className="lp-social-btn" href="#" onClick={(e) => e.preventDefault()} aria-label="LinkedIn">
+                  <Globe size={18} />
+                </a>
+                <a className="lp-social-btn" href="#" onClick={(e) => e.preventDefault()} aria-label="Facebook">
+                  <Users size={18} />
+                </a>
+                <a className="lp-social-btn" href="#" onClick={(e) => e.preventDefault()} aria-label="Twitter">
+                  <Mail size={18} />
                 </a>
               </div>
             </div>
-            <div className="faq-list sr d2">
-              {faqs.map((faq, index) => (
-                <div className={`faq-item ${activeFaq === index ? 'open' : ''}`} key={index}>
-                  <button className="faq-trig" onClick={() => handleFaqToggle(index)}>
-                    {faq.q}
-                    <div className="faq-plus">
-                      <iconify-icon icon="ph:plus" className="plus-ico" width="14"></iconify-icon>
-                    </div>
-                  </button>
-                  <div className="faq-body" style={{ maxHeight: activeFaq === index ? '280px' : '0px' }}>
-                    <div className="faq-bi">{faq.a}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
           </div>
-        </div>
-      </section>
 
-      {/* LOCATION */}
-      <section className="loc-section">
-        <div className="wrap">
-          <div className="loc-layout">
-            <div className="map-visual sr">
-              <div className="map-grid-bg"></div>
-              <div className="map-center">
-                <div className="rw">
-                  <div className="rr rr1"></div>
-                  <div className="rr rr2"></div>
-                  <div className="rr rr3"></div>
-                  <div className="map-pin"><iconify-icon icon="ph:map-pin-fill" width="24"></iconify-icon></div>
-                </div>
-              </div>
-              <div className="map-badge">
-                <div className="map-city">Kathmandu, Nepal</div>
-                <div className="map-city-sub">Leaf &amp; Life HQ · Est. 2024</div>
-              </div>
-              <button className="map-btn-float"><iconify-icon icon="ph:map-trifold-fill" width="14"></iconify-icon>View on Maps</button>
+          <div className="lp-footer-bottom">
+            <p>© 2026 Leaf &amp; Life. All rights reserved.</p>
+            <div className="lp-footer-bottom-links">
+              <a href="#" onClick={(e) => e.preventDefault()}>Privacy Policy</a>
+              <a href="#" onClick={(e) => e.preventDefault()}>Terms of Service</a>
             </div>
-            <div className="sr d1">
-              <div className="pill-label" style={{ opacity: 1 }}>
-                <div className="pill-dot"><iconify-icon icon="ph:map-pin-fill" width="11"></iconify-icon></div> Our Base
-              </div>
-              <h2 className="loc-h2">Rooted in<br /><em>community.</em></h2>
-              <p className="loc-sub">Based in Kathmandu with a mission to make sustainable living more accessible through technology and community-driven action across the region.</p>
-              <div className="loc-items">
-                <div className="loc-item">
-                  <div className="loc-ico"><iconify-icon icon="ph:globe-hemisphere-east-fill" width="16"></iconify-icon></div>
-                  <div>
-                    <div className="loc-t">Based in Kathmandu, Nepal</div>
-                    <div className="loc-v">Connecting gardeners, nurseries, and beginners across Nepal for a greener tomorrow.</div>
-                  </div>
-                </div>
-                <div className="loc-item">
-                  <div className="loc-ico"><iconify-icon icon="ph:users-three-fill" width="16"></iconify-icon></div>
-                  <div>
-                    <div className="loc-t">Serving Plant Lovers Nationwide</div>
-                    <div className="loc-v">Our hyperlocal platform bridges plant lovers with trusted nurseries everywhere.</div>
-                  </div>
-                </div>
-                <div className="loc-item">
-                  <div className="loc-ico"><iconify-icon icon="ph:clock-fill" width="16"></iconify-icon></div>
-                  <div>
-                    <div className="loc-t">Working Hours</div>
-                    <div className="loc-v">Monday – Saturday · 9:00 AM – 6:00 PM NPT</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="cta-section">
-        <div className="cta-inner sr">
-          <h2 className="cta-h2">Ready to Start Your Green Journey?</h2>
-          <p className="cta-desc">Make your living space greener, healthier, and smarter with AI-powered plant guidance and a connected plant community.</p>
-          <div className="cta-actions">
-            <button type="button" className="cta-btn-primary" onClick={handleGetStarted}>Get Started Now</button>
-            <button type="button" className="cta-btn-ghost" onClick={() => handleNavClick('/marketplace')}>Explore Marketplace</button>
-          </div>
-        </div>
-      </section>
-
-      {/* FOOTER */}
-      <footer className="footer">
-        <div className="footer-container">
-          <div className="footer-brand">
-            <div className="footer-logo">
-              <img src={logo} alt="Leaf & Life" style={{ width: '24px', height: 'auto' }} />
-              <span>Leaf &amp; Life</span>
-            </div>
-            <p className="footer-desc">AI-powered plant recommendation and exchange platform designed to promote greener living through technology and community.</p>
-          </div>
-          <div>
-            <h5 className="footer-h">Platform</h5>
-            <ul className="footer-list">
-              <li><button type="button" className="footer-link" onClick={() => navigate('/')}>Home</button></li>
-              <li><button type="button" className="footer-link" onClick={() => handleNavClick('/scan')}>Smart Scan</button></li>
-              <li><button type="button" className="footer-link" onClick={() => handleNavClick('/marketplace')}>Marketplace</button></li>
-              <li><button type="button" className="footer-link" onClick={() => handleNavClick('/rewards')}>Community</button></li>
-            </ul>
-          </div>
-          <div>
-            <h5 className="footer-h">Company</h5>
-            <ul className="footer-list">
-              <li><button type="button" className="footer-link" onClick={() => navigate('/about')}>About Us</button></li>
-              <li><button type="button" className="footer-link" onClick={() => navigate('/contact')}>Contact</button></li>
-              <li><a href="#" className="footer-link" onClick={(e) => e.preventDefault()}>Privacy Policy</a></li>
-              <li><a href="#" className="footer-link" onClick={(e) => e.preventDefault()}>Terms of Service</a></li>
-            </ul>
-          </div>
-          <div>
-            <h5 className="footer-h">Connect</h5>
-            <div className="footer-social">
-              <a href="#" className="footer-social-btn" onClick={(e) => e.preventDefault()} aria-label="Instagram">
-                <iconify-icon icon="ph:instagram-logo" width="18"></iconify-icon>
-              </a>
-              <a href="#" className="footer-social-btn" onClick={(e) => e.preventDefault()} aria-label="LinkedIn">
-                <iconify-icon icon="ph:linkedin-logo" width="18"></iconify-icon>
-              </a>
-              <a href="#" className="footer-social-btn" onClick={(e) => e.preventDefault()} aria-label="Facebook">
-                <iconify-icon icon="ph:facebook-logo" width="18"></iconify-icon>
-              </a>
-              <a href="#" className="footer-social-btn" onClick={(e) => e.preventDefault()} aria-label="Twitter">
-                <iconify-icon icon="ph:twitter-logo" width="18"></iconify-icon>
-              </a>
-            </div>
-          </div>
-        </div>
-        <div className="footer-bottom">
-          <p>© 2026 Leaf &amp; Life. All rights reserved.</p>
-          <div className="footer-bottom-links">
-            <a href="#" onClick={(e) => e.preventDefault()}>Privacy Policy</a>
-            <a href="#" onClick={(e) => e.preventDefault()}>Terms of Service</a>
           </div>
         </div>
       </footer>
