@@ -1,79 +1,163 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { 
-  ArrowRight, 
-  Camera, 
-  Globe, 
-  Users, 
-  Mail, 
-  CheckCircle2, 
-  ShieldCheck, 
-  Loader2, 
-  Send, 
-  ChevronDown,
-  Building2,
-  PhoneCall,
-  Newspaper,
-  Plus,
-  Minus
-} from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
 import './Contact.css';
-import logo from "../assets/Leaf and Life logo.png";
-import AuthModal from '../components/AuthModal';
 
 export default function Contact() {
-  const navigate = useNavigate();
-  const [showModal, setShowModal] = useState(false);
-  
-  const [isSubmitted, setIsSubmitted] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return localStorage.getItem('leafLifeSubmitted') === 'true';
+  // Navigation active state
+  const [activeNav, setActiveNav] = useState('contact');
+
+  // Form Field States
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    subject: '',
+    message: ''
   });
 
-  // Accordion active element tracking state
-  const [openFaq, setOpenFaq] = useState(null);
+  // Form Validation & Interaction States
+  const [filledFields, setFilledFields] = useState({
+    name: false,
+    email: false,
+    subject: false,
+    message: false
+  });
+  const [errors, setErrors] = useState({
+    name: false,
+    email: false,
+    message: false
+  });
+  const [validName, setValidName] = useState(false);
+  const [validEmail, setValidEmail] = useState(false);
+  const [charCount, setCharCount] = useState(0);
 
-  // Form interactive handling states
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [topic, setTopic] = useState('general');
-  const [message, setMessage] = useState('');
-  const [errors, setErrors] = useState({ name: false, email: false, message: false });
+  // Form Submission States
   const [isSending, setIsSending] = useState(false);
-  const [sendProgress, setSendProgress] = useState(0);
-  const [sendSuccess, setSendSuccess] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [progressBarWidth, setProgressBarWidth] = useState(0);
 
-  const toggleFaq = (index) => {
-    setOpenFaq(openFaq === index ? null : index);
-  };
+  // Mouse Cursor Tracking state
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [ringPos, setRingPos] = useState({ x: 0, y: 0 });
+  const [cursorType, setCursorType] = useState(''); // 'grow' or 'text'
+  const totalScrollRef = useRef(0);
 
-  const handleLogoClick = () => {
-    navigate('/');
-  };
+  // Custom Cursor Fluid Animation Loop
+  useEffect(() => {
+    let reqId;
+    const animateRing = () => {
+      setRingPos((prev) => ({
+        x: prev.x + (mousePos.x - prev.x) * 0.15,
+        y: prev.y + (mousePos.y - prev.y) * 0.15
+      }));
+      reqId = requestAnimationFrame(animateRing);
+    };
+    reqId = requestAnimationFrame(animateRing);
+    return () => cancelAnimationFrame(reqId);
+  }, [mousePos]);
 
-  const handleGetStarted = () => {
-    if (!isSubmitted) {
-      setShowModal(true);
-      return;
+  // Track Mouse Movements & Scroll Progress
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      setMousePos({ x: e.clientX, y: e.clientY });
+    };
+
+    const handleScroll = () => {
+      const total = document.documentElement.scrollHeight - window.innerHeight;
+      if (total > 0) {
+        totalScrollRef.current = (window.scrollY / total) * 100;
+      }
+      
+      const navElement = document.getElementById('mainNav');
+      if (navElement) {
+        navElement.classList.toggle('scrolled', window.scrollY > 20);
+      }
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('scroll', handleScroll);
+
+    // Setup Intersection Observer for Reveal elements
+    const elementsToReveal = document.querySelectorAll('.sr');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in');
+        }
+      });
+    }, { threshold: 0.1 });
+
+    elementsToReveal.forEach(el => observer.observe(el));
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('scroll', handleScroll);
+      observer.disconnect();
+    };
+  }, []);
+
+  // Form Event Handlers
+  const handleInputChange = (e) => {
+    const { id, value } = e.target;
+    const shortId = id.replace('f-', ''); // Maps 'f-name' -> 'name'
+
+    setFormData(prev => ({ ...prev, [shortId]: value }));
+    setFilledFields(prev => ({ ...prev, [shortId]: value.trim() !== '' }));
+
+    // Reset errors on fresh input
+    if (errors[shortId]) {
+      setErrors(prev => ({ ...prev, [shortId]: false }));
     }
-    navigate('/dashboard');
+
+    // Interactive indicators
+    if (shortId === 'name') {
+      setValidName(value.trim().length > 1);
+    }
+    if (shortId === 'email') {
+      const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+      setValidEmail(emailOk);
+    }
+    if (shortId === 'message') {
+      setCharCount(value.length);
+    }
   };
 
-  const handleModalSubmit = () => {
-    localStorage.setItem('leafLifeSubmitted', 'true');
-    setIsSubmitted(true);
-    setShowModal(false);
-    navigate('/dashboard');
+  const handleBlur = (e) => {
+    const { id, value } = e.target;
+    const shortId = id.replace('f-', '');
+    setFilledFields(prev => ({ ...prev, [shortId]: value.trim() !== '' }));
   };
 
-  const handleSubmit = (e) => {
+  const scrollToForm = (e) => {
     e.preventDefault();
-    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+    const target = document.getElementById('headline');
+    if (target) target.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const toggleFaq = (e) => {
+    const btn = e.currentTarget;
+    const item = btn.closest('.faq-item');
+    const body = item.querySelector('.faq-body');
+    const isOpen = item.classList.contains('open');
+
+    // Close all FAQs first
+    document.querySelectorAll('.faq-item.open').forEach(i => {
+      i.classList.remove('open');
+      i.querySelector('.faq-body').style.maxHeight = null;
+    });
+
+    // Toggle current selection
+    if (!isOpen) {
+      item.classList.add('open');
+      body.style.maxHeight = body.scrollHeight + 'px';
+    }
+  };
+
+  const handleSubmit = () => {
+    const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim());
     
     const newErrors = {
-      name: !name.trim(),
-      email: !email.trim() || !emailOk,
-      message: !message.trim()
+      name: formData.name.trim().length === 0,
+      email: !isEmailValid,
+      message: formData.message.trim().length === 0
     };
 
     setErrors(newErrors);
@@ -82,397 +166,464 @@ export default function Contact() {
       return;
     }
 
+    // Proceed to simulated sending workflow animation
     setIsSending(true);
     let progress = 0;
     const interval = setInterval(() => {
-      progress = Math.min(progress + Math.random() * 15, 90);
-      setSendProgress(progress);
-    }, 70);
+      progress = Math.min(progress + Math.random() * 12, 90);
+      setProgressBarWidth(progress);
+    }, 80);
 
     setTimeout(() => {
       clearInterval(interval);
-      setSendProgress(100);
+      setProgressBarWidth(100);
       setTimeout(() => {
         setIsSending(false);
-        setSendSuccess(true);
+        setIsSuccess(true);
       }, 150);
-    }, 1200);
+    }, 1400);
   };
 
-  // Content mapped accurately directly from your contact.html layout
-  const faqData = [
-    {
-      q: "How fast do teams respond through the transmission channel?",
-      a: "Tickets routed via our direct channel options clear ingestion queues instantly. You will hear back from a representative within 12 to 24 standard operation business hours."
-    },
-    {
-      q: "Can I coordinate hardware modifications directly with engineers?",
-      a: "Yes! If you select 'Smart Garden IoT Hardware Modules' as your inquiry topic, your structural ticket is routed to our hardware engineering department for firmware or sensor customization talks."
-    },
-    {
-      q: "Are there platform transaction safeguards for local trading operations?",
-      a: "Absolutely. Leaf & Life operates fully isolated cryptographic escrow contracts for decentralized local garden swaps to guarantee secure item exchanges across active neighborhoods."
-    },
-    {
-      q: "Do you facilitate university research or community project grants?",
-      a: "Yes, we prioritize structural educational initiatives. Reach out through our 'Institutional Ecosystem Partnerships' option for streamlined grant evaluations and hardware testing sponsorships."
-    }
-  ];
+  // Cursor Element Classes Wrapper Helper
+  const bodyCursorClass = cursorType === 'grow' ? 'cursor-grow' : cursorType === 'text' ? 'cursor-text' : '';
 
   return (
-    <div className="lp-root contact-page-root">
-      
-      {/* ─── 1. NAVBAR (UNTOUCHED) ─── */}
-      <nav className="lp-nav">
-        <div className="lp-nav-inner">
-          <button type="button" className="lp-brand lp-brand-action" onClick={handleLogoClick}>
-            <span className="lp-brand-mark" aria-hidden="true">
-              <img src={logo} alt="Leaf & Life logo" className="lp-brand-img" />
-            </span>
-            <span className="lp-brand-text">Leaf &amp; Life</span>
+    <div className={`contact-root ${bodyCursorClass}`}>
+      {/* ─── CUSTOM CURSOR ─── */}
+      <div id="cursor" style={{ left: `${mousePos.x}px`, top: `${mousePos.y}px` }}></div>
+      <div id="cursor-ring" style={{ left: `${ringPos.x}px`, top: `${ringPos.y}px` }}></div>
+
+      {/* ─── TOP SCROLL PROGRESS BAR ─── */}
+      <div id="pageBar" style={{ width: `${totalScrollRef.current}%` }}></div>
+
+      {/* ─── NAVIGATION BAR ─── */}
+      <nav className="nav" id="mainNav">
+        <a href="#" className="nav-logo" onMouseEnter={() => setCursorType('grow')} onMouseLeave={() => setCursorType('')}>
+          <div className="logo-mark">
+            <iconify-icon icon="ph:leaf-fill" width="18"></iconify-icon>
+          </div>
+          <span>Leaf &amp; Life</span>
+        </a>
+        <ul className="nav-links">
+          <li><a href="#" onMouseEnter={() => setCursorType('grow')} onMouseLeave={() => setCursorType('')}>Home</a></li>
+          <li><a href="#" onMouseEnter={() => setCursorType('grow')} onMouseLeave={() => setCursorType('')}>About Us</a></li>
+          <li><a href="#" className={activeNav === 'contact' ? 'active' : ''} onMouseEnter={() => setCursorType('grow')} onMouseLeave={() => setCursorType('')}>Contact</a></li>
+        </ul>
+        <div className="nav-actions">
+          <button className="btn-solid" onMouseEnter={() => setCursorType('grow')} onMouseLeave={() => setCursorType('')}>
+            <span>Get Started</span>
           </button>
-
-          <div className="lp-nav-center">
-            <button type="button" className="lp-nav-link" onClick={() => navigate('/')}>Home</button>
-            <button type="button" className="lp-nav-link" onClick={() => navigate('/about')}>About Us</button>
-            <button type="button" className="lp-nav-link lp-nav-link-active" onClick={() => navigate('/contact')}>Contact</button>
-          </div>
-
-          <div className="lp-nav-actions">
-            {isSubmitted && (
-              <button
-                type="button"
-                className="lp-btn lp-btn-ghost lp-btn-sm"
-                onClick={() => {
-                  localStorage.removeItem('leafLifeSubmitted');
-                  localStorage.removeItem('leafLifeAuthenticated');
-                  window.location.reload();
-                }}
-              >
-                Switch Account
-              </button>
-            )}
-            <button type="button" className="lp-btn lp-btn-primary" onClick={handleGetStarted}>
-              Get Started
-            </button>
-          </div>
         </div>
       </nav>
 
-      <AuthModal
-        open={showModal}
-        onClose={() => setShowModal(false)}
-        onSuccess={handleModalSubmit}
-      />
+      {/* ─── HERO SPLIT SECTION ─── */}
+      <section className="hero">
+        {/* Left Aspect Side Column Frame */}
+        <div className="hero-left">
+          <div className="blob blob1"></div>
+          <div className="blob blob2"></div>
+          <div className="dot-grid" id="dotGrid"></div>
 
-      {/* ─── 2. CONTACT HERO FORM SECTOR FROM CONTACT.HTML ─── */}
-      <main className="contact-hero-section">
-        <div className="lp-container">
-          <div className="contact-hero-grid">
-            
-            {/* Left Brand Identity Card */}
-            <div className="contact-hero-left">
-              <div className="contact-blob contact-blob1" aria-hidden="true"></div>
-              <div className="contact-blob contact-blob2" aria-hidden="true"></div>
-              <div className="contact-dot-grid" aria-hidden="true"></div>
-              
-              <div className="contact-left-content">
-                <div className="contact-hero-eyebrow">
-                  <span className="contact-ey-line"></span>Get In Touch
-                </div>
-                <h1 className="contact-hero-h1">
-                  Let's cultivate <br />something <em>together</em>.
-                </h1>
-                <p className="contact-hero-desc">
-                  Have questions about our smart garden solutions, community marketplace channels, or partnership models? Reach our technical teams instantly.
-                </p>
-              </div>
-
-              <div className="contact-hero-chips">
-                <span className="contact-chip">🌱 Smart Agriculture</span>
-                <span className="contact-chip">🏪 Local Trade Help</span>
-                <span className="contact-chip">✨ Plant Diagnosis AI</span>
-              </div>
-
-              <div className="contact-hero-scroll">
-                <span className="contact-sdot"></span>
-                <span className="contact-sline"></span>
-                Direct Response Channel
-              </div>
-            </div>
-
-            {/* Right Ingestion Dynamic Form Component */}
-            <div className="contact-hero-right">
-              {!sendSuccess ? (
-                <form className="contact-form-anim" onSubmit={handleSubmit} noValidate>
-                  <div className="contact-pill-label">
-                    <span className="contact-pill-dot">
-                      <Mail size={10} strokeWidth={3} />
-                    </span>
-                    Direct Channel
-                  </div>
-                  
-                  <h2 className="contact-form-title">Send a <em>message</em></h2>
-                  <p className="contact-form-sub">Expect responses within standard business operation slots.</p>
-
-                  <div className="contact-f-group">
-                    <div className="contact-f-wrap">
-                      <input 
-                        type="text" 
-                        id="nameInput"
-                        className={`contact-f-input ${name ? 'contact-filled' : ''} ${errors.name ? 'contact-err' : ''}`}
-                        placeholder="Your Name"
-                        value={name}
-                        onChange={(e) => {
-                          setName(e.target.value);
-                          if(errors.name) setErrors(prev => ({...prev, name: false}));
-                        }}
-                      />
-                      <label className="contact-f-lbl" htmlFor="nameInput">Full Name</label>
-                      <span className={`contact-v-ico contact-valid-tick ${(!errors.name && name.trim()) ? 'contact-show' : ''}`}>
-                        <CheckCircle2 size={16} fill="#2d5a27" color="#ffffff" />
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="contact-f-group">
-                    <div className="contact-f-wrap">
-                      <input 
-                        type="email" 
-                        id="emailInput"
-                        className={`contact-f-input ${email ? 'contact-filled' : ''} ${errors.email ? 'contact-err' : ''}`}
-                        placeholder="Email address"
-                        value={email}
-                        onChange={(e) => {
-                          setEmail(e.target.value);
-                          if(errors.email) setErrors(prev => ({...prev, email: false}));
-                        }}
-                      />
-                      <label className="contact-f-lbl" htmlFor="emailInput">Email Address</label>
-                      <span className={`contact-v-ico contact-valid-tick ${(!errors.email && email.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) ? 'contact-show' : ''}`}>
-                        <CheckCircle2 size={16} fill="#2d5a27" color="#ffffff" />
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="contact-f-group">
-                    <div className="contact-f-wrap">
-                      <select 
-                        id="topicSelect"
-                        className={`contact-f-input contact-f-select ${topic ? 'contact-filled' : ''}`}
-                        value={topic}
-                        onChange={(e) => setTopic(e.target.value)}
-                      >
-                        <option value="general">General Support inquiry</option>
-                        <option value="marketplace">Marketplace & Trading Escrow</option>
-                        <option value="hardware">Smart Garden IoT Hardware Modules</option>
-                        <option value="partnership">Institutional Ecosystem Partnerships</option>
-                      </select>
-                      <label className="contact-f-lbl" htmlFor="topicSelect">Inquiry Topic</label>
-                      <span className="contact-sel-arrow">
-                        <ChevronDown size={16} />
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="contact-f-group contact-f-ta-wrap">
-                    <div className="contact-f-wrap">
-                      <textarea 
-                        id="msgInput"
-                        maxLength="1000"
-                        className={`contact-f-input contact-f-textarea ${message ? 'contact-filled' : ''} ${errors.message ? 'contact-err' : ''}`}
-                        placeholder="Write your brief message here..."
-                        value={message}
-                        onChange={(e) => {
-                          setMessage(e.target.value);
-                          if(errors.message) setErrors(prev => ({...prev, message: false}));
-                        }}
-                      ></textarea>
-                      <label className="contact-f-lbl" htmlFor="msgInput">Your Message</label>
-                      <span className={`contact-char-cnt ${message.length > 900 ? 'contact-warn' : ''}`}>
-                        {message.length}/1000
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="contact-form-ft">
-                    <div className="contact-form-note">
-                      <ShieldCheck size={16} color="#2d5a27" />
-                      Data secure & encrypted
-                    </div>
-                    
-                    <button type="submit" className="contact-btn-send" disabled={isSending}>
-                      <div className="contact-btn-bar" style={{ width: `${sendProgress}%` }}></div>
-                      <span>{isSending ? 'Sending…' : 'Transmit Request'}</span>
-                      {isSending ? <Loader2 size={16} className="contact-spin" /> : <Send size={14} />}
-                    </button>
-                  </div>
-                </form>
-              ) : (
-                <div className="contact-form-success">
-                  <div className="contact-s-ring">
-                    <CheckCircle2 size={24} color="#2d5a27" />
-                  </div>
-                  <h3 className="contact-succ-h">Transmission Complete</h3>
-                  <p className="contact-succ-p">Your support ticket has cleared internal ingestion pathways successfully.</p>
-                  <button type="button" className="contact-btn-ghost" onClick={() => setSendSuccess(false)}>
-                    Send New Ticket
-                  </button>
-                </div>
-              )}
-            </div>
-
-          </div>
-        </div>
-      </main>
-
-      {/* ─── 3. ALTERNATIVE CHANNELS BLOCK FROM CONTACT.HTML ─── */}
-      <section className="contact-channels-section">
-        <div className="lp-container">
-          <div className="contact-section-header">
-            <span className="contact-sub-eyebrow">Alternative Options</span>
-            <h2 className="contact-section-h2">Other ways to <em>connect</em></h2>
-            <p className="contact-section-p">Skip the queue lines if your requirements align with these operational desks directly.</p>
+          <div>
+            <div className="hero-eyebrow"><span className="ey-line"></span>Connect with us</div>
+            <h1 className="hero-h1" id="headline">
+              <span className="word">Let's</span> <span className="word">grow</span> <br/>
+              <span className="word">something</span> <span className="word"><em>beautiful</em></span> <span className="word">together.</span>
+            </h1>
+            <p className="hero-desc">Have questions about plant care, local exchanges, or nursery features? Our green team is here to guide your journey smoothly.</p>
           </div>
 
-          <div className="contact-channels-grid">
-            <div className="contact-chan-card">
-              <div className="contact-chan-icon-box">
-                <Building2 size={22} color="#2d5a27" />
+          <div>
+            <div className="hero-chips">
+              <div className="chip" style={{ animationDelay: '.85s' }} onMouseEnter={() => setCursorType('grow')} onMouseLeave={() => setCursorType('')}>
+                <iconify-icon icon="ph:sparkles-fill"></iconify-icon>AI Guidance Support
               </div>
-              <h3 className="contact-chan-title">Central HQ Office</h3>
-              <p className="contact-chan-desc">Stop by our collaborative campus hubs for physical hardware system prototype viewings.</p>
-              <span className="contact-chan-detail">Jalan Universiti, Bandar Sunway, MY</span>
+              <div className="chip" style={{ animationDelay: '.95s' }} onMouseEnter={() => setCursorType('grow')} onMouseLeave={() => setCursorType('')}>
+                <iconify-icon icon="ph:storefront-fill"></iconify-icon>Marketplace Help
+              </div>
+              <div className="chip" style={{ animationDelay: '1.05s' }} onMouseEnter={() => setCursorType('grow')} onMouseLeave={() => setCursorType('')}>
+                <iconify-icon icon="ph:tree-nursery-fill"></iconify-icon>Nursery Solutions
+              </div>
             </div>
-
-            <div className="contact-chan-card">
-              <div className="contact-chan-icon-box">
-                <PhoneCall size={22} color="#2d5a27" />
-              </div>
-              <h3 className="contact-chan-title">Urgent Hotline</h3>
-              <p className="contact-chan-desc">Immediate telephone infrastructure integration support for emergency grower system outages.</p>
-              <span className="contact-chan-detail">+60 (3) 7491-8622</span>
-            </div>
-
-            <div className="contact-chan-card">
-              <div className="contact-chan-icon-box">
-                <Newspaper size={22} color="#2d5a27" />
-              </div>
-              <h3 className="contact-chan-title">Press &amp; Media</h3>
-              <p className="contact-chan-desc">Download digital brand assets, view media reports, or submit editorial presentation requests.</p>
-              <span className="contact-chan-detail">media@leafandlife.org</span>
+            <div className="hero-scroll">
+              <span>Scroll to Explore</span>
+              <div className="sdot"></div>
+              <div className="sline"></div>
             </div>
           </div>
         </div>
-      </section>
 
-      {/* ─── 4. FAQ ACCORDION SECTION FROM CONTACT.HTML ─── */}
-      <section className="contact-faq-section">
-        <div className="lp-container">
-          <div className="contact-faq-inner-grid">
-            
-            <div className="contact-faq-sticky-left">
-              <span className="contact-sub-eyebrow">Got Questions?</span>
-              <h2 className="contact-section-h2">Frequently Asked <em>Inquiries</em></h2>
-              <p className="contact-section-p">Quick answers regarding technical configurations, system integration latency, and marketplace security mechanics.</p>
-            </div>
+        {/* Right Aspect Contact Workspace Form Panel Side */}
+        <div className="hero-right">
+          {!isSuccess ? (
+            <div className="form-anim fa2" id="formWrapper">
+              <div className="form-anim fa1">
+                <div className="pill-label">
+                  <div className="pill-dot"><iconify-icon icon="ph:envelope-simple-open-fill" width="11"></iconify-icon></div>
+                  Drop a line
+                </div>
+                <h2 className="form-title">Send a <em>message.</em></h2>
+                <p className="form-sub">We usually reply within a day or two maximum.</p>
+              </div>
 
-            <div className="contact-faq-list">
-              {faqData.map((faq, idx) => {
-                const isOpen = openFaq === idx;
-                return (
-                  <div 
-                    key={idx} 
-                    className={`contact-faq-item ${isOpen ? 'contact-faq-open' : ''}`}
-                    onClick={() => toggleFaq(idx)}
+              <div className="f-row">
+                <div className="f-wrap">
+                  <input 
+                    type="text" 
+                    className={`f-input ${filledFields.name ? 'filled' : ''} ${errors.name ? 'err' : ''}`}
+                    id="f-name" 
+                    placeholder=" " 
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    onBlur={handleBlur}
+                    onMouseEnter={() => setCursorType('text')}
+                    onMouseLeave={() => setCursorType('')}
+                    autoComplete="off"
+                  />
+                  <label className="f-lbl" htmlFor="f-name">Your Name</label>
+                  <span className={`v-ico ${validName ? 'show' : ''}`} style={{ color: 'var(--g500)' }}><iconify-icon icon="ph:check-circle-fill"></iconify-icon></span>
+                  {errors.name && <div className="f-err show"><iconify-icon icon="ph:warning-circle-fill" width="13"></iconify-icon>Please enter your name</div>}
+                </div>
+
+                <div className="f-wrap">
+                  <input 
+                    type="email" 
+                    className={`f-input ${filledFields.email ? 'filled' : ''} ${errors.email ? 'err' : ''}`}
+                    id="f-email" 
+                    placeholder=" " 
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    onBlur={handleBlur}
+                    onMouseEnter={() => setCursorType('text')}
+                    onMouseLeave={() => setCursorType('')}
+                    autoComplete="off"
+                  />
+                  <label className="f-lbl" htmlFor="f-email">Email Address</label>
+                  <span className={`v-ico ${validEmail ? 'show' : ''}`} style={{ color: 'var(--g500)' }}><iconify-icon icon="ph:check-circle-fill"></iconify-icon></span>
+                  {errors.email && <div className="f-err show"><iconify-icon icon="ph:warning-circle-fill" width="13"></iconify-icon>Enter a valid email address</div>}
+                </div>
+              </div>
+
+              <div className="f-group">
+                <div className="f-wrap">
+                  <select 
+                    className={`f-input f-select ${filledFields.subject ? 'filled' : ''}`} 
+                    id="f-subject"
+                    value={formData.subject}
+                    onChange={handleInputChange}
+                    onBlur={handleBlur}
+                    onMouseEnter={() => setCursorType('grow')}
+                    onMouseLeave={() => setCursorType('')}
                   >
-                    <div className="contact-faq-top">
-                      <h4 className="contact-faq-q">{faq.q}</h4>
-                      <button type="button" className="contact-faq-toggle-btn" aria-label="Toggle accordion view">
-                        {isOpen ? <Minus size={18} /> : <Plus size={18} />}
-                      </button>
-                    </div>
-                    <div className="contact-faq-answer-pane">
-                      <p className="contact-faq-a">{faq.a}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                    <option value="" disabled hidden></option>
+                    <option value="Recommendation Help">Plant Recommendation Help</option>
+                    <option value="Marketplace Support">Marketplace Support</option>
+                    <option value="Nursery Partnership">Nursery Partnership</option>
+                    <option value="Technical Assistance">Technical Assistance</option>
+                    <option value="General Inquiry">General Inquiry</option>
+                    <option value="Feedback">Feedback &amp; Suggestions</option>
+                  </select>
+                  <label className="f-lbl" htmlFor="f-subject">How can we help?</label>
+                  <span className="sel-arrow"><iconify-icon icon="ph:caret-down" width="14"></iconify-icon></span>
+                </div>
+              </div>
 
+              <div className="f-group">
+                <div className="f-wrap f-ta-wrap">
+                  <textarea 
+                    className={`f-input f-textarea ${filledFields.message ? 'filled' : ''} ${errors.message ? 'err' : ''}`}
+                    id="f-msg" 
+                    placeholder=" " 
+                    maxLength="500"
+                    value={formData.message}
+                    onChange={handleInputChange}
+                    onBlur={handleBlur}
+                    onMouseEnter={() => setCursorType('text')}
+                    onMouseLeave={() => setCursorType('')}
+                  ></textarea>
+                  <label className="f-lbl" htmlFor="f-msg">Your Message</label>
+                  <span className={`char-cnt ${charCount > 450 ? 'warn' : ''} ${charCount > 490 ? 'over' : ''}`}>{charCount} / 500</span>
+                </div>
+                {errors.message && <div className="f-err show"><iconify-icon icon="ph:warning-circle-fill" width="13"></iconify-icon>Please write your message</div>}
+              </div>
+
+              <div className="form-ft">
+                <p className="form-note">
+                  <iconify-icon icon="ph:shield-check-fill" width="13" style={{ color: 'var(--g500)' }}></iconify-icon> Response within 24–48 hours.
+                </p>
+                <button 
+                  className="btn-send" 
+                  disabled={isSending} 
+                  onClick={handleSubmit}
+                  onMouseEnter={() => setCursorType('grow')}
+                  onMouseLeave={() => setCursorType('')}
+                >
+                  <div className="btn-bar" style={{ width: `${progressBarWidth}%` }}></div>
+                  <span>{isSending ? 'Sending…' : 'Send Message'}</span>
+                  <iconify-icon 
+                    icon={isSending ? 'ph:spinner-gap' : 'ph:arrow-right'} 
+                    className="arr" 
+                    width="16"
+                    style={{ animation: isSending ? 'spin .65s linear infinite' : 'none' }}
+                  ></iconify-icon>
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="form-success" style={{ display: 'block' }}>
+              <div className="s-ring"><iconify-icon icon="ph:check-bold" width="30"></iconify-icon></div>
+              <div className="s-title">Message Sent!</div>
+              <div className="s-sub">Thank you for reaching out. We'll get back to you within 24–48 hours.</div>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ─── WAYS CONTACT TILES SECTION ─── */}
+      <section className="ways-section">
+        <div className="hatch"></div>
+        <div className="wrap">
+          <div className="sec-head sr">
+            <div className="s-ey">Reach Out</div>
+            <h2 className="s-h2">We're always <em>here for you.</em></h2>
+          </div>
+          <div className="ways-grid">
+            <div className="way-card sr d1" onMouseEnter={() => setCursorType('grow')} onMouseLeave={() => setCursorType('')}>
+              <div className="way-reveal"></div>
+              <div className="way-arr"><iconify-icon icon="ph:arrow-up-right-bold" width="14"></iconify-icon></div>
+              <div className="way-inner">
+                <div className="way-num">01</div>
+                <div className="way-ico"><iconify-icon icon="ph:envelope-simple-fill" width="23"></iconify-icon></div>
+                <div className="way-title">Email Support</div>
+                <div className="way-desc">For inquiries, feedback, technical help.</div>
+                <div className="way-val">hello@leafandlife.com</div>
+              </div>
+            </div>
+            <div className="way-card sr d2" onMouseEnter={() => setCursorType('grow')} onMouseLeave={() => setCursorType('')}>
+              <div className="way-reveal"></div>
+              <div className="way-arr"><iconify-icon icon="ph:arrow-up-right-bold" width="14"></iconify-icon></div>
+              <div className="way-inner">
+                <div className="way-num">02</div>
+                <div className="way-ico"><iconify-icon icon="ph:phone-fill" width="23"></iconify-icon></div>
+                <div className="way-title">Call Helpline</div>
+                <div className="way-desc">Direct support for immediate platform assistance.</div>
+                <div className="way-val">+977 1-4200000</div>
+              </div>
+            </div>
+            <div className="way-card sr d3" onMouseEnter={() => setCursorType('grow')} onMouseLeave={() => setCursorType('')}>
+              <div className="way-reveal"></div>
+              <div className="way-arr"><iconify-icon icon="ph:arrow-up-right-bold" width="14"></iconify-icon></div>
+              <div className="way-inner">
+                <div className="way-num">03</div>
+                <div className="way-ico"><iconify-icon icon="ph:map-pin-fill" width="23"></iconify-icon></div>
+                <div className="way-title">Main Office</div>
+                <div className="way-desc">Visit our central community workspace.</div>
+                <div className="way-val">Kathmandu, Nepal</div>
+              </div>
+            </div>
+            <div className="way-card sr d4" onMouseEnter={() => setCursorType('grow')} onMouseLeave={() => setCursorType('')}>
+              <div className="way-reveal"></div>
+              <div className="way-arr"><iconify-icon icon="ph:arrow-up-right-bold" width="14"></iconify-icon></div>
+              <div className="way-inner">
+                <div className="way-num">04</div>
+                <div className="way-ico"><iconify-icon icon="ph:chats-fill" width="23"></iconify-icon></div>
+                <div className="way-title">Live Chat</div>
+                <div className="way-desc">Available 9 AM – 6 PM for quick help notes.</div>
+                <div className="way-val">Instant Reply</div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ─── 5. FINAL CTA SECTION (UNTOUCHED LOGIC) ─── */}
+      {/* ─── SUPPORT CHANNELS ROW CONTAINER ─── */}
+      <section className="support-section">
+        <div className="wrap">
+          <div className="sup-intro">
+            <div className="sr">
+              <div className="s-ey">Channels</div>
+              <h2 className="s-h2">Tailored support for<br/><em>every plant lover.</em></h2>
+            </div>
+          </div>
+          <div className="sup-list">
+            <div className="sup-item sr d1" onMouseEnter={() => setCursorType('grow')} onMouseLeave={() => setCursorType('')}>
+              <div className="si-l">
+                <div className="si-ico"><iconify-icon icon="ph:sparkles-fill" width="24"></iconify-icon></div>
+                <div className="si-title">AI Guidance Assistance</div>
+              </div>
+              <div className="si-r">
+                <div className="si-desc">Get quick structural answers on plant scanner diagnosis parameters, space metric optimization metrics, and customized recommendation logic rules.</div>
+                <div className="si-link">Learn more <iconify-icon icon="ph:arrow-right" width="12"></iconify-icon></div>
+              </div>
+            </div>
+            <div className="sup-item sr d2" onMouseEnter={() => setCursorType('grow')} onMouseLeave={() => setCursorType('')}>
+              <div className="si-l">
+                <div className="si-ico"><iconify-icon icon="ph:storefront-fill" width="24"></iconify-icon></div>
+                <div className="si-title">Marketplace Assistance</div>
+              </div>
+              <div className="si-r">
+                <div className="si-desc">Our team assists with listings, connections, and all marketplace-related queries efficiently.</div>
+                <div className="si-link">Learn more <iconify-icon icon="ph:arrow-right" width="12"></iconify-icon></div>
+              </div>
+            </div>
+            <div className="sup-item sr d3" onMouseEnter={() => setCursorType('grow')} onMouseLeave={() => setCursorType('')}>
+              <div className="si-l">
+                <div className="si-ico"><iconify-icon icon="ph:handshake-fill" width="24"></iconify-icon></div>
+                <div className="si-title">Nursery Partnerships</div>
+              </div>
+              <div className="si-r">
+                <div className="si-desc">Are you a nursery owner looking to go digital? Let's help your business grow by reaching more plant enthusiasts through our hyperlocal platform with dedicated tools.</div>
+                <div className="si-link">Learn more <iconify-icon icon="ph:arrow-right" width="12"></iconify-icon></div>
+              </div>
+            </div>
+            <div className="sup-item sr d4" onMouseEnter={() => setCursorType('grow')} onMouseLeave={() => setCursorType('')}>
+              <div className="si-l">
+                <div className="si-ico"><iconify-icon icon="ph:gear-six-fill" width="24"></iconify-icon></div>
+                <div className="si-title">Technical Assistance</div>
+              </div>
+              <div className="si-r">
+                <div className="si-desc">Experiencing technical issues or account problems? Our dedicated support team will resolve them quickly so your green journey stays smooth and uninterrupted.</div>
+                <div className="si-link">Learn more <iconify-icon icon="ph:arrow-right" width="12"></iconify-icon></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── ACCORDION FAQS WRAPPER ─── */}
+      <section className="faq-section">
+        <div className="faq-mesh"></div><div className="faq-dots-bg"></div>
+        <div className="wrap">
+          <div className="faq-layout">
+            <div className="sr">
+              <div className="faq-pill"><div class="faq-pd"><iconify-icon icon="ph:question-fill" width="11"></iconify-icon></div>Common Questions</div>
+              <h2 className="faq-h2">Frequently<br/><em>Asked.</em></h2>
+              <p class="faq-sub">Everything you need to know. Can't find an answer? Reach out directly.</p>
+              <div className="faq-nudge">
+                <div className="faq-nudge-t">Still have questions?</div>
+                <div className="faq-nudge-s">Our team is always happy to help. Send us a message and we'll respond promptly.</div>
+                <a href="#" className="faq-nudge-btn" onClick={scrollToForm} onMouseEnter={() => setCursorType('grow')} onMouseLeave={() => setCursorType('')}>Contact Support <iconify-icon icon="ph:arrow-right" width="14"></iconify-icon></a>
+              </div>
+            </div>
+            <div className="faq-list sr d2">
+              <div className="faq-item">
+                <button className="faq-trig" onClick={toggleFaq} onMouseEnter={() => setCursorType('grow')} onMouseLeave={() => setCursorType('')}>
+                  How does plant recommendation work?
+                  <div className="faq-plus"><iconify-icon icon="ph:plus" className="plus-ico" width="14"></iconify-icon></div>
+                </button>
+                <div className="faq-body">
+                  <div className="faq-bi">Our recommendation system suggests plants based on your space, sunlight conditions, and location. The AI analyzes your inputs and curates the most suitable options tailored to your living environment.</div>
+                </div>
+              </div>
+              <div className="faq-item">
+                <button className="faq-trig" onClick={toggleFaq} onMouseEnter={() => setCursorType('grow')} onMouseLeave={() => setCursorType('')}>
+                  Can I swap plants with nearby users?
+                  <div className="faq-plus"><iconify-icon icon="ph:plus" className="plus-ico" width="14"></iconify-icon></div>
+                </button>
+                <div className="faq-body">
+                  <div className="faq-bi">Yes! The hyperlocal marketplace allows you to connect with plant lovers in your neighborhood to swap, buy, sell, or thrift plants easily and sustainably.</div>
+                </div>
+              </div>
+              <div className="faq-item">
+                <button className="faq-trig" onClick={toggleFaq} onMouseEnter={() => setCursorType('grow')} onMouseLeave={() => setCursorType('')}>
+                  Is the plant scanner free to use?
+                  <div className="faq-plus"><iconify-icon icon="ph:plus" className="plus-ico" width="14"></iconify-icon></div>
+                </button>
+                <div className="faq-body">
+                  <div className="faq-bi">Yes, our primary AI identification scanner is free for all users to promote accessible and widespread green urban living.</div>
+                </div>
+              </div>
+              <div className="faq-item">
+                <button className="faq-trig" onClick={toggleFaq} onMouseEnter={() => setCursorType('grow')} onMouseLeave={() => setCursorType('')}>
+                  Who can join the platform?
+                  <div className="faq-plus"><iconify-icon icon="ph:plus" className="plus-ico" width="14"></iconify-icon></div>
+                </button>
+                <div className="faq-body">
+                  <div className="faq-bi">Anyone! From absolute beginners who want care guidance to experienced gardeners, collectors, and professional local commercial nurseries who want smarter plant care guidance. Step-by-step recommendations, visual guides, and community support make it simple for everyone to start their green journey.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── LOCATION GEOLOCATION DETAILS MAP GRID ─── */}
+      <section className="loc-section">
+        <div className="wrap">
+          <div className="loc-layout">
+            <div className="map-visual sr">
+              <div className="map-grid-bg"></div>
+              <div className="map-center"><div className="rw"><div className="rr rr1"></div><div className="rr rr2"></div><div className="rr rr3"></div><div className="map-pin"><iconify-icon icon="ph:map-pin-fill" width="24"></iconify-icon></div></div></div>
+              <div className="map-badge"><div className="map-city">Kathmandu, Nepal</div><div className="map-city-sub">Leaf &amp; Life HQ · Est. 2024</div></div>
+              <button className="map-btn-float" onMouseEnter={() => setCursorType('grow')} onMouseLeave={() => setCursorType('')}><iconify-icon icon="ph:map-trifold-fill" width="14"></iconify-icon>View on Maps</button>
+            </div>
+            <div className="sr d1">
+              <div className="pill-label" style={{ opacity: 1 }}><div className="pill-dot"><iconify-icon icon="ph:map-pin-fill" width="11"></iconify-icon></div>Our Base</div>
+              <h2 className="loc-h2">Rooted in<br/><em>community.</em></h2>
+              <p className="loc-sub">Based in Kathmandu with a mission to make sustainable living more accessible through technology and community-driven action across the region.</p>
+              <div className="loc-items">
+                <div className="loc-item"><div className="loc-ico"><iconify-icon icon="ph:globe-hemisphere-east-fill" width="16"></iconify-icon></div><div><div className="loc-t">Based in Kathmandu, Nepal</div><div class="loc-v">Connecting gardeners, nurseries, and beginners across Nepal for a greener tomorrow.</div></div></div>
+                <div className="loc-item"><div className="loc-ico"><iconify-icon icon="ph:users-three-fill" width="16"></iconify-icon></div><div><div className="loc-t">Serving Plant Lovers Nationwide</div><div class="loc-v">Our hyperlocal platform bridges plant lovers with trusted nurseries everywhere.</div></div></div>
+                <div className="loc-item"><div className="loc-ico"><iconify-icon icon="ph:clock-fill" width="16"></iconify-icon></div><div><div className="loc-t">Working Hours</div><div class="loc-v">Our support desk operates Sunday to Friday, 9:00 AM to 6:00 PM (NPT).</div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── FINAL CTA SECTION (MATCHED WITH LANDING.JSX) ─── */}
       <section className="lp-cta">
-        <div className="lp-container">
-          <div className="lp-cta-box">
-            <div className="lp-cta-content">
-              <h2 className="lp-cta-h2">Ready to cultivate your smart lifestyle?</h2>
-              <p className="lp-cta-p">
-                Join thousands of urban growers transforming their spaces today. No green thumb required.
-              </p>
-              <button type="button" className="lp-btn lp-btn-white" onClick={handleGetStarted}>
-                Get Started Now <ArrowRight size={16} style={{ marginLeft: '6px' }} />
-              </button>
-            </div>
-            <div className="lp-cta-decor" aria-hidden="true">
-              <div className="lp-decor-circle"></div>
-              <div className="lp-decor-circle-2"></div>
-            </div>
+        <div className="wrap lp-cta-inner">
+          <h2 className="lp-cta-title">Ready to Start Your Green Journey?</h2>
+          <p className="lp-lead">
+            Make your living space greener, healthier, and smarter with AI-powered plant guidance and a connected plant community.
+          </p>
+          <div className="lp-cta-actions">
+            <button type="button" className="lp-btn lp-btn-primary" onMouseEnter={() => setCursorType('grow')} onMouseLeave={() => setCursorType('')}>Get Started Now</button>
+            <button type="button" className="lp-btn lp-btn-ghost" onMouseEnter={() => setCursorType('grow')} onMouseLeave={() => setCursorType('')}>Explore Marketplace</button>
           </div>
         </div>
       </section>
 
-      {/* ─── 6. FOOTER SECTION (UNTOUCHED LOGIC) ─── */}
+      {/* ─── FOOTER SECTION (MATCHED WITH LANDING.JSX) ─── */}
       <footer className="lp-footer">
-        <div className="lp-container">
+        <div className="wrap">
           <div className="lp-footer-grid">
             <div className="lp-footer-brand">
-              <div className="lp-brand">
-                <span className="lp-brand-mark" aria-hidden="true">
-                  <img src={logo} alt="Leaf & Life logo" className="lp-brand-img" />
-                </span>
-                <span className="lp-brand-text">Leaf &amp; Life</span>
+              <div className="lp-footer-logo">
+                <iconify-icon icon="ph:leaf-fill" width="22" style={{ color: 'var(--g700)' }}></iconify-icon>
+                <span>Leaf &amp; Life</span>
               </div>
-              <p className="lp-footer-tagline">
-                Bridging nature and technology for sustainable, smarter urban living communities.
-              </p>
+              <p className="lp-footer-tagline">Connecting urban spaces with nature through AI plant identification and local trading.</p>
             </div>
 
-            <div className="lp-footer-links-group">
+            <div>
               <h5 className="lp-footer-h">Platform</h5>
-              <div className="lp-footer-links">
-                <button type="button" className="lp-footer-link" onClick={() => navigate('/marketplace')}>Marketplace</button>
-                <button type="button" className="lp-footer-link" onClick={() => navigate('/scan')}>AI Plant Scanner</button>
-                <button type="button" className="lp-footer-link" onClick={() => navigate('/recommendation')}>Smart Finder</button>
-              </div>
+              <ul className="lp-footer-links">
+                <li><a href="#" onMouseEnter={() => setCursorType('grow')} onMouseLeave={() => setCursorType('')}>AI Plant Scanner</a></li>
+                <li><a href="#" onMouseEnter={() => setCursorType('grow')} onMouseLeave={() => setCursorType('')}>Smart Matches</a></li>
+                <li><a href="#" onMouseEnter={() => setCursorType('grow')} onMouseLeave={() => setCursorType('')}>Marketplace</a></li>
+                <li><a href="#" onMouseEnter={() => setCursorType('grow')} onMouseLeave={() => setCursorType('')}>Care Guides</a></li>
+              </ul>
             </div>
 
-            <div className="lp-footer-links-group">
+            <div>
               <h5 className="lp-footer-h">Company</h5>
-              <div className="lp-footer-links">
-                <button type="button" className="lp-footer-link" onClick={() => navigate('/about')}>About Us</button>
-                <button type="button" className="lp-footer-link" onClick={() => navigate('/contact')}>Contact</button>
-              </div>
+              <ul className="lp-footer-links">
+                <li><a href="#" onMouseEnter={() => setCursorType('grow')} onMouseLeave={() => setCursorType('')}>About Us</a></li>
+                <li><a href="#" onMouseEnter={() => setCursorType('grow')} onMouseLeave={() => setCursorType('')}>Our Impact</a></li>
+                <li><a href="#" onMouseEnter={() => setCursorType('grow')} onMouseLeave={() => setCursorType('')}>Nursery Partners</a></li>
+                <li><a href="#" onMouseEnter={() => setCursorType('grow')} onMouseLeave={() => setCursorType('')}>Contact Us</a></li>
+              </ul>
             </div>
 
-            <div className="lp-footer-links-group">
+            <div>
               <h5 className="lp-footer-h">Connect</h5>
               <div className="lp-social">
-                <a className="lp-social-btn" href="#" onClick={(e) => e.preventDefault()} aria-label="Instagram">
-                  <Camera size={18} />
-                </a>
-                <a className="lp-social-btn" href="#" onClick={(e) => e.preventDefault()} aria-label="LinkedIn">
-                  <Globe size={18} />
-                </a>
-                <a className="lp-social-btn" href="#" onClick={(e) => e.preventDefault()} aria-label="Facebook">
-                  <Users size={18} />
-                </a>
-                <a className="lp-social-btn" href="#" onClick={(e) => e.preventDefault()} aria-label="Twitter">
-                  <Mail size={18} />
-                </a>
+                <a className="lp-social-btn" href="#" aria-label="Instagram" onMouseEnter={() => setCursorType('grow')} onMouseLeave={() => setCursorType('')}><iconify-icon icon="ph:instagram-logo" width="18"></iconify-icon></a>
+                <a className="lp-social-btn" href="#" aria-label="LinkedIn" onMouseEnter={() => setCursorType('grow')} onMouseLeave={() => setCursorType('')}><iconify-icon icon="ph:linkedin-logo" width="18"></iconify-icon></a>
+                <a className="lp-social-btn" href="#" aria-label="Facebook" onMouseEnter={() => setCursorType('grow')} onMouseLeave={() => setCursorType('')}><iconify-icon icon="ph:facebook-logo" width="18"></iconify-icon></a>
+                <a className="lp-social-btn" href="#" aria-label="Twitter" onMouseEnter={() => setCursorType('grow')} onMouseLeave={() => setCursorType('')}><iconify-icon icon="ph:twitter-logo" width="18"></iconify-icon></a>
               </div>
             </div>
           </div>
@@ -480,8 +631,8 @@ export default function Contact() {
           <div className="lp-footer-bottom">
             <p>© 2026 Leaf &amp; Life. All rights reserved.</p>
             <div className="lp-footer-bottom-links">
-              <a href="#" onClick={(e) => e.preventDefault()}>Privacy Policy</a>
-              <a href="#" onClick={(e) => e.preventDefault()}>Terms of Service</a>
+              <a href="#" onMouseEnter={() => setCursorType('grow')} onMouseLeave={() => setCursorType('')}>Privacy Policy</a>
+              <a href="#" onMouseEnter={() => setCursorType('grow')} onMouseLeave={() => setCursorType('')}>Terms of Service</a>
             </div>
           </div>
         </div>
