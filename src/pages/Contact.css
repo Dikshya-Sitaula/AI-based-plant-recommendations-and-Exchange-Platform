@@ -787,6 +787,16 @@
 .way-desc { font-size: .81rem; color: var(--txt2); line-height: 1.72; margin-bottom: 16px; }
 .way-val { font-size: .83rem; font-weight: 700; color: var(--g700); }
 
+.way-card-social .way-desc { margin-bottom: 20px; }
+
+.way-val-social {
+  font-size: .83rem;
+  font-weight: 700;
+  color: var(--g700);
+  line-height: 1.65;
+  letter-spacing: -0.01em;
+}
+
 .way-arr {
   position: absolute;
   top: 26px;
@@ -900,7 +910,7 @@
 /* ─── FAQ SECTION ─── */
 .faq-section {
   padding: 120px 0;
-  background: var(--g800);
+  background: var(--lp-primary);
   position: relative;
   overflow: hidden;
 }

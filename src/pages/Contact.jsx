@@ -21,6 +21,7 @@ import {
   Camera,
   Users,
   Map,
+  Share2,
 } from 'lucide-react';
 import './Contact.css';
 import logo from '../assets/Leaf and Life logo.png';
@@ -371,12 +372,19 @@ export default function Contact() {
           </div>
           <div className="ways-grid">
             {[
-              { num: '01', icon: <Mail size={23} />, title: 'Email Support', desc: 'For inquiries, feedback, technical help.', val: 'hello@leafandlife.com' },
-              { num: '02', icon: <Phone size={23} />, title: 'Call Helpline', desc: 'Direct support for immediate platform assistance.', val: '+977 1-4200000' },
-              { num: '03', icon: <MapPin size={23} />, title: 'Main Office', desc: 'Visit our central community workspace.', val: 'Kathmandu, Nepal' },
-              { num: '04', icon: <MessageCircle size={23} />, title: 'Live Chat', desc: 'Available 9 AM – 6 PM for quick help.', val: 'Instant Reply' },
+              { num: '01', icon: <Mail size={23} />, title: 'Email Support', desc: 'For inquiries, feedback, technical help.', val: 'leafandlifeofficial77@gmail.com' },
+              { num: '02', icon: <Phone size={23} />, title: 'Call Helpline', desc: 'Direct support for immediate platform assistance.', val: '+977 9849859220, +977 9761087026' },
+              { num: '03', icon: <MapPin size={23} />, title: 'Main Office', desc: 'Visit our central community workspace.', val: 'Maitidevi Temple, Maitidevi, Kathmandu' },
+              {
+                num: '04',
+                icon: <Share2 size={23} />,
+                title: 'Community & Socials',
+                desc: 'Stay connected and grow alongside our plant-loving community online.',
+                val: 'Instagram · Facebook · LinkedIn',
+                social: true,
+              },
             ].map((card, i) => (
-              <div className={`way-card sr d${i + 1}`} key={card.num}>
+              <div className={`way-card sr d${i + 1}${card.social ? ' way-card-social' : ''}`} key={card.num}>
                 <div className="way-reveal" />
                 <div className="way-arr"><ArrowRight size={14} /></div>
                 <div className="way-inner">
@@ -384,7 +392,7 @@ export default function Contact() {
                   <div className="way-ico">{card.icon}</div>
                   <div className="way-title">{card.title}</div>
                   <div className="way-desc">{card.desc}</div>
-                  <div className="way-val">{card.val}</div>
+                  <div className={`way-val${card.social ? ' way-val-social' : ''}`}>{card.val}</div>
                 </div>
               </div>
             ))}
