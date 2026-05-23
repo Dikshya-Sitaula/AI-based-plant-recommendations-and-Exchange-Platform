@@ -23,12 +23,20 @@ import {
   Map,
 } from 'lucide-react';
 import './Contact.css';
+import logo from '../assets/Leaf and Life logo.png';
+import AuthModal from '../components/AuthModal';
 
 export default function Contact() {
   const navigate = useNavigate();
-
-  // Nav scroll state
-  const [navScrolled, setNavScrolled] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('leafLifeSubmitted') === 'true';
+  });
+  const [activeNav, setActiveNav] = useState(() => {
+    if (typeof window === 'undefined') return 'landing';
+    return localStorage.getItem('leafLifeSubmitted') === 'true' ? 'features' : 'landing';
+  });
 
   // Form field states
   const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
@@ -45,23 +53,43 @@ export default function Contact() {
   const [openFaq, setOpenFaq] = useState(null);
   const faqRefs = useRef([]);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setNavScrolled(window.scrollY > 20);
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
+  const openModal = () => setShowModal(true);
 
-    // Scroll reveal
+  const handleLogoClick = () => {
+    if (isSubmitted) setActiveNav('landing');
+  };
+
+  const handleGetStarted = () => {
+    if (!isSubmitted) {
+      openModal();
+      return;
+    }
+    navigate('/dashboard');
+  };
+
+  const handleFeatureNav = (path) => {
+    if (!isSubmitted) {
+      openModal();
+      return;
+    }
+    navigate(path);
+  };
+
+  const handleModalSubmit = () => {
+    localStorage.setItem('leafLifeSubmitted', 'true');
+    setIsSubmitted(true);
+    setActiveNav('features');
+    setShowModal(false);
+    navigate('/dashboard');
+  };
+
+  useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in'); }),
       { threshold: 0.1 }
     );
     document.querySelectorAll('.sr').forEach(el => observer.observe(el));
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      observer.disconnect();
-    };
+    return () => observer.disconnect();
   }, []);
 
   const handleInputChange = (e) => {
@@ -145,28 +173,50 @@ export default function Contact() {
     <div className="contact-root">
 
       {/* ─── NAVBAR — matches Landing.jsx exactly ─── */}
-      <nav className={`lp-nav${navScrolled ? ' scrolled' : ''}`}>
+      <nav className="lp-nav">
         <div className="lp-nav-inner">
-          <button type="button" className="lp-brand lp-brand-action" onClick={() => navigate('/')}>
-            <span className="lp-brand-mark">
-              <Leaf size={20} color="var(--lp-primary)" />
+          <button type="button" className="lp-brand lp-brand-action" onClick={handleLogoClick}>
+            <span className="lp-brand-mark" aria-hidden="true">
+              <img src={logo} alt="Leaf & Life logo" className="lp-brand-img" />
             </span>
             <span className="lp-brand-text">Leaf &amp; Life</span>
+            {isSubmitted && (
+              <span className={`lp-dropdown-arrow ${activeNav === 'landing' ? 'open' : ''}`} aria-hidden="true">▾</span>
+            )}
           </button>
 
           <div className="lp-nav-center">
-            <button type="button" className="lp-nav-link" onClick={() => navigate('/')}>Home</button>
+            <button type="button" className="lp-nav-link" onClick={() => navigate('/?landing=1')}>Home</button>
             <button type="button" className="lp-nav-link" onClick={() => navigate('/about')}>About Us</button>
-            <button type="button" className="lp-nav-link active" onClick={() => navigate('/contact')}>Contact</button>
+            <button type="button" className="lp-nav-link" onClick={() => navigate('/contact')}>Contact</button>
           </div>
 
           <div className="lp-nav-actions">
-            <button type="button" className="lp-btn lp-btn-primary" onClick={() => navigate('/dashboard')}>
+            {isSubmitted && (
+              <button
+                type="button"
+                className="lp-btn lp-btn-ghost lp-btn-sm"
+                onClick={() => {
+                  localStorage.removeItem('leafLifeSubmitted');
+                  localStorage.removeItem('leafLifeAuthenticated');
+                  window.location.reload();
+                }}
+              >
+                Switch Account
+              </button>
+            )}
+            <button type="button" className="lp-btn lp-btn-primary" onClick={handleGetStarted}>
               Get Started
             </button>
           </div>
         </div>
       </nav>
+
+      <AuthModal
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        onSuccess={handleModalSubmit}
+      />
 
       {/* ─── HERO SPLIT ─── */}
       <section className="c-hero">
@@ -470,10 +520,10 @@ export default function Contact() {
             Make your living space greener, healthier, and smarter with AI-powered plant guidance and a connected plant community.
           </p>
           <div className="lp-hero-actions lp-cta-actions">
-            <button type="button" className="lp-btn lp-btn-primary lp-btn-xl" onClick={() => navigate('/dashboard')}>
+            <button type="button" className="lp-btn lp-btn-primary lp-btn-xl" onClick={() => handleFeatureNav('/dashboard')}>
               Get Started Now
             </button>
-            <button type="button" className="lp-btn lp-btn-ghost lp-btn-xl" onClick={() => navigate('/marketplace')}>
+            <button type="button" className="lp-btn lp-btn-ghost lp-btn-xl" onClick={() => handleFeatureNav('/marketplace')}>
               Explore Marketplace
             </button>
           </div>
@@ -486,7 +536,7 @@ export default function Contact() {
           <div className="lp-footer-grid">
             <div className="lp-footer-brand">
               <div className="lp-footer-logo">
-                <Leaf size={22} color="var(--lp-primary)" />
+                <img src={logo} alt="Leaf & Life" className="lp-footer-img" />
                 <span className="lp-brand-text">Leaf &amp; Life</span>
               </div>
               <p className="lp-p">
