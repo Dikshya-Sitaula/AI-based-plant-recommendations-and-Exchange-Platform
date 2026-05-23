@@ -117,10 +117,14 @@ export default function Scan() {
 
           <div className="location-form-container scan-rec-form-wrap">
             <h3 className="text-center form-title">Let's find the perfect spot</h3>
-            <RecommendationForm
-              showHeader={false}
-              onSubmit={handleSubmitLocation}
-            />
+            <div className="rec-page rec-page--embedded">
+              <div className="rec-container">
+                <RecommendationForm
+                  showHeader={false}
+                  onSubmit={handleSubmitLocation}
+                />
+              </div>
+            </div>
           </div>
         </div>
       )}

@@ -317,15 +317,22 @@
 }
 
 .location-form-container {
-  background: var(--bg-surface);
-  border-radius: 1rem;
-  padding: 1rem;
-  box-shadow: var(--shadow-sm);
+  background: transparent;
+  border-radius: 0;
+  padding: 0 0 1.5rem;
+  box-shadow: none;
+}
+
+.scan-rec-form-wrap .form-title {
+  margin-bottom: 1rem;
+}
+
+.scan-rec-form-wrap .rec-page--embedded {
+  width: 100%;
 }
 
 .scan-rec-form-wrap .rec-card {
-  margin-top: 0.5rem;
-  box-shadow: none;
+  margin-top: 0;
 }
 
 .form-title {

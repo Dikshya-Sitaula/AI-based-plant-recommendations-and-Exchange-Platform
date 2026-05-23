@@ -9,8 +9,10 @@
   --g300: #A8D5A2;
   --g100: #E0EFD8;
   --g50:  #F2F7F1;
-  --cream: #FAFAF8;
-  --sand: #F5F3EE;
+  --cream: #fdfdfb;
+  --sand: #f5f5dc;
+  --lp-background: #fdfdfb;
+  --lp-border: #e2e8ce;
   --border: #E4E7DF;
   --border-s: #C8D4C4;
   --txt: #141F13;
@@ -24,7 +26,7 @@
   --shadow-lg: 0 16px 48px rgba(20, 31, 19, .10), 0 4px 14px rgba(20, 31, 19, .06);
 
   min-height: 100vh;
-  background: var(--cream);
+  background: var(--lp-background);
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -35,9 +37,25 @@
   -webkit-font-smoothing: antialiased;
 }
 
+.rec-page,
 .rec-page * {
   box-sizing: border-box;
+}
+
+.rec-page :where(h1, h2, h3, h4, p, ul, ol, li, figure) {
   margin: 0;
+  padding: 0;
+}
+
+.rec-page--embedded {
+  min-height: unset;
+  padding: 0;
+  background: transparent;
+  overflow: visible;
+}
+
+.rec-page--embedded .rec-container {
+  max-width: 100%;
   padding: 0;
 }
 

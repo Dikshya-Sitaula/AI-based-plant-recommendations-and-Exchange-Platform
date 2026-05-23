@@ -171,6 +171,13 @@ export default function Contact() {
   ];
 
   return (
+    <>
+      <AuthModal
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        onSuccess={handleModalSubmit}
+      />
+
     <div className="contact-root">
 
       {/* ─── NAVBAR — matches Landing.jsx exactly ─── */}
@@ -212,12 +219,6 @@ export default function Contact() {
           </div>
         </div>
       </nav>
-
-      <AuthModal
-        open={showModal}
-        onClose={() => setShowModal(false)}
-        onSuccess={handleModalSubmit}
-      />
 
       {/* ─── HERO SPLIT ─── */}
       <section className="c-hero">
@@ -590,5 +591,6 @@ export default function Contact() {
         </div>
       </footer>
     </div>
+    </>
   );
 }
