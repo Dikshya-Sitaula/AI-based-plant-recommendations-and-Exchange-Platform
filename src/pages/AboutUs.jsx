@@ -296,10 +296,10 @@ export default function AboutUs() {
           </RevealUp>
           <div className="au-team-grid">
             {[
-              { name: 'Dikshya Sitaula', role: 'Backend Dev, AI Integration & Co-Lead', img: 'https://randomuser.me/api/portraits/women/12.jpg', delay: 100 },
+              { name: 'Dikshya Sitaula', role: 'Frontend Dev, AI Integration & Co-Lead', img: 'https://randomuser.me/api/portraits/women/12.jpg', delay: 100 },
               { name: 'Rishu Prajapati', role: 'Backend Dev, AI Integration & Co-Lead', img: 'https://randomuser.me/api/portraits/women/45.jpg', delay: 200 },
-              { name: 'Adita Rai', role: 'Frontend Dev, Database & UI/UX', img: 'https://randomuser.me/api/portraits/women/67.jpg', delay: 300 },
-              { name: 'Liza Shrestha', role: 'Frontend Dev, Testing & Docs', img: 'https://randomuser.me/api/portraits/women/89.jpg', delay: 400 },
+              { name: 'Adita Rai', role: 'Database, Data Curation & Model Training ', img: 'https://randomuser.me/api/portraits/women/67.jpg', delay: 300 },
+              { name: 'Liza Shrestha', role: 'Database, Data Curation & Model Training', img: 'https://randomuser.me/api/portraits/women/89.jpg', delay: 400 },
             ].map((member) => (
               <RevealUp key={member.name} delay={member.delay}>
                 <div className="au-team-card">
