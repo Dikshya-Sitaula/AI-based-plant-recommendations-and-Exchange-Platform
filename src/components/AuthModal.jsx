@@ -20,16 +20,25 @@ export default function AuthModal({ open, onClose, onSuccess }) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
+  // Password criteria logic
+  const passwordCriteria = {
+    length: password.length >= 6,
+    alphanumeric: /[a-zA-Z]/.test(password) && /[0-9]/.test(password),
+    special: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+  };
+
   const canSubmit = useMemo(() => {
-    const base = email.trim().length > 0 && password.length >= 6;
-    if (!base) return false;
-    if (mode === 'create') return confirmPassword.length >= 6 && confirmPassword === password;
-    return true;
-  }, [email, password, confirmPassword, mode]);
+    const isEmailValid = /\S+@\S+\.\S+/.test(email.trim());
+    const isPasswordValid = passwordCriteria.length && passwordCriteria.alphanumeric && passwordCriteria.special;
+    
+    if (mode === 'signIn') return isEmailValid && password.length > 0;
+    return isEmailValid && isPasswordValid && confirmPassword === password;
+  }, [email, password, confirmPassword, mode, passwordCriteria]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -56,29 +65,48 @@ export default function AuthModal({ open, onClose, onSuccess }) {
     e.preventDefault();
     setError('');
 
-    if (!/\S+@\S+\.\S+/.test(email.trim())) {
+    const emailTrimmed = email.trim();
+
+    if (!/\S+@\S+\.\S+/.test(emailTrimmed)) {
       setError('Please enter a valid email address.');
       firstFieldRef.current?.focus();
       return;
     }
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters.');
-      return;
-    }
-
-    if (mode === 'create' && password !== confirmPassword) {
-      setError('Passwords do not match.');
-      return;
+    if (mode === 'create') {
+      if (!passwordCriteria.length || !passwordCriteria.special || !passwordCriteria.alphanumeric) {
+        setError('Password does not meet criteria.');
+        return;
+      }
+      if (password !== confirmPassword) {
+        setError('invalid password');
+        return;
+      }
     }
 
     setSubmitting(true);
     try {
-      // Placeholder: wire to real auth later.
-      await new Promise((r) => setTimeout(r, 650));
-      onSuccess?.({ email: email.trim(), rememberMe, mode });
-    } catch {
-      setError('Something went wrong. Please try again.');
+      const endpoint = mode === 'signIn' ? '/api/auth/login' : '/api/auth/signup';
+      const response = await fetch(`http://localhost:5000${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: emailTrimmed,
+          password,
+          confirmPassword: mode === 'create' ? confirmPassword : undefined
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.message || 'Something went wrong.');
+        return;
+      }
+
+      onSuccess?.({ email: emailTrimmed, rememberMe, mode });
+    } catch (err) {
+      setError('Could not connect to the server.');
     } finally {
       setSubmitting(false);
     }
@@ -97,10 +125,6 @@ export default function AuthModal({ open, onClose, onSuccess }) {
         <div className="am-decor am-decor-1" aria-hidden="true" />
         <div className="am-decor am-decor-2" aria-hidden="true" />
         <div className="am-decor am-decor-3" aria-hidden="true" />
-
-        <button type="button" className="am-close" onClick={onClose} aria-label="Close">
-          <X size={18} />
-        </button>
 
         <header className="am-header">
           <div className="am-brand">
@@ -177,7 +201,6 @@ export default function AuthModal({ open, onClose, onSuccess }) {
                   className="am-input"
                   type={showPassword ? 'text' : 'password'}
                   autoComplete={mode === 'signIn' ? 'current-password' : 'new-password'}
-                  placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
@@ -190,6 +213,13 @@ export default function AuthModal({ open, onClose, onSuccess }) {
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
+              {mode === 'create' && (
+                <div className="am-criteria">
+                  <span className={passwordCriteria.length ? 'is-valid' : ''}>min. 6 char</span>,{' '}
+                  <span className={passwordCriteria.alphanumeric ? 'is-valid' : ''}>alphanumeric</span>,{' '}
+                  <span className={passwordCriteria.special ? 'is-valid' : ''}>1 special character</span>
+                </div>
+              )}
             </div>
 
             {mode === 'create' && (
@@ -200,12 +230,19 @@ export default function AuthModal({ open, onClose, onSuccess }) {
                   <input
                     id="am-confirm"
                     className="am-input"
-                    type={showPassword ? 'text' : 'password'}
+                    type={showConfirmPassword ? 'text' : 'password'}
                     autoComplete="new-password"
-                    placeholder="••••••••"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                   />
+                  <button
+                    type="button"
+                    className="am-icon-btn"
+                    onClick={() => setShowConfirmPassword((v) => !v)}
+                    aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
                 </div>
               </div>
             )}
@@ -281,6 +318,10 @@ export default function AuthModal({ open, onClose, onSuccess }) {
             </button>
           </footer>
         </div>
+
+        <button type="button" className="am-close" onClick={onClose} aria-label="Close">
+          <X size={18} />
+        </button>
       </div>
     </div>
   );
