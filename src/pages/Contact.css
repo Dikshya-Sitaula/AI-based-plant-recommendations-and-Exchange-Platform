@@ -9,9 +9,9 @@
   --g300: #A8D5A2;
   --g100: #E0EFD8;
   --g50: #F2F7F1;
-  --cream: #FAFAF8;
-  --sand: #F5F3EE;
-  --border: #E4E7DF;
+  --cream: #fdfdfb;
+  --sand: #f5f5dc;
+  --border: #e2e8ce;
   --border-s: #C8D4C4;
   --txt: #141F13;
   --txt2: #4A5E47;
@@ -29,7 +29,7 @@
   --lp-border: #e2e8ce;
   --lp-muted: rgba(26, 47, 26, 0.65);
 
-  background: var(--cream);
+  background: var(--lp-background);
   color: var(--txt);
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
@@ -363,7 +363,7 @@
 
 /* Right form panel */
 .c-hero-right {
-  background: var(--cream);
+  background: var(--lp-background);
   padding: 80px 64px;
   display: flex;
   flex-direction: column;
@@ -379,22 +379,22 @@
   left: 0;
   bottom: 0;
   width: 1px;
-  background: linear-gradient(to bottom, transparent, var(--border) 15%, var(--border) 85%, transparent);
+  background: linear-gradient(to bottom, transparent, var(--lp-border) 15%, var(--lp-border) 85%, transparent);
 }
 
 .c-pill-label {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: var(--g50);
-  border: 1px solid var(--g100);
+  background: rgba(245, 245, 220, 0.8);
+  border: 1px solid rgba(45, 90, 39, 0.14);
   border-radius: 50px;
   padding: 6px 16px 6px 8px;
   font-size: .68rem;
   font-weight: 700;
   letter-spacing: .11em;
   text-transform: uppercase;
-  color: var(--g700);
+  color: var(--lp-primary);
   margin-bottom: 18px;
 }
 
@@ -402,7 +402,7 @@
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: var(--g700);
+  background: var(--lp-primary);
   display: grid;
   place-items: center;
   color: #fff;
@@ -461,9 +461,9 @@
 .f-input {
   width: 100%;
   padding: 22px 16px 8px;
-  border: 1.5px solid var(--border);
+  border: 1.5px solid var(--lp-border);
   border-radius: 14px;
-  background: var(--white);
+  background: var(--lp-card);
   color: var(--txt);
   font-size: .9rem;
   outline: none;
@@ -477,7 +477,7 @@
 
 .f-input:focus {
   border-color: var(--g600);
-  background: var(--white);
+  background: var(--lp-card);
   box-shadow: 0 0 0 4px rgba(74, 140, 68, .09);
 }
 
@@ -649,8 +649,8 @@
   width: 76px;
   height: 76px;
   border-radius: 50%;
-  border: 2px solid var(--g100);
-  background: var(--g50);
+  border: 2px solid rgba(226, 232, 206, 0.9);
+  background: rgba(245, 245, 220, 0.9);
   display: grid;
   place-items: center;
   margin: 0 auto 22px;
@@ -695,8 +695,8 @@
 /* ─── WAYS SECTION ─── */
 .ways-section {
   padding: 120px 0;
-  background: var(--sand);
-  border-top: 1px solid var(--border);
+  background: var(--lp-secondary);
+  border-top: 1px solid var(--lp-border);
   position: relative;
   overflow: hidden;
 }
@@ -704,7 +704,7 @@
 .c-hatch {
   position: absolute;
   inset: 0;
-  background: repeating-linear-gradient(-45deg, transparent, transparent 48px, rgba(228, 231, 223, .3) 48px, rgba(228, 231, 223, .3) 49px);
+  background: repeating-linear-gradient(-45deg, transparent, transparent 48px, rgba(226, 232, 206, 0.35) 48px, rgba(226, 232, 206, 0.35) 49px);
   pointer-events: none;
 }
 
@@ -712,14 +712,14 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 0;
-  border: 1px solid var(--border);
+  border: 1px solid var(--lp-border);
   border-radius: 24px;
   overflow: hidden;
-  background: var(--border);
+  background: var(--lp-border);
 }
 
 .way-card {
-  background: var(--white);
+  background: var(--lp-card);
   padding: 44px 36px;
   position: relative;
   overflow: hidden;
@@ -729,7 +729,7 @@
 .way-reveal {
   position: absolute;
   inset: 0;
-  background: var(--g50);
+  background: rgba(245, 245, 220, 0.9);
   transform: translateY(100%);
   transition: transform .5s var(--ease);
 }
@@ -767,8 +767,8 @@
   width: 54px;
   height: 54px;
   border-radius: 14px;
-  background: var(--g50);
-  border: 1px solid var(--g100);
+  background: rgba(245, 245, 220, 0.9);
+  border: 1px solid rgba(226, 232, 206, 0.9);
   display: grid;
   place-items: center;
   color: var(--g700);
@@ -811,7 +811,10 @@
 .way-card:hover .way-arr { opacity: 1; transform: translate(0, 0); }
 
 /* ─── SUPPORT SECTION ─── */
-.support-section { padding: 120px 0; }
+.support-section {
+  padding: 120px 0;
+  background: var(--lp-background);
+}
 
 .sup-intro {
   display: grid;
@@ -826,11 +829,11 @@
 .sup-item {
   display: grid;
   grid-template-columns: 2fr 3fr;
-  border: 1px solid var(--border);
+  border: 1px solid var(--lp-border);
   border-radius: 18px;
   overflow: hidden;
   transition: all .45s var(--ease);
-  background: var(--white);
+  background: var(--lp-card);
   position: relative;
 }
 
@@ -855,22 +858,22 @@
 
 .si-l {
   padding: 44px 48px;
-  border-right: 1px solid var(--border);
+  border-right: 1px solid var(--lp-border);
   display: flex;
   align-items: center;
   gap: 22px;
   transition: background .4s;
 }
 
-.sup-item:hover .si-l { background: var(--g50); }
+.sup-item:hover .si-l { background: rgba(245, 245, 220, 0.55); }
 
 .si-ico {
   width: 54px;
   height: 54px;
   flex-shrink: 0;
   border-radius: 14px;
-  background: var(--g50);
-  border: 1px solid var(--g100);
+  background: rgba(245, 245, 220, 0.9);
+  border: 1px solid rgba(226, 232, 206, 0.9);
   display: grid;
   place-items: center;
   color: var(--g700);
@@ -1088,7 +1091,10 @@
 }
 
 /* ─── LOCATION SECTION ─── */
-.loc-section { padding: 120px 0; }
+.loc-section {
+  padding: 120px 0;
+  background: var(--lp-background);
+}
 
 .loc-layout {
   display: grid;
@@ -1100,8 +1106,8 @@
 .map-visual {
   height: 460px;
   border-radius: 28px;
-  background: var(--sand);
-  border: 1px solid var(--border);
+  background: var(--lp-secondary);
+  border: 1px solid var(--lp-border);
   position: relative;
   overflow: hidden;
   display: grid;
@@ -1161,8 +1167,8 @@
 .map-badge {
   position: absolute;
   top: 28px; left: 28px;
-  background: #fff;
-  border: 1px solid var(--border);
+  background: var(--lp-card);
+  border: 1px solid var(--lp-border);
   padding: 14px 20px;
   border-radius: 16px;
   box-shadow: 0 12px 36px rgba(0, 0, 0, .05);
@@ -1218,8 +1224,8 @@
   width: 38px;
   height: 38px;
   border-radius: 10px;
-  background: var(--g50);
-  border: 1px solid var(--g100);
+  background: rgba(245, 245, 220, 0.9);
+  border: 1px solid rgba(226, 232, 206, 0.9);
   display: grid;
   place-items: center;
   color: var(--g700);
@@ -1231,7 +1237,7 @@
 
 /* ─── FINAL CTA — exact match to Landing.jsx ─── */
 .lp-cta {
-  background: var(--white);
+  background: var(--lp-background);
   padding: 100px 0;
   text-align: center;
   border-top: 1px solid var(--lp-border);
@@ -1274,7 +1280,7 @@
 
 /* ─── FOOTER — exact match to Landing.jsx ─── */
 .lp-footer {
-  background: var(--cream);
+  background: var(--lp-background);
   border-top: 1px solid var(--lp-border);
   padding: 80px 0 40px;
 }
@@ -1406,7 +1412,7 @@
   .ways-grid { grid-template-columns: 1fr 1fr; }
   .sup-intro { grid-template-columns: 1fr; gap: 32px; margin-bottom: 44px; }
   .sup-item { grid-template-columns: 1fr; }
-  .si-l { border-right: none; border-bottom: 1px solid var(--border); padding: 28px 32px; }
+  .si-l { border-right: none; border-bottom: 1px solid var(--lp-border); padding: 28px 32px; }
   .si-r { padding: 32px; }
   .faq-layout { grid-template-columns: 1fr; gap: 56px; }
   .loc-layout { grid-template-columns: 1fr; gap: 48px; }

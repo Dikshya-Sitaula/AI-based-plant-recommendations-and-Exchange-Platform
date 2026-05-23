@@ -323,6 +323,11 @@
   box-shadow: var(--shadow-sm);
 }
 
+.scan-rec-form-wrap .rec-card {
+  margin-top: 0.5rem;
+  box-shadow: none;
+}
+
 .form-title {
   font-size: 1.125rem;
   font-weight: 700;

@@ -1,13 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
-import { Camera, MapPin, Search, Leaf, ArrowRight, Home } from 'lucide-react';
+import { Camera } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import RecommendationForm from '../components/RecommendationForm';
 import './Scan.css';
 
 export default function Scan() {
   const [step, setStep] = useState('scan'); // 'scan', 'location', 'results'
   const [stream, setStream] = useState(null);
   const [location, setLocation] = useState('');
-  const [spaceType, setSpaceType] = useState('indoor-bright');
+  const [spaceType, setSpaceType] = useState('indoor');
   const [isScanning, setIsScanning] = useState(false);
   const videoRef = useRef(null);
   const navigate = useNavigate();
@@ -51,23 +52,10 @@ export default function Scan() {
     }, 2000);
   };
 
-  const requestLocation = () => {
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          // Mock geocoding
-          setLocation("New York, NY (Detected)");
-        },
-        (error) => {
-          console.error("Location error", error);
-          alert("Could not detect location. Please enter manually.");
-        }
-      );
-    }
-  };
-
-  const handleSubmitLocation = (e) => {
+  const handleSubmitLocation = (e, { location: loc, selectedSpace }) => {
     e.preventDefault();
+    if (loc) setLocation(loc);
+    setSpaceType(selectedSpace);
     setStep('results');
   };
 
@@ -127,90 +115,12 @@ export default function Scan() {
             </div>
           </div>
 
-          <div className="location-form-container">
+          <div className="location-form-container scan-rec-form-wrap">
             <h3 className="text-center form-title">Let's find the perfect spot</h3>
-            
-            <form onSubmit={handleSubmitLocation} className="smart-setup-form">
-              {/* Step 1 */}
-              <div className="form-group">
-                <label><span className="step-number">1</span> Where are you located?</label>
-                <div className="location-input-group">
-                  <div className="input-with-icon">
-                    <MapPin size={18} className="icon" />
-                    <input 
-                      type="text" 
-                      placeholder="Enter city or zip code" 
-                      value={location}
-                      onChange={(e) => setLocation(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <button type="button" className="btn-outline" onClick={requestLocation}>
-                    <MapPin size={16} /> Use My Location
-                  </button>
-                </div>
-              </div>
-
-              {/* Step 2 */}
-              <div className="form-group">
-                <label><span className="step-number">2</span> Where will your new plant live?</label>
-                <div className="space-grid">
-                  <label className={`space-card ${spaceType === 'indoor' ? 'selected' : ''}`}>
-                    <input type="radio" name="space" value="indoor" onChange={(e) => setSpaceType(e.target.value)} checked={spaceType === 'indoor'} />
-                    <span className="emoji">🏠</span>
-                    <span className="space-title">Indoor</span>
-                    <span className="space-desc">Low light, stable temp</span>
-                  </label>
-                  <label className={`space-card ${spaceType === 'rooftop' ? 'selected' : ''}`}>
-                    <input type="radio" name="space" value="rooftop" onChange={(e) => setSpaceType(e.target.value)} checked={spaceType === 'rooftop'} />
-                    <span className="emoji">☀️</span>
-                    <span className="space-title">Rooftop</span>
-                    <span className="space-desc">Direct sun, high wind</span>
-                  </label>
-                  <label className={`space-card ${spaceType === 'balcony' ? 'selected' : ''}`}>
-                    <input type="radio" name="space" value="balcony" onChange={(e) => setSpaceType(e.target.value)} checked={spaceType === 'balcony'} />
-                    <span className="emoji">🪴</span>
-                    <span className="space-title">Balcony</span>
-                    <span className="space-desc">Partial shade</span>
-                  </label>
-                  <label className={`space-card ${spaceType === 'garden' ? 'selected' : ''}`}>
-                    <input type="radio" name="space" value="garden" onChange={(e) => setSpaceType(e.target.value)} checked={spaceType === 'garden'} />
-                    <span className="emoji">🌳</span>
-                    <span className="space-title">Garden/Open</span>
-                    <span className="space-desc">Direct ground</span>
-                  </label>
-                </div>
-              </div>
-
-              {/* Step 3 */}
-              <div className="form-group">
-                <label><span className="step-number">3</span> How much natural light does this spot get?</label>
-                <div className="light-slider-container">
-                  <input type="range" min="1" max="3" defaultValue="2" className="light-slider" />
-                  <div className="light-labels">
-                    <div className="light-label">
-                      <span className="emoji">☁️</span>
-                      <span className="light-title">Low</span>
-                      <span className="light-desc">No direct windows</span>
-                    </div>
-                    <div className="light-label active">
-                      <span className="emoji">🌤️</span>
-                      <span className="light-title">Medium</span>
-                      <span className="light-desc">Bright indirect light</span>
-                    </div>
-                    <div className="light-label">
-                      <span className="emoji">☀️</span>
-                      <span className="light-title">High</span>
-                      <span className="light-desc">Direct sun 6+ hrs</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <button type="submit" className="btn-primary w-full mt-6">
-                Get Recommendations <ArrowRight size={18} />
-              </button>
-            </form>
+            <RecommendationForm
+              showHeader={false}
+              onSubmit={handleSubmitLocation}
+            />
           </div>
         </div>
       )}

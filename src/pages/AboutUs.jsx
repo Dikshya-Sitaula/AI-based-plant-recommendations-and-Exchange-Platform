@@ -302,8 +302,8 @@ export default function AboutUs() {
             {[
               { name: 'Dikshya Sitaula', role: 'Frontend Dev, AI Integration & Co-Lead', img: dikshyaImg, delay: 100 },
               { name: 'Rishu Prajapati', role: 'Backend Dev, AI Integration & Co-Lead', img: rishuImg, delay: 200 },
-              { name: 'Adita Rai', role: 'Database, Data Curation & Model Training ', img: aditaImg, delay: 300 },
-              { name: 'Liza Shrestha', role: 'Database, Data Curation & Model Training', img: lizaImg, delay: 400 },
+              { name: 'Adita Rai', role: 'Database & Model Training ', img: aditaImg, delay: 300 },
+              { name: 'Liza Shrestha', role: 'Database & Model Training', img: lizaImg, delay: 400 },
             ].map((member) => (
               <RevealUp key={member.name} delay={member.delay}>
                 <div className="au-team-card">
