@@ -15,6 +15,12 @@
      // Routes
      app.use('/api/auth', authRoutes);
 
+     // Test Database Connection
+     const db = require('./db');
+     db.execute('SELECT 1')
+       .then(() => console.log('✅ Connected to MySQL database (leaf_life_db)'))
+       .catch(err => console.error('❌ MySQL connection failed:', err.message));
+
      // Basic Route
      app.get('/', (req, res) => {      res.send('Leaf-Life API is running...');
     });
