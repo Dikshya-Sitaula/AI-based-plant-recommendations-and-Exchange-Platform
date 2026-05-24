@@ -26,6 +26,40 @@ import {
   Target,
   Gem,
 } from 'lucide-react';
+import './Rewards.css';
+
+const LEADERBOARD = [
+  { id: 1, name: 'EcoWarrior', label: 'You', points: 2450, initial: 'EW', tone: 'gold', isYou: true },
+  { id: 2, name: 'PlantMom99', points: 2100, initial: 'PM', tone: 'rose' },
+  { id: 3, name: 'GreenThumb', points: 1950, initial: 'GT', tone: 'green' },
+  { id: 4, name: 'CactusJack', points: 1800, initial: 'CJ', tone: 'teal' },
+  { id: 5, name: 'FernLover', points: 1650, initial: 'FL', tone: 'sage' },
+];
+
+const EARN_TASKS = [
+  { icon: ScanLine, label: 'Scan a new plant', pts: 50, tone: 'green' },
+  { icon: ArrowLeftRight, label: 'Swap a plant', pts: 200, tone: 'orange' },
+  { icon: ImagePlus, label: 'Upload green progress', pts: 75, tone: 'blue' },
+  { icon: LayoutGrid, label: 'Complete green space', pts: 100, tone: 'teal' },
+  { icon: Users, label: 'Join an eco event', pts: 150, tone: 'purple' },
+  { icon: Flame, label: '7-day plant care streak', pts: 300, tone: 'red' },
+];
+
+const IMPACT_STATS = [
+  { icon: Sprout, label: 'Plants Added', value: '12', tone: 'green' },
+  { icon: Cloud, label: 'CO₂ Reduced', value: '14 kg', tone: 'blue' },
+  { icon: ThermometerSun, label: 'Cooling Impact', value: '1.2°C', tone: 'orange' },
+  { icon: Recycle, label: 'Sustainable Actions', value: '8', tone: 'teal' },
+];
+
+const REWARDS = [
+  { icon: Gift, title: 'Free Indoor Plant', pts: 2000, premium: false },
+  { icon: Sprout, title: 'Compost Starter Kit', pts: 1500, premium: false },
+  { icon: Ticket, title: 'Nursery Voucher', pts: 500, premium: false },
+  { icon: Gem, title: '1 Month Premium', pts: 3000, premium: true },
+  { icon: Package, title: 'Mystery Rare Plant', pts: 5000, premium: false, mystery: true },
+];
+
 const ICON_PROPS = { strokeWidth: 1.75, className: 'rh-icon' };
 
 export default function Rewards() {
