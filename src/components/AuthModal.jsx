@@ -16,6 +16,7 @@ export default function AuthModal({ open, onClose, onSuccess }) {
   const firstFieldRef = useRef(null);
 
   const [mode, setMode] = useState('signIn'); // 'signIn' | 'create'
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -37,8 +38,8 @@ export default function AuthModal({ open, onClose, onSuccess }) {
     const isPasswordValid = passwordCriteria.length && passwordCriteria.alphanumeric && passwordCriteria.special;
     
     if (mode === 'signIn') return isEmailValid && password.length > 0;
-    return isEmailValid && isPasswordValid && confirmPassword === password;
-  }, [email, password, confirmPassword, mode, passwordCriteria]);
+    return fullName.trim() !== '' && isEmailValid && isPasswordValid && confirmPassword === password;
+  }, [email, password, confirmPassword, mode, passwordCriteria, fullName]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -53,6 +54,7 @@ export default function AuthModal({ open, onClose, onSuccess }) {
   useEffect(() => {
     if (!open) return;
     setError('');
+    setFullName('');
     setSubmitting(false);
     setTimeout(() => firstFieldRef.current?.focus(), 0);
   }, [open]);
@@ -74,6 +76,10 @@ export default function AuthModal({ open, onClose, onSuccess }) {
     }
 
     if (mode === 'create') {
+      if (!fullName.trim()) {
+        setError('Full Name is required.');
+        return;
+      }
       if (!passwordCriteria.length || !passwordCriteria.special || !passwordCriteria.alphanumeric) {
         setError('Password does not meet criteria.');
         return;
@@ -91,6 +97,7 @@ export default function AuthModal({ open, onClose, onSuccess }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          fullName: mode === 'create' ? fullName : undefined,
           email: emailTrimmed,
           password,
           confirmPassword: mode === 'create' ? confirmPassword : undefined
@@ -104,7 +111,7 @@ export default function AuthModal({ open, onClose, onSuccess }) {
         return;
       }
 
-      onSuccess?.({ email: emailTrimmed, rememberMe, mode });
+      onSuccess?.({ email: emailTrimmed, rememberMe, mode, fullName: data.fullName });
     } catch (err) {
       setError('Could not connect to the server.');
     } finally {
@@ -166,13 +173,31 @@ export default function AuthModal({ open, onClose, onSuccess }) {
           </div>
 
           <form className="am-form" onSubmit={handleSubmit}>
+            {mode === 'create' && (
+              <div className="am-field">
+                <label className="am-label" htmlFor="am-fullname">Full Name</label>
+                <div className="am-input-wrap">
+                  <span className="am-icon" aria-hidden="true"><Leaf size={18} /></span>
+                  <input
+                    id="am-fullname"
+                    ref={firstFieldRef}
+                    className="am-input"
+                    type="text"
+                    placeholder="Jane Doe"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                  />
+                </div>
+              </div>
+            )}
+
             <div className="am-field">
               <label className="am-label" htmlFor="am-email">Email Address</label>
               <div className="am-input-wrap">
                 <span className="am-icon" aria-hidden="true"><Mail size={18} /></span>
                 <input
                   id="am-email"
-                  ref={firstFieldRef}
+                  ref={mode === 'signIn' ? firstFieldRef : null}
                   className="am-input"
                   type="email"
                   autoComplete="email"
