@@ -3,7 +3,21 @@ import { useNavigate } from 'react-router-dom';
 import { Search, Filter, Heart, MapPin, ShoppingCart, X, Minus, Plus, QrCode, CheckCircle, Loader2 } from 'lucide-react';
 import './Marketplace.css';
 
-function PlantCard({ plant, onBuyClick, onClick }) {
+function PlantCard({ plant, onAddToCart, onClick }) {
+  const [showQty, setShowQty] = useState(false);
+  const [qty, setQty] = useState(1);
+
+  const handleAction = (e) => {
+    e.stopPropagation();
+    if (!showQty) {
+      setShowQty(true);
+    } else {
+      onAddToCart(plant, qty);
+      setShowQty(false);
+      setQty(1);
+    }
+  };
+
   return (
     <div className="plant-card" onClick={() => onClick(plant.id)}>
       <div className="plant-image-wrap">
@@ -21,13 +35,26 @@ function PlantCard({ plant, onBuyClick, onClick }) {
           <span>{plant.location}</span>
         </div>
         
-        <button 
-          className="add-to-cart-card" 
-          onClick={(e) => onBuyClick(e, plant)}
-        >
-          <ShoppingCart size={16} />
-          Add to Cart
-        </button>
+        {showQty ? (
+          <div className="card-qty-selector-row" onClick={(e) => e.stopPropagation()}>
+            <div className="daraz-selector small">
+              <button className="daraz-btn" onClick={() => setQty(Math.max(1, qty - 1))}><Minus size={14} /></button>
+              <input type="text" className="daraz-input" value={qty} readOnly />
+              <button className="daraz-btn" onClick={() => setQty(Math.min(10, qty + 1))}><Plus size={14} /></button>
+            </div>
+            <button className="confirm-btn-small" onClick={handleAction}>
+              <CheckCircle size={18} />
+            </button>
+          </div>
+        ) : (
+          <button 
+            className="add-to-cart-card" 
+            onClick={handleAction}
+          >
+            <ShoppingCart size={16} />
+            Add to Cart
+          </button>
+        )}
       </div>
     </div>
   );
@@ -117,6 +144,19 @@ export default function Marketplace() {
     return true;
   });
 
+  const handleAddToCart = (plant, qty) => {
+    const existingItem = cart.find(item => item.id === plant.id);
+    if (existingItem) {
+      setCart(cart.map(item => 
+        item.id === plant.id 
+          ? { ...item, quantity: item.quantity + qty } 
+          : item
+      ));
+    } else {
+      setCart([...cart, { ...plant, quantity: qty }]);
+    }
+  };
+
   const handleBuyClick = (e, plant) => {
     e.stopPropagation();
     setSelectedPlant(plant);
@@ -124,17 +164,8 @@ export default function Marketplace() {
     setShowQuantitySelector(true);
   };
 
-  const handleAddToCart = () => {
-    const existingItem = cart.find(item => item.id === selectedPlant.id);
-    if (existingItem) {
-      setCart(cart.map(item => 
-        item.id === selectedPlant.id 
-          ? { ...item, quantity: item.quantity + quantity } 
-          : item
-      ));
-    } else {
-      setCart([...cart, { ...selectedPlant, quantity }]);
-    }
+  const handleModalAddToCart = () => {
+    handleAddToCart(selectedPlant, quantity);
     setShowQuantitySelector(false);
     setSelectedPlant(null);
   };
@@ -260,17 +291,11 @@ export default function Marketplace() {
           <PlantCard 
             key={plant.id} 
             plant={plant} 
-            onBuyClick={handleBuyClick} 
+            onAddToCart={handleAddToCart} 
             onClick={goToDetail} 
           />
         ))}
       </div>
-      
-      {filteredPlants.length === 0 && !loading && (
-        <div className="empty-state">
-          <p className="text-subtle">No plants found. Try a different search.</p>
-        </div>
-      )}
 
       {showQuantitySelector && (
         <div className="modal-overlay" onClick={closeModals}>
@@ -285,7 +310,7 @@ export default function Marketplace() {
               <span className="qty-value">{quantity}</span>
               <button type="button" onClick={() => setQuantity(Math.min(10, quantity + 1))} className="qty-btn"><Plus size={20} /></button>
             </div>
-            <button type="button" onClick={handleAddToCart} className="btn-primary w-full">Add to Cart</button>
+            <button type="button" onClick={handleModalAddToCart} className="btn-primary w-full">Add to Cart</button>
           </div>
         </div>
       )}
