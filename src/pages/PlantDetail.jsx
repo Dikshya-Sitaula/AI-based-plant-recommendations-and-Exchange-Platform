@@ -16,7 +16,10 @@ export default function PlantDetail() {
   const navigate = useNavigate();
   const [plant, setPlant] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [cart, setCart] = useState([]);
+  const [cart, setCart] = useState(() => {
+    const savedCart = localStorage.getItem('cart');
+    return savedCart ? JSON.parse(savedCart) : [];
+  });
   
   // Purchase Flow State
   const [showQuantitySelector, setShowQuantitySelector] = useState(false);
@@ -43,11 +46,6 @@ export default function PlantDetail() {
       }
     };
     fetchPlant();
-
-    const savedCart = localStorage.getItem('cart');
-    if (savedCart) {
-      setCart(JSON.parse(savedCart));
-    }
   }, [plantId]);
 
   useEffect(() => {

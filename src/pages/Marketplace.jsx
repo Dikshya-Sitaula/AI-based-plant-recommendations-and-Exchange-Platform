@@ -44,7 +44,10 @@ export default function Marketplace() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [cart, setCart] = useState([]);
+  const [cart, setCart] = useState(() => {
+    const savedCart = localStorage.getItem('cart');
+    return savedCart ? JSON.parse(savedCart) : [];
+  });
 
   // Purchase Flow State
   const [selectedPlant, setSelectedPlant] = useState(null);
@@ -55,7 +58,7 @@ export default function Marketplace() {
   const [paymentStatus, setPaymentStatus] = useState('pending'); // pending, completed
   const [success, setSuccess] = useState(false);
 
-  // Restore session and cart from localStorage on mount
+  // Restore session from localStorage on mount
   useEffect(() => {
     const savedSession = localStorage.getItem('pendingMarketplacePurchase');
     if (savedSession) {
@@ -64,11 +67,6 @@ export default function Marketplace() {
       setSelectedPlant(plant);
       setQuantity(savedQuantity);
       setShowQRPrompt(true);
-    }
-
-    const savedCart = localStorage.getItem('cart');
-    if (savedCart) {
-      setCart(JSON.parse(savedCart));
     }
   }, []);
 
