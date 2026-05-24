@@ -48,7 +48,7 @@
 
 .marketplace-header {
   margin-bottom: 1.5rem;
-  padding-right: 4rem; /* Added space for floating cart */
+  padding-right: 4rem;
 }
 
 .search-bar {
@@ -91,8 +91,8 @@
   overflow-x: auto;
   padding-bottom: 1rem;
   margin-bottom: 1rem;
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 .tabs-container::-webkit-scrollbar {
@@ -149,114 +149,6 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: all 0.3s ease;
-  cursor: pointer;
-}
-
-.marketplace-img.blur {
-  filter: blur(8px) brightness(0.7);
-  transform: scale(1.1);
-}
-
-.card-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  z-index: 10;
-  animation: fade-in 0.2s ease-out;
-}
-
-@keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.close-overlay {
-  position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  background: rgba(255, 255, 255, 0.2);
-  border: none;
-  color: white;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.close-overlay:hover {
-  background: rgba(255, 255, 255, 0.4);
-}
-
-.overlay-add-btn {
-  background: white;
-  color: var(--primary);
-  border: none;
-  padding: 0.75rem 1.25rem;
-  border-radius: var(--radius-full);
-  font-weight: 800;
-  font-size: 0.9rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  cursor: pointer;
-  box-shadow: var(--shadow-md);
-  transition: all 0.2s;
-}
-
-.overlay-add-btn:hover {
-  transform: scale(1.05);
-  box-shadow: var(--shadow-lg);
-}
-
-.overlay-qty-box {
-  background: white;
-  padding: 1rem;
-  border-radius: var(--radius-lg);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-  box-shadow: var(--shadow-lg);
-  width: 90%;
-}
-
-.qty-title {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: var(--text-muted);
-  text-transform: uppercase;
-}
-
-.confirm-btn-circle {
-  background: var(--primary);
-  color: white;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s;
-  box-shadow: var(--shadow-md);
-}
-
-.confirm-btn-circle:hover {
-  background: var(--primary-dark);
-  transform: scale(1.1);
 }
 
 .badge {
@@ -286,10 +178,6 @@
   justify-content: center;
   color: var(--text-muted);
   backdrop-filter: blur(4px);
-}
-
-.like-btn:hover {
-  color: #ff4b4b;
 }
 
 .plant-details {
@@ -344,9 +232,82 @@
   transition: all 0.2s;
 }
 
-.add-to-cart-card:hover {
-  background: var(--primary-dark);
-  transform: translateY(-2px);
+.card-qty-selector-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.daraz-selector {
+  display: flex;
+  align-items: center;
+  border: 1px solid #dadada;
+  border-radius: 2px;
+  background: white;
+}
+
+.daraz-selector.small .daraz-btn {
+  width: 28px;
+  height: 28px;
+}
+
+.daraz-selector.small .daraz-input {
+  width: 32px;
+  height: 28px;
+}
+
+.daraz-btn {
+  width: 32px;
+  height: 32px;
+  background: #f5f5f5;
+  border: none;
+  font-size: 1.1rem;
+  color: #757575;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.daraz-btn:disabled {
+  color: #d9d9d9;
+}
+
+.daraz-input {
+  width: 40px;
+  height: 32px;
+  border: none;
+  border-left: 1px solid #dadada;
+  border-right: 1px solid #dadada;
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.confirm-btn-small {
+  background: var(--primary);
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.confirm-btn-circle {
+  background: var(--primary);
+  color: white;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
   box-shadow: var(--shadow-md);
 }
 

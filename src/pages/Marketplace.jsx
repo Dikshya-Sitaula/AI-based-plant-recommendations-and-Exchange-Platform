@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, Heart, MapPin, ShoppingCart } from 'lucide-react';
+import { Search, Filter, Heart, MapPin, ShoppingCart, Check } from 'lucide-react';
 import './Marketplace.css';
 
 // Mock Data using all 47 categories from public/plants
@@ -54,86 +54,39 @@ const PLANTS = [
   { id: 47, name: 'ZZ Plant', type: 'buy', price: '$32', location: '3.1 miles away', image: '/plants/ZZ Plant (Zamioculcas zamiifolia)/1.jpg' },
 ];
 
-import { Check, X } from 'lucide-react';
-
 function PlantCard({ plant, onAddToCart, onClick }) {
-  const [mode, setMode] = useState('normal'); // 'normal', 'action', 'quantity'
+  const [isSelecting, setIsSelecting] = useState(false);
   const [quantity, setQuantity] = useState(1);
 
-  const handleImageClick = (e) => {
+  const handleAddToCartClick = (e) => {
     e.stopPropagation();
-    setMode('action');
-  };
-
-  const startQuantity = (e) => {
-    e.stopPropagation();
-    setMode('quantity');
+    setIsSelecting(true);
   };
 
   const confirmAdd = (e) => {
     e.stopPropagation();
     onAddToCart(plant.name, quantity);
-    setMode('normal');
+    setIsSelecting(false);
     setQuantity(1);
   };
 
-  const cancel = (e) => {
+  const increment = (e) => {
     e.stopPropagation();
-    setMode('normal');
-    setQuantity(1);
+    setQuantity(q => q + 1);
+  };
+
+  const decrement = (e) => {
+    e.stopPropagation();
+    setQuantity(q => Math.max(1, q - 1));
   };
 
   return (
     <div className="plant-card" onClick={() => onClick(plant.id)}>
       <div className="plant-image-wrap">
-        <img 
-          src={plant.image} 
-          alt={plant.name} 
-          className={`marketplace-img ${mode !== 'normal' ? 'blur' : ''}`} 
-          onClick={handleImageClick}
-        />
+        <img src={plant.image} alt={plant.name} className="marketplace-img" />
         <div className="badge">{plant.type}</div>
         <button className="like-btn" onClick={(e) => e.stopPropagation()}><Heart size={18} /></button>
-
-        {mode === 'action' && (
-          <div className="card-overlay" onClick={(e) => e.stopPropagation()}>
-            <button className="close-overlay" onClick={cancel}><X size={16} /></button>
-            <button className="overlay-add-btn" onClick={startQuantity}>
-              <ShoppingCart size={20} />
-              ADD TO CART
-            </button>
-          </div>
-        )}
-
-        {mode === 'quantity' && (
-          <div className="card-overlay" onClick={(e) => e.stopPropagation()}>
-            <button className="close-overlay" onClick={cancel}><X size={16} /></button>
-            <div className="overlay-qty-box">
-              <p className="qty-title">Select Quantity</p>
-              <div className="daraz-selector">
-                <button 
-                  className="daraz-btn" 
-                  disabled={quantity <= 1}
-                  onClick={() => setQuantity(q => q - 1)}
-                >
-                  -
-                </button>
-                <input type="text" className="daraz-input" value={quantity} readOnly />
-                <button 
-                  className="daraz-btn" 
-                  onClick={() => setQuantity(q => q + 1)}
-                >
-                  +
-                </button>
-              </div>
-              <button className="confirm-btn-circle" onClick={confirmAdd}>
-                <Check size={24} />
-              </button>
-            </div>
-          </div>
-        )}
       </div>
-
       <div className="plant-details">
         <div className="plant-info-top">
           <h3>{plant.name}</h3>
@@ -143,16 +96,27 @@ function PlantCard({ plant, onAddToCart, onClick }) {
           <MapPin size={14} />
           <span>{plant.location}</span>
         </div>
-        <button 
-          className="add-to-cart-card" 
-          onClick={(e) => {
-            e.stopPropagation();
-            setMode('quantity');
-          }}
-        >
-          <ShoppingCart size={16} />
-          Add to Cart
-        </button>
+        
+        {!isSelecting ? (
+          <button 
+            className="add-to-cart-card" 
+            onClick={handleAddToCartClick}
+          >
+            <ShoppingCart size={16} />
+            Add to Cart
+          </button>
+        ) : (
+          <div className="card-qty-selector-row">
+            <div className="daraz-selector small">
+              <button className="daraz-btn" disabled={quantity <= 1} onClick={decrement}>-</button>
+              <input type="text" className="daraz-input" value={quantity} readOnly />
+              <button className="daraz-btn" onClick={increment}>+</button>
+            </div>
+            <button className="confirm-btn-small" onClick={confirmAdd}>
+              <Check size={18} />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

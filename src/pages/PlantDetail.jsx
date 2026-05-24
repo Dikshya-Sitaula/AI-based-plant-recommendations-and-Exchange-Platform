@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Thermometer, Sun, Wind, MapPin, ShoppingCart } from 'lucide-react';
+import { ArrowLeft, Thermometer, Sun, Wind, MapPin, ShoppingCart, Check } from 'lucide-react';
 import PLANT_DETAILS from './plantData';
 import './PlantDetail.css';
 
@@ -57,6 +58,8 @@ const PLANTS_LIST = [
 export default function PlantDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [isSelecting, setIsSelecting] = useState(false);
+  const [quantity, setQuantity] = useState(1);
   const plantId = parseInt(id);
   
   const detail = PLANT_DETAILS[plantId];
@@ -73,9 +76,13 @@ export default function PlantDetail() {
     );
   }
 
-  const addToCart = (e) => {
+  const startSelecting = () => setIsSelecting(true);
+
+  const confirmAdd = (e) => {
     e.stopPropagation();
-    alert(`${basicInfo.name} added to cart!`);
+    alert(`Successfully added ${quantity} ${basicInfo.name}(s) to your cart!`);
+    setIsSelecting(false);
+    setQuantity(1);
   };
 
   return (
@@ -135,10 +142,37 @@ export default function PlantDetail() {
             </div>
           </div>
 
-          <button className="add-to-cart-big" onClick={addToCart}>
-            <ShoppingCart size={20} />
-            Add to Cart
-          </button>
+          <div className="detail-actions">
+            {!isSelecting ? (
+              <button className="add-to-cart-big" onClick={startSelecting}>
+                <ShoppingCart size={20} />
+                Add to Cart
+              </button>
+            ) : (
+              <div className="qty-row-detail">
+                <span className="qty-label-detail">Quantity</span>
+                <div className="daraz-selector">
+                  <button 
+                    className="daraz-btn" 
+                    disabled={quantity <= 1}
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  >
+                    -
+                  </button>
+                  <input type="text" className="daraz-input" value={quantity} readOnly />
+                  <button 
+                    className="daraz-btn" 
+                    onClick={() => setQuantity(quantity + 1)}
+                  >
+                    +
+                  </button>
+                </div>
+                <button className="confirm-btn-circle" onClick={confirmAdd}>
+                  <Check size={24} />
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
