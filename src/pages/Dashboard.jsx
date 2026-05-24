@@ -33,13 +33,14 @@ const CARE_TASKS = [
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const userName = localStorage.getItem('leafLifeUserName') || 'Alex';
 
   return (
     <div className="dashboard-content animate-fade-in">
       {/* Header */}
       <header className="dashboard-header">
         <div>
-          <h1 className="dashboard-greeting">Hi, Alex! 👋</h1>
+          <h1 className="dashboard-greeting">Hi, {userName}! 👋</h1>
           <p className="dashboard-subtext">Your urban jungle is thriving.</p>
         </div>
       </header>

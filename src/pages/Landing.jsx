@@ -64,8 +64,11 @@ export default function Landing() {
     navigate(path);
   };
 
-  const handleModalSubmit = () => {
+  const handleModalSubmit = (data) => {
     localStorage.setItem('leafLifeSubmitted', 'true');
+    localStorage.setItem('leafLifeAuthenticated', 'true');
+    const nameToSet = data.fullName || data.email.split('@')[0];
+    localStorage.setItem('leafLifeUserName', nameToSet);
     setIsSubmitted(true);
     setActiveNav('features');
     setShowModal(false);
