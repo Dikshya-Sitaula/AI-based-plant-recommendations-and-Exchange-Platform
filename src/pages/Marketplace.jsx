@@ -54,6 +54,110 @@ const PLANTS = [
   { id: 47, name: 'ZZ Plant', type: 'buy', price: '$32', location: '3.1 miles away', image: '/plants/ZZ Plant (Zamioculcas zamiifolia)/1.jpg' },
 ];
 
+import { Check, X } from 'lucide-react';
+
+function PlantCard({ plant, onAddToCart, onClick }) {
+  const [mode, setMode] = useState('normal'); // 'normal', 'action', 'quantity'
+  const [quantity, setQuantity] = useState(1);
+
+  const handleImageClick = (e) => {
+    e.stopPropagation();
+    setMode('action');
+  };
+
+  const startQuantity = (e) => {
+    e.stopPropagation();
+    setMode('quantity');
+  };
+
+  const confirmAdd = (e) => {
+    e.stopPropagation();
+    onAddToCart(plant.name, quantity);
+    setMode('normal');
+    setQuantity(1);
+  };
+
+  const cancel = (e) => {
+    e.stopPropagation();
+    setMode('normal');
+    setQuantity(1);
+  };
+
+  return (
+    <div className="plant-card" onClick={() => onClick(plant.id)}>
+      <div className="plant-image-wrap">
+        <img 
+          src={plant.image} 
+          alt={plant.name} 
+          className={`marketplace-img ${mode !== 'normal' ? 'blur' : ''}`} 
+          onClick={handleImageClick}
+        />
+        <div className="badge">{plant.type}</div>
+        <button className="like-btn" onClick={(e) => e.stopPropagation()}><Heart size={18} /></button>
+
+        {mode === 'action' && (
+          <div className="card-overlay" onClick={(e) => e.stopPropagation()}>
+            <button className="close-overlay" onClick={cancel}><X size={16} /></button>
+            <button className="overlay-add-btn" onClick={startQuantity}>
+              <ShoppingCart size={20} />
+              ADD TO CART
+            </button>
+          </div>
+        )}
+
+        {mode === 'quantity' && (
+          <div className="card-overlay" onClick={(e) => e.stopPropagation()}>
+            <button className="close-overlay" onClick={cancel}><X size={16} /></button>
+            <div className="overlay-qty-box">
+              <p className="qty-title">Select Quantity</p>
+              <div className="daraz-selector">
+                <button 
+                  className="daraz-btn" 
+                  disabled={quantity <= 1}
+                  onClick={() => setQuantity(q => q - 1)}
+                >
+                  -
+                </button>
+                <input type="text" className="daraz-input" value={quantity} readOnly />
+                <button 
+                  className="daraz-btn" 
+                  onClick={() => setQuantity(q => q + 1)}
+                >
+                  +
+                </button>
+              </div>
+              <button className="confirm-btn-circle" onClick={confirmAdd}>
+                <Check size={24} />
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="plant-details">
+        <div className="plant-info-top">
+          <h3>{plant.name}</h3>
+          <p className="price">{plant.price}</p>
+        </div>
+        <div className="location">
+          <MapPin size={14} />
+          <span>{plant.location}</span>
+        </div>
+        <button 
+          className="add-to-cart-card" 
+          onClick={(e) => {
+            e.stopPropagation();
+            setMode('quantity');
+          }}
+        >
+          <ShoppingCart size={16} />
+          Add to Cart
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function Marketplace() {
   const [activeTab, setActiveTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -66,10 +170,8 @@ export default function Marketplace() {
     return true;
   });
 
-  const addToCart = (e, plantName) => {
-    e.stopPropagation();
-    setCartCount(prev => prev + 1);
-    // Remove alert for smoother experience, icon badge handles feedback
+  const handleAddToCart = (plantName, quantity) => {
+    setCartCount(prev => prev + quantity);
   };
 
   const goToDetail = (id) => {
@@ -111,30 +213,12 @@ export default function Marketplace() {
 
       <div className="plants-grid">
         {filteredPlants.map(plant => (
-          <div key={plant.id} className="plant-card" onClick={() => goToDetail(plant.id)}>
-            <div className="plant-image-wrap">
-              <img src={plant.image} alt={plant.name} className="marketplace-img" />
-              <div className="badge">{plant.type}</div>
-              <button className="like-btn" onClick={(e) => e.stopPropagation()}><Heart size={18} /></button>
-            </div>
-            <div className="plant-details">
-              <div className="plant-info-top">
-                <h3>{plant.name}</h3>
-                <p className="price">{plant.price}</p>
-              </div>
-              <div className="location">
-                <MapPin size={14} />
-                <span>{plant.location}</span>
-              </div>
-              <button 
-                className="add-to-cart-card" 
-                onClick={(e) => addToCart(e, plant.name)}
-              >
-                <ShoppingCart size={16} />
-                Add to Cart
-              </button>
-            </div>
-          </div>
+          <PlantCard 
+            key={plant.id} 
+            plant={plant} 
+            onAddToCart={handleAddToCart} 
+            onClick={goToDetail} 
+          />
         ))}
       </div>
       
