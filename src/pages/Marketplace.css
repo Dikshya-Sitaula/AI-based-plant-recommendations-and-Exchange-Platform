@@ -5,9 +5,7 @@
 }
 
 .floating-cart {
-  position: fixed;
-  top: 0.5rem;
-  right: 1rem;
+  position: relative;
   background: white;
   width: 50px;
   height: 50px;
@@ -15,16 +13,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-md);
   color: var(--primary);
-  z-index: 100;
+  z-index: 10;
   cursor: pointer;
   border: 1px solid var(--border-color);
   transition: all 0.3s ease;
 }
 
 .floating-cart:hover {
-  transform: scale(1.1);
+  transform: scale(1.05);
   background: var(--bg-secondary);
 }
 
@@ -48,7 +46,6 @@
 
 .marketplace-header {
   margin-bottom: 1.5rem;
-  padding-right: 4rem;
 }
 
 .search-bar {

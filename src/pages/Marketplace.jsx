@@ -251,13 +251,14 @@ export default function Marketplace() {
 
   return (
     <div className="animate-fade-in marketplace-container">
-      <div className="floating-cart" onClick={() => { console.log('Opening Cart from fixed button...'); setShowCart(true); }}>
-        <ShoppingCart size={24} />
-        {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
-      </div>
-
       <div className="marketplace-header">
-        <h2 className="title-medium">Marketplace</h2>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h2 className="title-medium">Marketplace</h2>
+          <div className="floating-cart" onClick={() => setShowCart(true)}>
+            <ShoppingCart size={24} />
+            {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
+          </div>
+        </div>
         <div className="search-bar">
           <Search size={20} className="icon" />
           <input 
