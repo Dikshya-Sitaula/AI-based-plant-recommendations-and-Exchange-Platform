@@ -57,6 +57,7 @@ const PLANTS_LIST = [
 export default function PlantDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [quantity, setQuantity] = useState(1);
   const plantId = parseInt(id);
   
   const detail = PLANT_DETAILS[plantId];
@@ -75,8 +76,7 @@ export default function PlantDetail() {
 
   const addToCart = (e) => {
     e.stopPropagation();
-    // In a real app, this would use a Cart Context or Redux
-    alert(`${basicInfo.name} added to cart!`);
+    alert(`Successfully added ${quantity} ${basicInfo.name}(s) to your cart!`);
   };
 
   return (
@@ -136,10 +136,27 @@ export default function PlantDetail() {
             </div>
           </div>
 
-          <button className="add-to-cart-big" onClick={addToCart}>
-            <ShoppingCart size={20} />
-            Add to Cart
-          </button>
+          <div className="detail-actions">
+            <div className="quantity-selector">
+              <button 
+                className="qty-btn" 
+                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+              >
+                -
+              </button>
+              <span className="qty-value">{quantity}</span>
+              <button 
+                className="qty-btn" 
+                onClick={() => setQuantity(quantity + 1)}
+              >
+                +
+              </button>
+            </div>
+            <button className="add-to-cart-big" onClick={addToCart}>
+              <ShoppingCart size={20} />
+              Add to Cart
+            </button>
+          </div>
         </div>
       </div>
     </div>

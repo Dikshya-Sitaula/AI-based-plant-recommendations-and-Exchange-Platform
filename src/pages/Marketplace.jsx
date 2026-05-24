@@ -67,7 +67,16 @@ export default function Marketplace() {
 
   const addToCart = (e, plantName) => {
     e.stopPropagation();
-    alert(`${plantName} added to cart!`);
+    const qty = window.prompt(`How many ${plantName} would you like to add to your cart?`, "1");
+    
+    if (qty === null) return; // User cancelled
+
+    const numQty = parseInt(qty);
+    if (!isNaN(numQty) && numQty > 0) {
+      alert(`Successfully added ${numQty} ${plantName}(s) to your cart!`);
+    } else {
+      alert("Please enter a valid quantity (number greater than 0).");
+    }
   };
 
   const goToDetail = (id) => {
