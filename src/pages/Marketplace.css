@@ -6,8 +6,8 @@
 
 .floating-cart {
   position: fixed;
-  top: 1rem;
-  right: 1.5rem;
+  top: 0.5rem;
+  right: 1rem;
   background: white;
   width: 50px;
   height: 50px;
@@ -48,6 +48,7 @@
 
 .marketplace-header {
   margin-bottom: 1.5rem;
+  padding-right: 4rem; /* Added space for floating cart */
 }
 
 .search-bar {
