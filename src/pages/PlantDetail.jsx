@@ -1,10 +1,10 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Search, Filter, Heart, MapPin, ShoppingCart } from 'lucide-react';
-import './Marketplace.css';
+import { useParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft, Thermometer, Sun, Wind, MapPin, ShoppingCart } from 'lucide-react';
+import PLANT_DETAILS from './plantData';
+import './PlantDetail.css';
 
-// Mock Data using all 47 categories from public/plants
-const PLANTS = [
+// Using the same mock data array to get images and prices
+const PLANTS_LIST = [
   { id: 1, name: 'African Violet', type: 'buy', price: '$12', location: '1.2 miles away', image: '/plants/African Violet (Saintpaulia ionantha)/1.jpg' },
   { id: 2, name: 'Aloe Vera', type: 'sell', price: '$10', location: 'You', image: '/plants/Aloe Vera/1.jpg' },
   { id: 3, name: 'Anthurium', type: 'buy', price: '$28', location: '3.5 miles away', image: '/plants/Anthurium (Anthurium andraeanum)/1.jpeg' },
@@ -54,88 +54,94 @@ const PLANTS = [
   { id: 47, name: 'ZZ Plant', type: 'buy', price: '$32', location: '3.1 miles away', image: '/plants/ZZ Plant (Zamioculcas zamiifolia)/1.jpg' },
 ];
 
-export default function Marketplace() {
-  const [activeTab, setActiveTab] = useState('all');
-  const [searchQuery, setSearchQuery] = useState('');
+export default function PlantDetail() {
+  const { id } = useParams();
   const navigate = useNavigate();
+  const plantId = parseInt(id);
+  
+  const detail = PLANT_DETAILS[plantId];
+  const basicInfo = PLANTS_LIST.find(p => p.id === plantId);
 
-  const filteredPlants = PLANTS.filter(plant => {
-    if (activeTab !== 'all' && plant.type !== activeTab) return false;
-    if (searchQuery && !plant.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
-    return true;
-  });
+  if (!detail || !basicInfo) {
+    return (
+      <div className="plant-detail-container">
+        <button className="back-btn" onClick={() => navigate('/marketplace')}>
+          <ArrowLeft size={20} /> Back to Marketplace
+        </button>
+        <div className="error-state">Plant not found</div>
+      </div>
+    );
+  }
 
-  const addToCart = (e, plantName) => {
+  const addToCart = (e) => {
     e.stopPropagation();
-    alert(`${plantName} added to cart!`);
-  };
-
-  const goToDetail = (id) => {
-    navigate(`/marketplace/${id}`);
+    // In a real app, this would use a Cart Context or Redux
+    alert(`${basicInfo.name} added to cart!`);
   };
 
   return (
-    <div className="animate-fade-in marketplace-container">
-      <div className="marketplace-header">
-        <h2 className="title-medium">Marketplace</h2>
-        <div className="search-bar">
-          <Search size={20} className="icon" />
-          <input 
-            type="text" 
-            placeholder="Search plants..." 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          <button className="btn-icon"><Filter size={20} /></button>
+    <div className="animate-fade-in plant-detail-container">
+      <button className="back-btn" onClick={() => navigate('/marketplace')}>
+        <ArrowLeft size={20} /> Back to Marketplace
+      </button>
+
+      <div className="detail-layout">
+        <div className="detail-image-section">
+          <img src={basicInfo.image} alt={basicInfo.name} className="detail-img" />
+          <div className="detail-badge">{basicInfo.type}</div>
         </div>
-      </div>
 
-      <div className="tabs-container">
-        {['all', 'swap', 'thrift', 'buy', 'sell'].map(tab => (
-          <button 
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`tab-button ${activeTab === tab ? 'active' : ''}`}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
-
-      <div className="plants-grid">
-        {filteredPlants.map(plant => (
-          <div key={plant.id} className="plant-card" onClick={() => goToDetail(plant.id)}>
-            <div className="plant-image-wrap">
-              <img src={plant.image} alt={plant.name} className="marketplace-img" />
-              <div className="badge">{plant.type}</div>
-              <button className="like-btn" onClick={(e) => e.stopPropagation()}><Heart size={18} /></button>
+        <div className="detail-info-section">
+          <div className="detail-header">
+            <div>
+              <h1 className="detail-title">{detail.name}</h1>
+              <p className="scientific-name"><i>{detail.scientificName}</i></p>
             </div>
-            <div className="plant-details">
-              <div className="plant-info-top">
-                <h3>{plant.name}</h3>
-                <p className="price">{plant.price}</p>
+            <p className="detail-price">{basicInfo.price}</p>
+          </div>
+
+          <p className="detail-description">{detail.description}</p>
+
+          <div className="detail-grid">
+            <div className="detail-item">
+              <MapPin className="detail-icon" size={24} />
+              <div className="detail-text">
+                <span className="detail-label">Suitable Location</span>
+                <span className="detail-value">{detail.suitableLocation}</span>
               </div>
-              <div className="location">
-                <MapPin size={14} />
-                <span>{plant.location}</span>
+            </div>
+
+            <div className="detail-item">
+              <Thermometer className="detail-icon" size={24} />
+              <div className="detail-text">
+                <span className="detail-label">Temperature Range</span>
+                <span className="detail-value">{detail.minTemp} - {detail.maxTemp}</span>
               </div>
-              <button 
-                className="add-to-cart-card" 
-                onClick={(e) => addToCart(e, plant.name)}
-              >
-                <ShoppingCart size={16} />
-                Add to Cart
-              </button>
+            </div>
+
+            <div className="detail-item">
+              <Sun className="detail-icon" size={24} />
+              <div className="detail-text">
+                <span className="detail-label">Sunlight</span>
+                <span className="detail-value">{detail.sunlight}</span>
+              </div>
+            </div>
+
+            <div className="detail-item">
+              <Wind className="detail-icon" size={24} />
+              <div className="detail-text">
+                <span className="detail-label">Air Quality Score</span>
+                <span className="detail-value">{detail.airQualityScore}/10</span>
+              </div>
             </div>
           </div>
-        ))}
-      </div>
-      
-      {filteredPlants.length === 0 && (
-        <div className="empty-state">
-          <p className="text-subtle">No plants found. Try a different search.</p>
+
+          <button className="add-to-cart-big" onClick={addToCart}>
+            <ShoppingCart size={20} />
+            Add to Cart
+          </button>
         </div>
-      )}
+      </div>
     </div>
   );
 }
