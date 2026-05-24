@@ -57,6 +57,7 @@ const PLANTS = [
 export default function Marketplace() {
   const [activeTab, setActiveTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [cartCount, setCartCount] = useState(0);
   const navigate = useNavigate();
 
   const filteredPlants = PLANTS.filter(plant => {
@@ -67,7 +68,8 @@ export default function Marketplace() {
 
   const addToCart = (e, plantName) => {
     e.stopPropagation();
-    alert(`${plantName} added to cart!`);
+    setCartCount(prev => prev + 1);
+    // Remove alert for smoother experience, icon badge handles feedback
   };
 
   const goToDetail = (id) => {
@@ -76,6 +78,11 @@ export default function Marketplace() {
 
   return (
     <div className="animate-fade-in marketplace-container">
+      <div className="floating-cart">
+        <ShoppingCart size={24} />
+        {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
+      </div>
+
       <div className="marketplace-header">
         <h2 className="title-medium">Marketplace</h2>
         <div className="search-bar">
