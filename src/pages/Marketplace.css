@@ -94,6 +94,24 @@
   box-shadow: var(--shadow-md);
 }
 
+.plant-image-wrap {
+  position: relative;
+  aspect-ratio: 1;
+  background: var(--bg-secondary);
+  overflow: hidden;
+}
+
+.marketplace-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.plant-card:hover .marketplace-img {
+  transform: scale(1.05);
+}
+
 .plant-image {
   position: relative;
   aspect-ratio: 1;

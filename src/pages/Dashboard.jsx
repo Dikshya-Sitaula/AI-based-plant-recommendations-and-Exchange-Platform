@@ -8,21 +8,42 @@ const COLLECTION_PLANTS = [
     name: 'Monstera Deliciosa', 
     location: 'Living Room', 
     status: 'Healthy • Last watered 2d ago', 
-    image: 'https://images.unsplash.com/photo-1614594975525-e45190c55d0b?q=80&w=600&auto=format&fit=crop' 
+    image: '/plants/Monstera Deliciosa (Monstera deliciosa)/1.jpg' 
   },
   { 
     id: 2, 
     name: 'Snake Plant', 
     location: 'Bedroom', 
     status: 'Needs water • Last watered 14d ago', 
-    image: 'https://images.unsplash.com/photo-1593482892290-f54927eba522?q=80&w=600&auto=format&fit=crop' 
+    image: '/plants/Snake plant (Sanseviera)/1.jpg' 
   },
   { 
     id: 3, 
     name: 'Golden Pothos', 
     location: 'Balcony', 
     status: 'Healthy • Last watered 5d ago', 
-    image: 'https://images.unsplash.com/photo-1558449028-b53a39d100fc?q=80&w=600&auto=format&fit=crop' 
+    image: '/plants/Pothos (Ivy arum)/1.jpg' 
+  },
+  { 
+    id: 4, 
+    name: 'Aloe Vera', 
+    location: 'Kitchen', 
+    status: 'Healthy • Last watered 1d ago', 
+    image: '/plants/Aloe Vera/1.jpg' 
+  },
+  { 
+    id: 5, 
+    name: 'ZZ Plant', 
+    location: 'Hallway', 
+    status: 'Healthy • Last watered 10d ago', 
+    image: '/plants/ZZ Plant (Zamioculcas zamiifolia)/1.jpg' 
+  },
+  { 
+    id: 6, 
+    name: 'Peace Lily', 
+    location: 'Office', 
+    status: 'Needs water • Last watered 3d ago', 
+    image: '/plants/Peace lily/1.jpg' 
   },
 ];
 
