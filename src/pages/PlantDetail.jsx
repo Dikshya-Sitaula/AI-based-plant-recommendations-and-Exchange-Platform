@@ -1,71 +1,158 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Thermometer, Sun, Wind, MapPin, ShoppingCart, Check } from 'lucide-react';
+import { ArrowLeft, Thermometer, Sun, Wind, MapPin, ShoppingCart, X, Minus, Plus, QrCode, CheckCircle, Loader2 } from 'lucide-react';
 import PLANT_DETAILS from './plantData';
 import './PlantDetail.css';
 
-// Using the same mock data array to get images and prices
+// Using the same mock data array for consistency with detailed info
 const PLANTS_LIST = [
-  { id: 1, name: 'African Violet', type: 'buy', price: '$12', location: '1.2 miles away', image: '/plants/African Violet (Saintpaulia ionantha)/1.jpg' },
-  { id: 2, name: 'Aloe Vera', type: 'sell', price: '$10', location: 'You', image: '/plants/Aloe Vera/1.jpg' },
-  { id: 3, name: 'Anthurium', type: 'buy', price: '$28', location: '3.5 miles away', image: '/plants/Anthurium (Anthurium andraeanum)/1.jpeg' },
-  { id: 4, name: 'Areca Palm', type: 'buy', price: '$35', location: '5 miles away', image: '/plants/Areca Palm (Dypsis lutescens)/1.jpg' },
-  { id: 5, name: 'Asparagus Fern', type: 'thrift', price: '$8', location: '2.1 miles away', image: '/plants/Asparagus Fern (Asparagus setaceus)/1.jpg' },
-  { id: 6, name: 'Begonia', type: 'swap', price: 'Trade', location: '0.8 miles away', image: '/plants/Begonia (Begonia spp.)/1.webp' },
-  { id: 7, name: 'Bird of Paradise', type: 'buy', price: '$55', location: '10 miles away', image: '/plants/Bird of Paradise (Strelitzia reginae)/1.jpg' },
-  { id: 8, name: 'Birds Nest Fern', type: 'buy', price: '$22', location: '4.2 miles away', image: '/plants/Birds Nest Fern (Asplenium nidus)/1.jpg' },
-  { id: 9, name: 'Boston Fern', type: 'thrift', price: '$15', location: '1.5 miles away', image: '/plants/Boston Fern (Nephrolepis exaltata)/1.jpg' },
-  { id: 10, name: 'Calathea', type: 'buy', price: '$24', location: '3 miles away', image: '/plants/Calathea/1.jpg' },
-  { id: 11, name: 'Cast Iron Plant', type: 'buy', price: '$30', location: '6 miles away', image: '/plants/Cast Iron Plant (Aspidistra elatior)/1.jpeg' },
-  { id: 12, name: 'Chinese Evergreen', type: 'sell', price: '$18', location: 'You', image: '/plants/Chinese evergreen (Aglaonema)/1.jpg' },
-  { id: 13, name: 'Chinese Money Plant', type: 'swap', price: 'Trade', location: '1.2 miles away', image: '/plants/Chinese Money Plant (Pilea peperomioides)/1.jpg' },
-  { id: 14, name: 'Christmas Cactus', type: 'buy', price: '$20', location: '4 miles away', image: '/plants/Christmas Cactus/1.jpg' },
-  { id: 15, name: 'Chrysanthemum', type: 'buy', price: '$15', location: '2.5 miles away', image: '/plants/Chrysanthemum/10.jpeg' },
-  { id: 16, name: 'Ctenanthe', type: 'buy', price: '$26', location: '3.8 miles away', image: '/plants/Ctenanthe/1.jpg' },
-  { id: 17, name: 'Daffodils', type: 'buy', price: '$10', location: '5.5 miles away', image: '/plants/Daffodils (Narcissus spp.)/1.jpg' },
-  { id: 18, name: 'Dracaena', type: 'buy', price: '$32', location: '7 miles away', image: '/plants/Dracaena/1.jpg' },
-  { id: 19, name: 'Dumb Cane', type: 'thrift', price: '$12', location: '2.8 miles away', image: '/plants/Dumb Cane (Dieffenbachia spp.)/1.jpg' },
-  { id: 20, name: 'Elephant Ear', type: 'buy', price: '$40', location: '8 miles away', image: '/plants/Elephant Ear (Alocasia spp.)/1.jpg' },
-  { id: 21, name: 'English Ivy', type: 'swap', price: 'Trade', location: '1.1 miles away', image: '/plants/English Ivy (Hedera helix)/1.jpg' },
-  { id: 22, name: 'Hyacinth', type: 'buy', price: '$14', location: '4.5 miles away', image: '/plants/Hyacinth (Hyacinthus orientalis)/1.jpg' },
-  { id: 23, name: 'Iron Cross Begonia', type: 'buy', price: '$25', location: '3.2 miles away', image: '/plants/Iron Cross begonia (Begonia masoniana)/1.jpg' },
-  { id: 24, name: 'Jade Plant', type: 'sell', price: '$12', location: 'You', image: '/plants/Jade plant (Crassula ovata)/1.jpg' },
-  { id: 25, name: 'Kalanchoe', type: 'buy', price: '$18', location: '2.2 miles away', image: '/plants/Kalanchoe/1.jpg' },
-  { id: 26, name: 'Lilium', type: 'buy', price: '$20', location: '6.5 miles away', image: '/plants/Lilium (Hemerocallis)/1.jpeg' },
-  { id: 27, name: 'Lily of the Valley', type: 'buy', price: '$16', location: '4.8 miles away', image: '/plants/Lily of the valley (Convallaria majalis)/1.jpg' },
-  { id: 28, name: 'Money Tree', type: 'buy', price: '$38', location: '9 miles away', image: '/plants/Money Tree (Pachira aquatica)/1.jpg' },
-  { id: 29, name: 'Monstera Deliciosa', type: 'buy', price: '$45', location: '3 miles away', image: '/plants/Monstera Deliciosa (Monstera deliciosa)/1.jpg' },
-  { id: 30, name: 'Orchid', type: 'buy', price: '$30', location: '5 miles away', image: '/plants/Orchid/1.jpg' },
-  { id: 31, name: 'Parlor Palm', type: 'buy', price: '$28', location: '4.1 miles away', image: '/plants/Parlor Palm (Chamaedorea elegans)/1.jpg' },
-  { id: 32, name: 'Peace Lily', type: 'swap', price: 'Trade', location: '2.5 miles away', image: '/plants/Peace lily/1.jpg' },
-  { id: 33, name: 'Poinsettia', type: 'buy', price: '$20', location: '3.6 miles away', image: '/plants/Poinsettia (Euphorbia pulcherrima)/1.jpg' },
-  { id: 34, name: 'Polka Dot Plant', type: 'buy', price: '$14', location: '1.8 miles away', image: '/plants/Polka Dot Plant (Hypoestes phyllostachya)/1.jpeg' },
-  { id: 35, name: 'Ponytail Palm', type: 'buy', price: '$35', location: '7.5 miles away', image: '/plants/Ponytail Palm (Beaucarnea recurvata)/1.jpg' },
-  { id: 36, name: 'Pothos', type: 'thrift', price: '$10', location: '0.9 miles away', image: '/plants/Pothos (Ivy arum)/1.jpg' },
-  { id: 37, name: 'Prayer Plant', type: 'buy', price: '$22', location: '4.4 miles away', image: '/plants/Prayer Plant (Maranta leuconeura)/1.jpg' },
-  { id: 38, name: 'Rattlesnake Plant', type: 'buy', price: '$26', location: '3.3 miles away', image: '/plants/Rattlesnake Plant (Calathea lancifolia)/1.jpg' },
-  { id: 39, name: 'Rubber Plant', type: 'buy', price: '$40', location: '6.2 miles away', image: '/plants/Rubber Plant (Ficus elastica)/1.jpg' },
-  { id: 40, name: 'Sago Palm', type: 'buy', price: '$50', location: '8.5 miles away', image: '/plants/Sago Palm (Cycas revoluta)/1.jpg' },
-  { id: 41, name: 'Schefflera', type: 'buy', price: '$30', location: '5.2 miles away', image: '/plants/Schefflera/1.jpg' },
-  { id: 42, name: 'Snake Plant', type: 'swap', price: 'Trade', location: '1.4 miles away', image: '/plants/Snake plant (Sanseviera)/1.jpg' },
-  { id: 43, name: 'Tradescantia', type: 'buy', price: '$18', location: '2.7 miles away', image: '/plants/Tradescantia/1.jpg' },
-  { id: 44, name: 'Tulip', type: 'buy', price: '$12', location: '4.6 miles away', image: '/plants/Tulip/1.jpg' },
-  { id: 45, name: 'Venus Flytrap', type: 'buy', price: '$25', location: '9.5 miles away', image: '/plants/Venus Flytrap/1.jpg' },
-  { id: 46, name: 'Yucca', type: 'buy', price: '$35', location: '7.8 miles away', image: '/plants/Yucca/1.jpg' },
-  { id: 47, name: 'ZZ Plant', type: 'buy', price: '$32', location: '3.1 miles away', image: '/plants/ZZ Plant (Zamioculcas zamiifolia)/1.jpg' },
+  { id: 1, name: 'African Violet', type: 'buy', price: 'Rs. 35', location: 'City Nursery', image: '/plants/African Violet (Saintpaulia ionantha)/1.jpg' },
+  { id: 2, name: 'Aloe Vera', type: 'buy', price: 'Rs. 15', location: 'Local Nursery', image: '/plants/Aloe Vera/1.jpg' },
+  // ... (I'll fetch from API instead of using this mock list if possible, but for now I'll use it to match IDs)
 ];
 
 export default function PlantDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [isSelecting, setIsSelecting] = useState(false);
-  const [quantity, setQuantity] = useState(1);
-  const plantId = parseInt(id);
+  const [plant, setPlant] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [cart, setCart] = useState([]);
   
-  const detail = PLANT_DETAILS[plantId];
-  const basicInfo = PLANTS_LIST.find(p => p.id === plantId);
+  // Purchase Flow State
+  const [showQuantitySelector, setShowQuantitySelector] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  const [showQRPrompt, setShowQRPrompt] = useState(false);
+  const [paymentSessionId, setPaymentSessionId] = useState(null);
+  const [paymentStatus, setPaymentStatus] = useState('pending'); // pending, completed
+  const [success, setSuccess] = useState(false);
 
-  if (!detail || !basicInfo) {
+  const plantId = parseInt(id);
+  const detail = PLANT_DETAILS[plantId];
+
+  useEffect(() => {
+    const fetchPlant = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/plants');
+        const data = await response.json();
+        const found = data.find(p => p.id === plantId);
+        setPlant(found);
+      } catch (err) {
+        console.error("Error fetching plant:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPlant();
+
+    const savedCart = localStorage.getItem('cart');
+    if (savedCart) {
+      setCart(JSON.parse(savedCart));
+    }
+  }, [plantId]);
+
+  useEffect(() => {
+    localStorage.setItem('cart', JSON.stringify(cart));
+  }, [cart]);
+
+  // Polling for payment status
+  useEffect(() => {
+    let interval;
+    if (showQRPrompt && paymentSessionId && paymentStatus === 'pending') {
+      interval = setInterval(async () => {
+        try {
+          const response = await fetch(`http://localhost:5000/api/payment/status/${paymentSessionId}`);
+          const data = await response.json();
+          if (data.status === 'completed') {
+            setPaymentStatus('completed');
+            clearInterval(interval);
+            handleFinalizePurchase();
+          } else if (data.status === 'expired') {
+            clearInterval(interval);
+            closeModals();
+            alert("Payment session expired. Please try again.");
+          }
+        } catch (err) {
+          console.error("Polling error:", err);
+        }
+      }, 2000);
+    }
+    return () => clearInterval(interval);
+  }, [showQRPrompt, paymentSessionId, paymentStatus]);
+
+  const handleBuyClick = () => {
+    setQuantity(1);
+    setShowQuantitySelector(true);
+  };
+
+  const handleAddToCart = () => {
+    const existingItem = cart.find(item => item.id === plant.id);
+    if (existingItem) {
+      setCart(cart.map(item => 
+        item.id === plant.id 
+          ? { ...item, quantity: item.quantity + quantity } 
+          : item
+      ));
+    } else {
+      setCart([...cart, { ...plant, quantity }]);
+    }
+    setShowQuantitySelector(false);
+  };
+
+  const handleProceedToPayment = async () => {
+    const userStr = localStorage.getItem('user');
+    if (!userStr) {
+      alert('Please log in to purchase.');
+      return;
+    }
+    const user = JSON.parse(userStr);
+    const amount = parseInt(plant.price.replace('Rs. ', '').replace('$', '')) * quantity;
+
+    try {
+      const response = await fetch('http://localhost:5000/api/payment/initiate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plantId: plant.id, userId: user.id, quantity, amount })
+      });
+      const data = await response.json();
+
+      setPaymentSessionId(data.sessionId);
+      setPaymentStatus('pending');
+      setShowQuantitySelector(false);
+      setShowQRPrompt(true);
+    } catch (err) {
+      alert("Failed to initiate payment.");
+    }
+  };
+
+  const handleFinalizePurchase = async () => {
+    const userStr = localStorage.getItem('user');
+    const user = JSON.parse(userStr);
+    
+    try {
+      const buyResponse = await fetch(`http://localhost:5000/api/plants/${plant.id}/buy`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, quantity })
+      });
+
+      if (buyResponse.ok) {
+        setShowQRPrompt(false);
+        setSuccess(true);
+      }
+    } catch (err) {
+      console.error("Finalization error:", err);
+    }
+  };
+
+  const closeModals = () => {
+    setShowQuantitySelector(false);
+    setShowQRPrompt(false);
+    setSuccess(false);
+    setPaymentSessionId(null);
+  };
+
+  if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading plant details...</div>;
+  if (!plant || !detail) {
     return (
       <div className="plant-detail-container">
         <button className="back-btn" onClick={() => navigate('/marketplace')}>
@@ -76,25 +163,28 @@ export default function PlantDetail() {
     );
   }
 
-  const startSelecting = () => setIsSelecting(true);
+  // Determine local IP for mobile access
+  const localIP = window.location.hostname === 'localhost' ? 'localhost' : window.location.hostname;
+  const paymentURL = `http://${localIP}:5173/payment-mobile/${paymentSessionId}`;
 
-  const confirmAdd = (e) => {
-    e.stopPropagation();
-    alert(`Successfully added ${quantity} ${basicInfo.name}(s) to your cart!`);
-    setIsSelecting(false);
-    setQuantity(1);
-  };
+  const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
     <div className="animate-fade-in plant-detail-container">
-      <button className="back-btn" onClick={() => navigate('/marketplace')}>
-        <ArrowLeft size={20} /> Back to Marketplace
-      </button>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+        <button className="back-btn" onClick={() => navigate('/marketplace')} style={{ marginBottom: 0 }}>
+          <ArrowLeft size={20} /> Back to Marketplace
+        </button>
+        <div className="floating-cart" onClick={() => alert('Cart feature coming soon!')} style={{ position: 'static', transform: 'none' }}>
+          <ShoppingCart size={24} />
+          {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
+        </div>
+      </div>
 
       <div className="detail-layout">
         <div className="detail-image-section">
-          <img src={basicInfo.image} alt={basicInfo.name} className="detail-img" />
-          <div className="detail-badge">{basicInfo.type}</div>
+          <img src={plant.image} alt={plant.name} className="detail-img" onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1545239351-ef35f43d514b?q=80&w=400'; }} />
+          <div className="detail-badge">{plant.type}</div>
         </div>
 
         <div className="detail-info-section">
@@ -103,7 +193,7 @@ export default function PlantDetail() {
               <h1 className="detail-title">{detail.name}</h1>
               <p className="scientific-name"><i>{detail.scientificName}</i></p>
             </div>
-            <p className="detail-price">{basicInfo.price}</p>
+            <p className="detail-price">{plant.price}</p>
           </div>
 
           <p className="detail-description">{detail.description}</p>
@@ -143,38 +233,78 @@ export default function PlantDetail() {
           </div>
 
           <div className="detail-actions">
-            {!isSelecting ? (
-              <button className="add-to-cart-big" onClick={startSelecting}>
-                <ShoppingCart size={20} />
-                Add to Cart
-              </button>
-            ) : (
-              <div className="qty-row-detail">
-                <span className="qty-label-detail">Quantity</span>
-                <div className="daraz-selector">
-                  <button 
-                    className="daraz-btn" 
-                    disabled={quantity <= 1}
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  >
-                    -
-                  </button>
-                  <input type="text" className="daraz-input" value={quantity} readOnly />
-                  <button 
-                    className="daraz-btn" 
-                    onClick={() => setQuantity(quantity + 1)}
-                  >
-                    +
-                  </button>
-                </div>
-                <button className="confirm-btn-circle" onClick={confirmAdd}>
-                  <Check size={24} />
-                </button>
-              </div>
-            )}
+            <button className="add-to-cart-big" onClick={handleBuyClick}>
+              <ShoppingCart size={20} />
+              Add to Cart
+            </button>
           </div>
         </div>
       </div>
+
+      {showQuantitySelector && (
+        <div className="modal-overlay" onClick={closeModals}>
+          <div className="glass-panel modal-content animate-scale-up" onClick={(e) => e.stopPropagation()}>
+            <button className="close-modal" type="button" onClick={closeModals}><X size={20} /></button>
+            <div className="modal-header">
+              <h3>Select Quantity</h3>
+              <p>How many {plant.name}s do you want?</p>
+            </div>
+            <div className="quantity-controls">
+              <button type="button" onClick={() => setQuantity(Math.max(1, quantity - 1))} className="qty-btn"><Minus size={20} /></button>
+              <span className="qty-value">{quantity}</span>
+              <button type="button" onClick={() => setQuantity(Math.min(10, quantity + 1))} className="qty-btn"><Plus size={20} /></button>
+            </div>
+            <button type="button" onClick={handleAddToCart} className="btn-primary w-full">Add to Cart</button>
+          </div>
+        </div>
+      )}
+
+      {showQRPrompt && (
+        <div className="modal-overlay" onClick={closeModals}>
+          <div className="glass-panel modal-content animate-scale-up text-center" onClick={(e) => e.stopPropagation()}>
+            <button className="close-modal" type="button" onClick={closeModals}><X size={20} /></button>
+            <div className="modal-header">
+              <div className="qr-icon" style={{ marginBottom: '1rem', color: 'var(--primary)', display: 'flex', justifyContent: 'center' }}><QrCode size={48} /></div>
+              <h3>Scan to Pay</h3>
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Scan this with your mobile to see the bill and pay.</p>
+              <p className="purchase-summary" style={{ fontWeight: '700', color: 'var(--primary)', fontSize: '1.25rem' }}>
+                Total: Rs. {parseInt(plant.price.replace('Rs. ', '').replace('$', '')) * quantity}
+              </p>
+            </div>
+
+            <div style={{ backgroundColor: 'white', padding: '1rem', borderRadius: '1rem', display: 'inline-block', margin: '1.5rem 0', border: '1px solid #eee' }}>
+              <img 
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(paymentURL)}`} 
+                alt="Payment QR Code" 
+                style={{ width: '200px', height: '200px' }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', padding: '1rem', backgroundColor: 'var(--bg-secondary)', borderRadius: '1rem' }}>
+              <Loader2 className="animate-spin" size={20} color="var(--primary)" />
+              <span style={{ fontSize: '0.875rem', fontWeight: '600' }}>Waiting for mobile scan...</span>
+            </div>
+            
+            <p className="text-subtle" style={{ fontSize: '0.75rem', marginTop: '1rem' }}>
+              Keep this window open. Once you pay on your phone, this will update automatically.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {success && (
+        <div className="modal-overlay" onClick={closeModals}>
+          <div className="glass-panel modal-content animate-scale-up text-center" onClick={(e) => e.stopPropagation()}>
+            <div className="success-icon"><CheckCircle size={48} /></div>
+            <h3>Purchase Successful!</h3>
+            <p>You bought {quantity} {plant.name}(s).</p>
+            <div className="modal-actions">
+              <button type="button" onClick={() => navigate('/dashboard')} className="btn-primary w-full">Go to Dashboard</button>
+              <button type="button" onClick={closeModals} className="btn-text w-full">Continue Shopping</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
