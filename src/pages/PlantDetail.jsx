@@ -17,10 +17,23 @@ export default function PlantDetail() {
   const [plant, setPlant] = useState(null);
   const [loading, setLoading] = useState(true);
   const [cart, setCart] = useState(() => {
-    const savedCart = localStorage.getItem('cart');
-    return savedCart ? JSON.parse(savedCart) : [];
+    try {
+      const savedCart = localStorage.getItem('cart');
+      return savedCart ? JSON.parse(savedCart) : [];
+    } catch (err) {
+      console.error("Cart parse error:", err);
+      return [];
+    }
   });
   const [showCart, setShowCart] = useState(false);
+
+  useEffect(() => {
+    console.log("Current Cart State (Detail):", cart);
+  }, [cart]);
+
+  useEffect(() => {
+    console.log("showCart state (Detail) changed to:", showCart);
+  }, [showCart]);
   
   // Purchase Flow State
   const [showQuantitySelector, setShowQuantitySelector] = useState(false);

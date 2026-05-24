@@ -45,10 +45,23 @@ export default function Marketplace() {
   const [activeTab, setActiveTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [cart, setCart] = useState(() => {
-    const savedCart = localStorage.getItem('cart');
-    return savedCart ? JSON.parse(savedCart) : [];
+    try {
+      const savedCart = localStorage.getItem('cart');
+      return savedCart ? JSON.parse(savedCart) : [];
+    } catch (err) {
+      console.error("Cart parse error:", err);
+      return [];
+    }
   });
   const [showCart, setShowCart] = useState(false);
+
+  useEffect(() => {
+    console.log("Current Cart State:", cart);
+  }, [cart]);
+
+  useEffect(() => {
+    console.log("showCart state changed to:", showCart);
+  }, [showCart]);
 
   // Purchase Flow State
   const [selectedPlant, setSelectedPlant] = useState(null);
@@ -238,14 +251,13 @@ export default function Marketplace() {
 
   return (
     <div className="animate-fade-in marketplace-container">
+      <div className="floating-cart" onClick={() => { console.log('Opening Cart from fixed button...'); setShowCart(true); }}>
+        <ShoppingCart size={24} />
+        {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
+      </div>
+
       <div className="marketplace-header">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2 className="title-medium">Marketplace</h2>
-          <div className="floating-cart" onClick={() => setShowCart(true)}>
-            <ShoppingCart size={24} />
-            {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
-          </div>
-        </div>
+        <h2 className="title-medium">Marketplace</h2>
         <div className="search-bar">
           <Search size={20} className="icon" />
           <input 
