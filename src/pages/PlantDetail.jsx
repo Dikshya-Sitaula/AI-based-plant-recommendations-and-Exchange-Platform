@@ -20,6 +20,7 @@ export default function PlantDetail() {
     const savedCart = localStorage.getItem('cart');
     return savedCart ? JSON.parse(savedCart) : [];
   });
+  const [showCart, setShowCart] = useState(false);
   
   // Purchase Flow State
   const [showQuantitySelector, setShowQuantitySelector] = useState(false);
@@ -173,7 +174,7 @@ export default function PlantDetail() {
         <button className="back-btn" onClick={() => navigate('/marketplace')} style={{ marginBottom: 0 }}>
           <ArrowLeft size={20} /> Back to Marketplace
         </button>
-        <div className="floating-cart" onClick={() => alert('Cart feature coming soon!')} style={{ position: 'static', transform: 'none' }}>
+        <div className="floating-cart" onClick={() => setShowCart(true)} style={{ position: 'static', transform: 'none' }}>
           <ShoppingCart size={24} />
           {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
         </div>
@@ -300,6 +301,49 @@ export default function PlantDetail() {
               <button type="button" onClick={() => navigate('/dashboard')} className="btn-primary w-full">Go to Dashboard</button>
               <button type="button" onClick={closeModals} className="btn-text w-full">Continue Shopping</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showCart && (
+        <div className="modal-overlay" onClick={() => setShowCart(false)}>
+          <div className="glass-panel modal-content animate-scale-up" onClick={(e) => e.stopPropagation()}>
+            <button className="close-modal" type="button" onClick={() => setShowCart(false)}><X size={20} /></button>
+            <div className="modal-header">
+              <h3>Your Cart</h3>
+              <p>{cart.length === 0 ? 'Your cart is empty' : `You have ${cartCount} items in your cart`}</p>
+            </div>
+
+            {cart.length > 0 && (
+              <>
+                <div className="cart-items-list">
+                  {cart.map((item, index) => (
+                    <div key={index} className="cart-item">
+                      <img src={item.image} alt={item.name} className="cart-item-img" />
+                      <div className="cart-item-info">
+                        <h4>{item.name}</h4>
+                        <p>{item.price}</p>
+                      </div>
+                      <div className="cart-item-qty">x{item.quantity}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="cart-total">
+                  <span>Total Amount</span>
+                  <span>Rs. {cart.reduce((sum, item) => sum + (parseInt(item.price.replace('Rs. ', '').replace('$', '')) * item.quantity), 0)}</span>
+                </div>
+                <div className="modal-actions">
+                  <button type="button" onClick={() => { setShowCart(false); alert('Checkout feature coming soon!'); }} className="btn-primary w-full">Proceed to Checkout</button>
+                  <button type="button" onClick={() => { setCart([]); setShowCart(false); }} className="btn-text w-full">Clear Cart</button>
+                </div>
+              </>
+            )}
+            
+            {cart.length === 0 && (
+              <div className="modal-actions">
+                <button type="button" onClick={() => setShowCart(false)} className="btn-primary w-full">Back to Shopping</button>
+              </div>
+            )}
           </div>
         </div>
       )}
