@@ -25,4 +25,4 @@ dist-ssr
 *.sw?
 
 # Local Assets
-public/plants/
+plants_backup/
