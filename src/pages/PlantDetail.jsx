@@ -137,20 +137,29 @@ export default function PlantDetail() {
           </div>
 
           <div className="detail-actions">
-            <div className="quantity-selector">
-              <button 
-                className="qty-btn" 
-                onClick={() => setQuantity(Math.max(1, quantity - 1))}
-              >
-                -
-              </button>
-              <span className="qty-value">{quantity}</span>
-              <button 
-                className="qty-btn" 
-                onClick={() => setQuantity(quantity + 1)}
-              >
-                +
-              </button>
+            <div className="qty-row-detail">
+              <span className="qty-label-detail">Quantity</span>
+              <div className="daraz-selector">
+                <button 
+                  className="daraz-btn" 
+                  disabled={quantity <= 1}
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                >
+                  -
+                </button>
+                <input 
+                  type="text" 
+                  className="daraz-input" 
+                  value={quantity} 
+                  readOnly 
+                />
+                <button 
+                  className="daraz-btn" 
+                  onClick={() => setQuantity(quantity + 1)}
+                >
+                  +
+                </button>
+              </div>
             </div>
             <button className="add-to-cart-big" onClick={addToCart}>
               <ShoppingCart size={20} />
