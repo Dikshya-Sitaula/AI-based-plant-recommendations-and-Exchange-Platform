@@ -54,100 +54,9 @@ const PLANTS = [
   { id: 47, name: 'ZZ Plant', type: 'buy', price: '$32', location: '3.1 miles away', image: '/plants/ZZ Plant (Zamioculcas zamiifolia)/1.jpg' },
 ];
 
-function PlantCard({ plant, onQuickAdd, onClick }) {
-  return (
-    <div className="plant-card" onClick={() => onClick(plant.id)}>
-      <div className="plant-image-wrap">
-        <img src={plant.image} alt={plant.name} className="marketplace-img" />
-        <div className="badge">{plant.type}</div>
-        <button className="like-btn" onClick={(e) => e.stopPropagation()}><Heart size={18} /></button>
-      </div>
-      <div className="plant-details">
-        <div className="plant-info-top">
-          <h3>{plant.name}</h3>
-          <p className="price">{plant.price}</p>
-        </div>
-        <div className="location">
-          <MapPin size={14} />
-          <span>{plant.location}</span>
-        </div>
-        
-        <button 
-          className="add-to-cart-card" 
-          onClick={(e) => {
-            e.stopPropagation();
-            onQuickAdd(plant);
-          }}
-        >
-          <ShoppingCart size={16} />
-          Add to Cart
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function QuantityModal({ plant, onClose, onConfirm }) {
-  const [quantity, setQuantity] = useState(1);
-
-  if (!plant) return null;
-
-  return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="quantity-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <div className="modal-product-info">
-            <img src={plant.image} alt={plant.name} className="modal-img" />
-            <div>
-              <h4 className="modal-plant-name">{plant.name}</h4>
-              <p className="modal-plant-price">{plant.price}</p>
-            </div>
-          </div>
-          <button className="close-modal" onClick={onClose}>&times;</button>
-        </div>
-        
-        <div className="modal-body">
-          <div className="qty-row">
-            <span className="qty-label">Quantity</span>
-            <div className="daraz-selector">
-              <button 
-                className="daraz-btn" 
-                disabled={quantity <= 1}
-                onClick={() => setQuantity(q => q - 1)}
-              >
-                -
-              </button>
-              <input 
-                type="text" 
-                className="daraz-input" 
-                value={quantity} 
-                readOnly 
-              />
-              <button 
-                className="daraz-btn" 
-                onClick={() => setQuantity(q => q + 1)}
-              >
-                +
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div className="modal-footer">
-          <button className="confirm-add-btn" onClick={() => onConfirm(plant, quantity)}>
-            Confirm
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function Marketplace() {
   const [activeTab, setActiveTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedPlant, setSelectedPlant] = useState(null);
-  const [showModal, setShowModal] = useState(false);
   const navigate = useNavigate();
 
   const filteredPlants = PLANTS.filter(plant => {
@@ -156,14 +65,9 @@ export default function Marketplace() {
     return true;
   });
 
-  const handleQuickAdd = (plant) => {
-    setSelectedPlant(plant);
-    setShowModal(true);
-  };
-
-  const handleConfirmAdd = (plant, quantity) => {
-    setShowModal(false);
-    alert(`Added ${quantity} ${plant.name}(s) to cart!`);
+  const addToCart = (e, plantName) => {
+    e.stopPropagation();
+    alert(`${plantName} added to cart!`);
   };
 
   const goToDetail = (id) => {
@@ -200,23 +104,33 @@ export default function Marketplace() {
 
       <div className="plants-grid">
         {filteredPlants.map(plant => (
-          <PlantCard 
-            key={plant.id} 
-            plant={plant} 
-            onQuickAdd={handleQuickAdd} 
-            onClick={goToDetail} 
-          />
+          <div key={plant.id} className="plant-card" onClick={() => goToDetail(plant.id)}>
+            <div className="plant-image-wrap">
+              <img src={plant.image} alt={plant.name} className="marketplace-img" />
+              <div className="badge">{plant.type}</div>
+              <button className="like-btn" onClick={(e) => e.stopPropagation()}><Heart size={18} /></button>
+            </div>
+            <div className="plant-details">
+              <div className="plant-info-top">
+                <h3>{plant.name}</h3>
+                <p className="price">{plant.price}</p>
+              </div>
+              <div className="location">
+                <MapPin size={14} />
+                <span>{plant.location}</span>
+              </div>
+              <button 
+                className="add-to-cart-card" 
+                onClick={(e) => addToCart(e, plant.name)}
+              >
+                <ShoppingCart size={16} />
+                Add to Cart
+              </button>
+            </div>
+          </div>
         ))}
       </div>
       
-      {showModal && (
-        <QuantityModal 
-          plant={selectedPlant} 
-          onClose={() => setShowModal(false)}
-          onConfirm={handleConfirmAdd}
-        />
-      )}
-
       {filteredPlants.length === 0 && (
         <div className="empty-state">
           <p className="text-subtle">No plants found. Try a different search.</p>

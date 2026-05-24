@@ -57,7 +57,6 @@ const PLANTS_LIST = [
 export default function PlantDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [quantity, setQuantity] = useState(1);
   const plantId = parseInt(id);
   
   const detail = PLANT_DETAILS[plantId];
@@ -76,7 +75,7 @@ export default function PlantDetail() {
 
   const addToCart = (e) => {
     e.stopPropagation();
-    alert(`Successfully added ${quantity} ${basicInfo.name}(s) to your cart!`);
+    alert(`${basicInfo.name} added to cart!`);
   };
 
   return (
@@ -136,36 +135,10 @@ export default function PlantDetail() {
             </div>
           </div>
 
-          <div className="detail-actions">
-            <div className="qty-row-detail">
-              <span className="qty-label-detail">Quantity</span>
-              <div className="daraz-selector">
-                <button 
-                  className="daraz-btn" 
-                  disabled={quantity <= 1}
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                >
-                  -
-                </button>
-                <input 
-                  type="text" 
-                  className="daraz-input" 
-                  value={quantity} 
-                  readOnly 
-                />
-                <button 
-                  className="daraz-btn" 
-                  onClick={() => setQuantity(quantity + 1)}
-                >
-                  +
-                </button>
-              </div>
-            </div>
-            <button className="add-to-cart-big" onClick={addToCart}>
-              <ShoppingCart size={20} />
-              Add to Cart
-            </button>
-          </div>
+          <button className="add-to-cart-big" onClick={addToCart}>
+            <ShoppingCart size={20} />
+            Add to Cart
+          </button>
         </div>
       </div>
     </div>
