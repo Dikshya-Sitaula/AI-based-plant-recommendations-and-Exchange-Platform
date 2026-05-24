@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, Heart, MapPin, ShoppingCart, X, Minus, Plus, QrCode, CheckCircle, Loader2 } from 'lucide-react';
+import { Search, Filter, Heart, MapPin, ShoppingCart, X, Minus, Plus, QrCode, CheckCircle, Loader2, Trash2 } from 'lucide-react';
 import './Marketplace.css';
 
 function PlantCard({ plant, onAddToCart, onClick }) {
@@ -132,6 +132,16 @@ export default function Marketplace() {
     } else {
       setCart([...cart, { ...plant, quantity: qty }]);
     }
+  };
+
+  const handleRemoveFromCart = (id) => {
+    setCart(cart.filter(item => item.id !== id));
+  };
+
+  const parsePrice = (priceStr) => {
+    if (!priceStr) return 0;
+    const numeric = priceStr.toString().replace(/[^0-9]/g, '');
+    return parseInt(numeric) || 0;
   };
 
   const handleBuyClick = (e, plant) => {
@@ -352,19 +362,33 @@ export default function Marketplace() {
               <>
                 <div className="cart-items-list">
                   {cart.map((item, index) => (
-                    <div key={index} className="cart-item">
-                      <img src={item.image} alt={item.name} className="cart-item-img" />
+                    <div key={item.id || index} className="cart-item">
+                      <img 
+                        src={item.image} 
+                        alt={item.name} 
+                        className="cart-item-img" 
+                        onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1545239351-ef35f43d514b?q=80&w=400'; }}
+                      />
                       <div className="cart-item-info">
                         <h4>{item.name}</h4>
-                        <p>{item.price}</p>
+                        <div className="cart-item-qty-row">
+                          <p>{item.price}</p>
+                          <div className="cart-item-qty">x{item.quantity}</div>
+                        </div>
                       </div>
-                      <div className="cart-item-qty">x{item.quantity}</div>
+                      <button 
+                        className="remove-item-btn" 
+                        onClick={() => handleRemoveFromCart(item.id)}
+                        title="Remove from cart"
+                      >
+                        <Trash2 size={18} />
+                      </button>
                     </div>
                   ))}
                 </div>
                 <div className="cart-total">
                   <span>Total Amount</span>
-                  <span>Rs. {cart.reduce((sum, item) => sum + (parseInt(item.price.replace('Rs. ', '').replace('$', '')) * item.quantity), 0)}</span>
+                  <span>Rs. {cart.reduce((sum, item) => sum + (parsePrice(item.price) * item.quantity), 0)}</span>
                 </div>
                 <div className="modal-actions">
                   <button type="button" onClick={() => { setShowCart(false); alert('Checkout feature coming soon!'); }} className="btn-primary w-full">Proceed to Checkout</button>
