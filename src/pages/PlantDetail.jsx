@@ -8,7 +8,6 @@ import './PlantDetail.css';
 const PLANTS_LIST = [
   { id: 1, name: 'African Violet', type: 'buy', price: 'Rs. 35', location: 'City Nursery', image: '/plants/African Violet (Saintpaulia ionantha)/1.jpg' },
   { id: 2, name: 'Aloe Vera', type: 'buy', price: 'Rs. 15', location: 'Local Nursery', image: '/plants/Aloe Vera/1.jpg' },
-  // ... (I'll fetch from API instead of using this mock list if possible, but for now I'll use it to match IDs)
 ];
 
 export default function PlantDetail() {
@@ -185,142 +184,145 @@ export default function PlantDetail() {
     );
   }
 
-  // Determine local IP for mobile access
-  const localIP = window.location.hostname === 'localhost' ? 'localhost' : window.location.hostname;
-  const paymentURL = `http://${localIP}:5173/payment-mobile/${paymentSessionId}`;
-
-  const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const cartCount = cart.reduce((sum, item) => sum + (item.quantity || 0), 0);
 
   return (
-    <div className="animate-fade-in plant-detail-container">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <button className="back-btn" onClick={() => navigate('/marketplace')} style={{ marginBottom: 0 }}>
-          <ArrowLeft size={20} /> Back to Marketplace
-        </button>
-        <div className="floating-cart" onClick={() => setShowCart(true)} style={{ position: 'static', transform: 'none' }}>
-          <ShoppingCart size={24} />
-          {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
+    <>
+      <div className="animate-fade-in plant-detail-container">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+          <button className="back-btn" onClick={() => navigate('/marketplace')} style={{ marginBottom: 0 }}>
+            <ArrowLeft size={20} /> Back
+          </button>
+          <div className="header-cart-icon" onClick={() => setShowCart(true)} style={{ position: 'relative', cursor: 'pointer', padding: '10px', background: 'white', borderRadius: '50%', boxShadow: 'var(--shadow-sm)', color: 'var(--primary)', border: '1px solid var(--border-color)' }}>
+            <ShoppingCart size={24} />
+            {cartCount > 0 && (
+              <span style={{ position: 'absolute', top: '-2px', right: '-2px', background: '#ff4b4b', color: 'white', fontSize: '0.7rem', fontWeight: 'bold', width: '20px', height: '20px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid white' }}>
+                {cartCount}
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="detail-layout">
+          <div className="detail-image-section">
+            <img src={plant.image} alt={plant.name} className="detail-img" onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1545239351-ef35f43d514b?q=80&w=400'; }} />
+            <div className="detail-badge">{plant.type}</div>
+          </div>
+
+          <div className="detail-info-section">
+            <div className="detail-header">
+              <div>
+                <h1 className="detail-title">{detail.name}</h1>
+                <p className="scientific-name"><i>{detail.scientificName}</i></p>
+              </div>
+              <p className="detail-price">{plant.price}</p>
+            </div>
+
+            <p className="detail-description">{detail.description}</p>
+
+            <div className="detail-grid">
+              <div className="detail-item">
+                <MapPin className="detail-icon" size={24} />
+                <div className="detail-text">
+                  <span className="detail-label">Suitable Location</span>
+                  <span className="detail-value">{detail.suitableLocation}</span>
+                </div>
+              </div>
+
+              <div className="detail-item">
+                <Thermometer className="detail-icon" size={24} />
+                <div className="detail-text">
+                  <span className="detail-label">Temperature Range</span>
+                  <span className="detail-value">{detail.minTemp} - {detail.maxTemp}</span>
+                </div>
+              </div>
+
+              <div className="detail-item">
+                <Sun className="detail-icon" size={24} />
+                <div className="detail-text">
+                  <span className="detail-label">Sunlight</span>
+                  <span className="detail-value">{detail.sunlight}</span>
+                </div>
+              </div>
+
+              <div className="detail-item">
+                <Wind className="detail-icon" size={24} />
+                <div className="detail-text">
+                  <span className="detail-label">Air Quality Score</span>
+                  <span className="detail-value">{detail.airQualityScore}/10</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="detail-actions">
+              <button className="add-to-cart-big" onClick={handleBuyClick}>
+                <ShoppingCart size={20} />
+                Add to Cart
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="detail-layout">
-        <div className="detail-image-section">
-          <img src={plant.image} alt={plant.name} className="detail-img" onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1545239351-ef35f43d514b?q=80&w=400'; }} />
-          <div className="detail-badge">{plant.type}</div>
-        </div>
-
-        <div className="detail-info-section">
-          <div className="detail-header">
-            <div>
-              <h1 className="detail-title">{detail.name}</h1>
-              <p className="scientific-name"><i>{detail.scientificName}</i></p>
-            </div>
-            <p className="detail-price">{plant.price}</p>
-          </div>
-
-          <p className="detail-description">{detail.description}</p>
-
-          <div className="detail-grid">
-            <div className="detail-item">
-              <MapPin className="detail-icon" size={24} />
-              <div className="detail-text">
-                <span className="detail-label">Suitable Location</span>
-                <span className="detail-value">{detail.suitableLocation}</span>
-              </div>
+      {/* Select Quantity Modal (Matching Marketplace aesthetic) */}
+      {showQuantitySelector && (
+        <div className="modal-overlay" style={{ zIndex: 10000, display: 'flex' }} onClick={closeModals}>
+          <div className="glass-panel modal-content animate-scale-up" style={{ zIndex: 10001, background: 'white', color: 'black', opacity: 1, transform: 'none', textAlign: 'center', padding: '2.5rem', borderRadius: '2rem', maxWidth: '420px', width: '95%' }} onClick={(e) => e.stopPropagation()}>
+            <button className="close-modal" type="button" style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', background: '#f5f5f5', borderRadius: '50%', padding: '5px' }} onClick={closeModals}><X size={20} /></button>
+            
+            <div className="modal-header">
+              <h3 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '0.5rem' }}>Select Quantity</h3>
+              <p style={{ color: '#666', fontSize: '1rem' }}>How many <b>{plant.name}</b>s do you want?</p>
             </div>
 
-            <div className="detail-item">
-              <Thermometer className="detail-icon" size={24} />
-              <div className="detail-text">
-                <span className="detail-label">Temperature Range</span>
-                <span className="detail-value">{detail.minTemp} - {detail.maxTemp}</span>
-              </div>
+            <div className="quantity-controls" style={{ display: 'flex', justifyContent: 'center', gap: '2rem', margin: '2rem 0' }}>
+              <button type="button" onClick={() => setQuantity(Math.max(1, quantity - 1))} style={{ width: '52px', height: '52px', borderRadius: '14px', border: '1px solid #ddd', background: '#f9f9f9', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Minus size={24} /></button>
+              <span style={{ fontSize: '2.25rem', fontWeight: '800' }}>{quantity}</span>
+              <button type="button" onClick={() => setQuantity(Math.min(10, quantity + 1))} style={{ width: '52px', height: '52px', borderRadius: '14px', border: '1px solid #ddd', background: '#f9f9f9', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Plus size={24} /></button>
             </div>
 
-            <div className="detail-item">
-              <Sun className="detail-icon" size={24} />
-              <div className="detail-text">
-                <span className="detail-label">Sunlight</span>
-                <span className="detail-value">{detail.sunlight}</span>
-              </div>
-            </div>
-
-            <div className="detail-item">
-              <Wind className="detail-icon" size={24} />
-              <div className="detail-text">
-                <span className="detail-label">Air Quality Score</span>
-                <span className="detail-value">{detail.airQualityScore}/10</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="detail-actions">
-            <button className="add-to-cart-big" onClick={handleBuyClick}>
-              <ShoppingCart size={20} />
+            <button 
+              type="button" 
+              onClick={handleAddToCart} 
+              style={{ width: '100%', padding: '1.1rem', borderRadius: '9999px', background: 'var(--gradient-primary)', color: 'white', fontWeight: '700', fontSize: '1.1rem', border: 'none', boxShadow: '0 4px 12px rgba(46, 96, 58, 0.2)', cursor: 'pointer' }}
+            >
               Add to Cart
             </button>
           </div>
         </div>
-      </div>
-
-      {showQuantitySelector && (
-        <div className="modal-overlay" onClick={closeModals}>
-          <div className="glass-panel modal-content animate-scale-up" onClick={(e) => e.stopPropagation()}>
-            <button className="close-modal" type="button" onClick={closeModals}><X size={20} /></button>
-            <div className="modal-header">
-              <h3>Select Quantity</h3>
-              <p>How many {plant.name}s do you want?</p>
-            </div>
-            <div className="quantity-controls">
-              <button type="button" onClick={() => setQuantity(Math.max(1, quantity - 1))} className="qty-btn"><Minus size={20} /></button>
-              <span className="qty-value">{quantity}</span>
-              <button type="button" onClick={() => setQuantity(Math.min(10, quantity + 1))} className="qty-btn"><Plus size={20} /></button>
-            </div>
-            <button type="button" onClick={handleAddToCart} className="btn-primary w-full">Add to Cart</button>
-          </div>
-        </div>
       )}
 
+      {/* QR Modal */}
       {showQRPrompt && (
-        <div className="modal-overlay" onClick={closeModals}>
-          <div className="glass-panel modal-content animate-scale-up text-center" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-overlay" style={{ zIndex: 10000, display: 'flex' }} onClick={closeModals}>
+          <div className="glass-panel modal-content text-center animate-scale-up" style={{ zIndex: 10001, background: 'white', padding: '2rem', borderRadius: '1.5rem' }} onClick={(e) => e.stopPropagation()}>
             <button className="close-modal" type="button" onClick={closeModals}><X size={20} /></button>
             <div className="modal-header">
               <div className="qr-icon" style={{ marginBottom: '1rem', color: 'var(--primary)', display: 'flex', justifyContent: 'center' }}><QrCode size={48} /></div>
               <h3>Scan to Pay</h3>
-              <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Scan this with your mobile to see the bill and pay.</p>
-              <p className="purchase-summary" style={{ fontWeight: '700', color: 'var(--primary)', fontSize: '1.25rem' }}>
+              <p style={{ fontSize: '0.875rem', color: '#666' }}>Scan this with your mobile to see the bill and pay.</p>
+              <p style={{ fontWeight: '700', color: 'var(--primary)', fontSize: '1.25rem', marginTop: '0.5rem' }}>
                 Total: Rs. {parseInt(plant.price.replace('Rs. ', '').replace('$', '')) * quantity}
               </p>
             </div>
-
             <div style={{ backgroundColor: 'white', padding: '1rem', borderRadius: '1rem', display: 'inline-block', margin: '1.5rem 0', border: '1px solid #eee' }}>
-              <img 
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(paymentURL)}`} 
-                alt="Payment QR Code" 
-                style={{ width: '200px', height: '200px' }}
-              />
+              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent('https://example.com/pay')}`} alt="Payment QR Code" style={{ width: '200px', height: '200px' }} />
             </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', padding: '1rem', backgroundColor: 'var(--bg-secondary)', borderRadius: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', padding: '1rem', backgroundColor: '#f5f5f5', borderRadius: '1rem' }}>
               <Loader2 className="animate-spin" size={20} color="var(--primary)" />
               <span style={{ fontSize: '0.875rem', fontWeight: '600' }}>Waiting for mobile scan...</span>
             </div>
-            
-            <p className="text-subtle" style={{ fontSize: '0.75rem', marginTop: '1rem' }}>
-              Keep this window open. Once you pay on your phone, this will update automatically.
-            </p>
           </div>
         </div>
       )}
 
       {success && (
-        <div className="modal-overlay" onClick={closeModals}>
-          <div className="glass-panel modal-content animate-scale-up text-center" onClick={(e) => e.stopPropagation()}>
-            <div className="success-icon"><CheckCircle size={48} /></div>
+        <div className="modal-overlay" style={{ zIndex: 10000, display: 'flex' }} onClick={closeModals}>
+          <div className="glass-panel modal-content text-center animate-scale-up" style={{ zIndex: 10001, background: 'white', padding: '2rem', borderRadius: '1.5rem' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ width: '80px', height: '80px', background: '#eef2ef', color: 'var(--primary)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}><CheckCircle size={48} /></div>
             <h3>Purchase Successful!</h3>
             <p>You bought {quantity} {plant.name}(s).</p>
-            <div className="modal-actions">
+            <div className="modal-actions" style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               <button type="button" onClick={() => navigate('/dashboard')} className="btn-primary w-full">Go to Dashboard</button>
               <button type="button" onClick={closeModals} className="btn-text w-full">Continue Shopping</button>
             </div>
@@ -328,62 +330,68 @@ export default function PlantDetail() {
         </div>
       )}
 
+      {/* Cart Modal (Shared layout) */}
       {showCart && (
-        <div className="modal-overlay" onClick={() => setShowCart(false)}>
-          <div className="glass-panel modal-content animate-scale-up" onClick={(e) => e.stopPropagation()}>
-            <button className="close-modal" type="button" onClick={() => setShowCart(false)}><X size={20} /></button>
-            <div className="modal-header">
-              <h3>Your Cart</h3>
-              <p>{cart.length === 0 ? 'Your cart is empty' : `You have ${cartCount} items in your cart`}</p>
+        <div className="modal-overlay" style={{ zIndex: 10000, display: 'flex' }} onClick={() => setShowCart(false)}>
+          <div className="glass-panel modal-content animate-scale-up" style={{ zIndex: 10001, background: 'white', color: 'black', opacity: 1, transform: 'none', maxWidth: '460px', width: '95%', padding: '2rem', borderRadius: '2rem' }} onClick={(e) => e.stopPropagation()}>
+            <button className="close-modal" type="button" style={{ position: 'absolute', top: '15px', right: '15px', color: 'black', background: '#f5f5f5', borderRadius: '50%', padding: '5px' }} onClick={() => setShowCart(false)}><X size={28} /></button>
+            
+            <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+              <h3 style={{ fontSize: '1.75rem', fontWeight: '800' }}>Your Cart</h3>
+              <p style={{ color: '#666' }}>
+                {cart.length === 0 ? 'Your cart is empty' : `Items: ${cartCount}`}
+              </p>
             </div>
 
-            {cart.length > 0 && (
+            {cart.length > 0 ? (
               <>
-                <div className="cart-items-list">
+                <div className="cart-items-list" style={{ maxHeight: '350px', overflowY: 'auto', textAlign: 'left', paddingRight: '5px' }}>
                   {cart.map((item, index) => (
-                    <div key={item.id || index} className="cart-item">
+                    <div key={item.id || `cart-${index}`} style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', padding: '15px 0', borderBottom: '1px solid #eee' }}>
                       <img 
                         src={item.image} 
                         alt={item.name} 
-                        className="cart-item-img" 
+                        style={{ width: '70px', height: '70px', borderRadius: '14px', objectFit: 'cover' }}
                         onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1545239351-ef35f43d514b?q=80&w=400'; }}
                       />
-                      <div className="cart-item-info">
-                        <h4>{item.name}</h4>
-                        <div className="cart-item-qty-row">
-                          <p>{item.price}</p>
-                          <div className="cart-item-qty">x{item.quantity}</div>
+                      <div style={{ flex: 1 }}>
+                        <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '600' }}>{item.name}</h4>
+                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: '5px' }}>
+                          <span style={{ color: 'var(--primary)', fontWeight: '800', fontSize: '1rem' }}>{item.price}</span>
+                          <span style={{ background: '#f0f4f1', color: '#555', padding: '2px 8px', borderRadius: '6px', fontSize: '0.85rem', fontWeight: '700' }}>x {item.quantity}</span>
                         </div>
                       </div>
                       <button 
-                        className="remove-item-btn" 
                         onClick={() => handleRemoveFromCart(item.id)}
-                        title="Remove from cart"
+                        style={{ color: '#ff4b4b', padding: '10px', background: '#fff0f0', borderRadius: '12px' }}
                       >
-                        <Trash2 size={18} />
+                        <Trash2 size={20} />
                       </button>
                     </div>
                   ))}
                 </div>
-                <div className="cart-total">
-                  <span>Total Amount</span>
-                  <span>Rs. {cart.reduce((sum, item) => sum + (parsePrice(item.price) * item.quantity), 0)}</span>
+                
+                <div style={{ marginTop: '25px', padding: '20px', background: '#f9fbf9', borderRadius: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #eee' }}>
+                  <span style={{ fontWeight: '600', color: '#555' }}>Total Amount</span>
+                  <span style={{ fontSize: '1.5rem', fontWeight: '900', color: 'var(--primary)' }}>Rs. {cart.reduce((sum, item) => sum + (parsePrice(item.price) * item.quantity), 0)}</span>
                 </div>
-                <div className="modal-actions">
-                  <button type="button" onClick={() => { setShowCart(false); alert('Checkout feature coming soon!'); }} className="btn-primary w-full">Proceed to Checkout</button>
-                  <button type="button" onClick={() => { setCart([]); setShowCart(false); }} className="btn-text w-full">Clear Cart</button>
+
+                <div className="modal-actions" style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <button type="button" onClick={() => { setShowCart(false); alert('Checkout Triggered!'); }} style={{ width: '100%', padding: '1.25rem', borderRadius: '9999px', background: 'var(--gradient-primary)', color: 'white', border: 'none', fontWeight: '700', fontSize: '1.1rem', cursor: 'pointer' }}>Proceed to Checkout</button>
+                  <button type="button" onClick={() => setShowCart(false)} style={{ color: '#888', fontWeight: '500', cursor: 'pointer', textAlign: 'center', padding: '5px' }}>Back to Shopping</button>
                 </div>
               </>
-            )}
-            
-            {cart.length === 0 && (
-              <div className="modal-actions">
-                <button type="button" onClick={() => setShowCart(false)} className="btn-primary w-full">Back to Shopping</button>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '50px 0' }}>
+                <div style={{ background: '#f5f7f5', width: '100px', height: '100px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 25px' }}>
+                  <ShoppingCart size={45} style={{ opacity: 0.3, color: 'var(--primary)' }} />
+                </div>
+                <button type="button" onClick={() => setShowCart(false)} style={{ width: '100%', padding: '1.1rem', borderRadius: '9999px', background: 'var(--gradient-primary)', color: 'white', border: 'none', fontWeight: '700', cursor: 'pointer' }}>Browse Marketplace</button>
               </div>
             )}
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

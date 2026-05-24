@@ -205,6 +205,62 @@
   font-size: 0.9rem;
 }
 
+.buy-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+  background: var(--gradient-primary);
+  color: white;
+  border-radius: var(--radius-full);
+  padding: 0.75rem;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(46, 96, 58, 0.15);
+}
+
+.buy-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(46, 96, 58, 0.2);
+}
+
+.quantity-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  margin: 2rem 0;
+}
+
+.qty-btn {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+}
+
+.qty-btn:hover {
+  border-color: var(--primary);
+  background: white;
+  color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.qty-value {
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  min-width: 45px;
+  text-align: center;
+}
+
 .location {
   display: flex;
   align-items: center;
