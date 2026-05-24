@@ -55,21 +55,13 @@ export default function Marketplace() {
   });
   const [showCart, setShowCart] = useState(false);
 
-  useEffect(() => {
-    console.log("Current Cart State:", cart);
-  }, [cart]);
-
-  useEffect(() => {
-    console.log("showCart state changed to:", showCart);
-  }, [showCart]);
-
   // Purchase Flow State
   const [selectedPlant, setSelectedPlant] = useState(null);
   const [showQuantitySelector, setShowQuantitySelector] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [showQRPrompt, setShowQRPrompt] = useState(false);
   const [paymentSessionId, setPaymentSessionId] = useState(null);
-  const [paymentStatus, setPaymentStatus] = useState('pending'); // pending, completed
+  const [paymentStatus, setPaymentStatus] = useState('pending');
   const [success, setSuccess] = useState(false);
 
   // Restore session from localStorage on mount
@@ -169,68 +161,25 @@ export default function Marketplace() {
     return parseInt(numeric) || 0;
   };
 
-  const handleBuyClick = (e, plant) => {
-    e.stopPropagation();
-    setSelectedPlant(plant);
-    setQuantity(1);
-    setShowQuantitySelector(true);
-  };
-
   const handleModalAddToCart = () => {
     handleAddToCart(selectedPlant, quantity);
     setShowQuantitySelector(false);
     setSelectedPlant(null);
   };
 
-  const handleProceedToPayment = async () => {
-    const userStr = localStorage.getItem('user');
-    if (!userStr) {
-      alert('Please log in to purchase.');
-      return;
-    }
-    const user = JSON.parse(userStr);
-    const amount = parseInt(selectedPlant.price.replace('Rs. ', '').replace('$', '')) * quantity;
-
-    try {
-      const response = await fetch('http://localhost:5000/api/payment/initiate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plantId: selectedPlant.id, userId: user.id, quantity, amount })
-      });
-      const data = await response.json();
-
-      // Save to localStorage for persistence
-      localStorage.setItem('pendingMarketplacePurchase', JSON.stringify({
-        sessionId: data.sessionId,
-        plant: selectedPlant,
-        quantity: quantity
-      }));
-
-      setPaymentSessionId(data.sessionId);
-      setPaymentStatus('pending');
-      setShowQuantitySelector(false);
-      setShowQRPrompt(true);
-    } catch (err) {
-      alert("Failed to initiate payment.");
-    }
-  };
-
   const handleFinalizePurchase = async () => {
     const userStr = localStorage.getItem('user');
     const user = JSON.parse(userStr);
-    
     try {
       const buyResponse = await fetch(`http://localhost:5000/api/plants/${selectedPlant.id}/buy`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user.id, quantity })
       });
-
       if (buyResponse.ok) {
-        localStorage.removeItem('pendingMarketplacePurchase'); // Clear session
+        localStorage.removeItem('pendingMarketplacePurchase');
         setShowQRPrompt(false);
         setSuccess(true);
-        // Refresh plants
         const refreshRes = await fetch('http://localhost:5000/api/plants');
         const newData = await refreshRes.json();
         setPlants(newData);
@@ -255,23 +204,27 @@ export default function Marketplace() {
     navigate(`/marketplace/${id}`);
   };
 
-  // Determine local IP for mobile access
   const localIP = window.location.hostname === 'localhost' ? 'localhost' : window.location.hostname;
   const paymentURL = `http://${localIP}:5173/payment-mobile/${paymentSessionId}`;
-
   const cartCount = cart.reduce((sum, item) => sum + (item.quantity || 0), 0);
 
   return (
     <>
-      <div className="marketplace-container" style={{ animation: 'none' }}>
-        <div className="floating-cart" onClick={() => { console.log('Fixed Cart Clicked!'); setShowCart(true); }}>
-          <ShoppingCart size={24} />
-          {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
-        </div>
-
+      <div className="marketplace-container">
         <div className="marketplace-header">
-          <h2 className="title-medium">Marketplace</h2>
-          <div className="search-bar">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h2 className="title-medium" style={{ margin: 0 }}>Marketplace</h2>
+            <div className="header-cart-icon" onClick={() => setShowCart(true)} style={{ position: 'relative', cursor: 'pointer', padding: '8px', background: 'white', borderRadius: '50%', boxShadow: 'var(--shadow-sm)', color: 'var(--primary)', border: '1px solid var(--border-color)' }}>
+              <ShoppingCart size={24} />
+              {cartCount > 0 && (
+                <span style={{ position: 'absolute', top: '-5px', right: '-5px', background: '#ff4b4b', color: 'white', fontSize: '0.7rem', fontWeight: 'bold', width: '18px', height: '18px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid white' }}>
+                  {cartCount}
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="search-bar" style={{ position: 'relative' }}>
             <Search size={20} className="icon" />
             <input 
               type="text" 
@@ -310,28 +263,29 @@ export default function Marketplace() {
         </div>
       </div>
 
-      {/* Modals moved outside of animated container for fixed positioning reliability */}
+      {/* Select Quantity Modal (Matching plant-app UI) */}
       {showQuantitySelector && (
         <div className="modal-overlay" style={{ zIndex: 10000, display: 'flex' }} onClick={closeModals}>
-          <div className="modal-content" style={{ zIndex: 10001, background: 'white', color: 'black', opacity: 1, transform: 'none', textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
-            <button className="close-modal" type="button" onClick={closeModals}><X size={20} /></button>
-            <div className="modal-header">
-              <h3>Select Quantity</h3>
-              <p>How many {selectedPlant?.name}s do you want?</p>
+          <div className="glass-panel modal-content animate-scale-up" style={{ zIndex: 10001, background: 'white', color: 'black', opacity: 1, transform: 'none', padding: '2rem', borderRadius: '1.5rem', maxWidth: '400px', width: '90%' }} onClick={(e) => e.stopPropagation()}>
+            <button className="close-modal" type="button" style={{ position: 'absolute', top: '1rem', right: '1rem', color: '#888' }} onClick={closeModals}><X size={20} /></button>
+            <div className="modal-header" style={{ textAlign: 'center' }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '0.5rem' }}>Select Quantity</h3>
+              <p style={{ color: '#666', fontSize: '0.875rem' }}>How many {selectedPlant?.name}s do you want?</p>
             </div>
-            <div className="quantity-controls" style={{ display: 'flex', justifyContent: 'center', gap: '2rem', margin: '2rem 0' }}>
-              <button type="button" onClick={() => setQuantity(Math.max(1, quantity - 1))} className="qty-btn" style={{ width: '48px', height: '48px', borderRadius: '12px', border: '1px solid #ddd' }}><Minus size={20} /></button>
-              <span className="qty-value" style={{ fontSize: '2rem', fontWeight: '700' }}>{quantity}</span>
-              <button type="button" onClick={() => setQuantity(Math.min(10, quantity + 1))} className="qty-btn" style={{ width: '48px', height: '48px', borderRadius: '12px', border: '1px solid #ddd' }}><Plus size={20} /></button>
+            <div className="quantity-controls" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2rem', margin: '2rem 0' }}>
+              <button type="button" onClick={() => setQuantity(Math.max(1, quantity - 1))} className="qty-btn" style={{ width: '48px', height: '48px', borderRadius: '12px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-primary)', transition: 'all 0.2s ease' }}><Minus size={20} /></button>
+              <span className="qty-value" style={{ fontSize: '2rem', fontWeight: '700', width: '40px', textAlign: 'center' }}>{quantity}</span>
+              <button type="button" onClick={() => setQuantity(Math.min(10, quantity + 1))} className="qty-btn" style={{ width: '48px', height: '48px', borderRadius: '12px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-primary)', transition: 'all 0.2s ease' }}><Plus size={20} /></button>
             </div>
-            <button type="button" onClick={handleModalAddToCart} className="btn-primary w-full">Add to Cart</button>
+            <button type="button" onClick={handleModalAddToCart} className="btn-primary w-full" style={{ width: '100%', padding: '1rem', borderRadius: '9999px', background: 'var(--gradient-primary)', color: 'white', fontWeight: '500', fontSize: '1rem', boxShadow: '0 4px 12px rgba(46, 96, 58, 0.2)' }}>Add to Cart</button>
           </div>
         </div>
       )}
 
+      {/* QR Modal */}
       {showQRPrompt && (
         <div className="modal-overlay" style={{ zIndex: 10000, display: 'flex' }} onClick={closeModals}>
-          <div className="modal-content" style={{ zIndex: 10001, background: 'white', color: 'black', opacity: 1, transform: 'none', textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
+          <div className="glass-panel modal-content text-center animate-scale-up" style={{ zIndex: 10001, background: 'white', padding: '2rem', borderRadius: '1.5rem' }} onClick={(e) => e.stopPropagation()}>
             <button className="close-modal" type="button" onClick={closeModals}><X size={20} /></button>
             <div className="modal-header">
               <div className="qr-icon" style={{ marginBottom: '1rem', color: 'var(--primary)', display: 'flex', justifyContent: 'center' }}><QrCode size={48} /></div>
@@ -341,15 +295,9 @@ export default function Marketplace() {
                 Total: Rs. {parseInt(selectedPlant?.price.replace('Rs. ', '').replace('$', '')) * quantity}
               </p>
             </div>
-
             <div style={{ backgroundColor: 'white', padding: '1rem', borderRadius: '1rem', display: 'inline-block', margin: '1.5rem 0', border: '1px solid #eee' }}>
-              <img 
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(paymentURL)}`} 
-                alt="Payment QR Code" 
-                style={{ width: '200px', height: '200px' }}
-              />
+              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(paymentURL)}`} alt="Payment QR Code" style={{ width: '200px', height: '200px' }} />
             </div>
-
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', padding: '1rem', backgroundColor: '#f5f5f5', borderRadius: '1rem' }}>
               <Loader2 className="animate-spin" size={20} color="var(--primary)" />
               <span style={{ fontSize: '0.875rem', fontWeight: '600' }}>Waiting for mobile scan...</span>
@@ -358,9 +306,10 @@ export default function Marketplace() {
         </div>
       )}
 
+      {/* Success Modal */}
       {success && (
         <div className="modal-overlay" style={{ zIndex: 10000, display: 'flex' }} onClick={closeModals}>
-          <div className="modal-content" style={{ zIndex: 10001, background: 'white', color: 'black', opacity: 1, transform: 'none', textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
+          <div className="glass-panel modal-content text-center animate-scale-up" style={{ zIndex: 10001, background: 'white', padding: '2rem', borderRadius: '1.5rem' }} onClick={(e) => e.stopPropagation()}>
             <div style={{ width: '80px', height: '80px', background: '#eef2ef', color: 'var(--primary)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}><CheckCircle size={48} /></div>
             <h3>Purchase Successful!</h3>
             <p>You bought {quantity} {selectedPlant?.name}(s).</p>
@@ -372,15 +321,16 @@ export default function Marketplace() {
         </div>
       )}
 
+      {/* Cart Modal */}
       {showCart && (
-        <div className="modal-overlay" style={{ zIndex: 10000, display: 'flex' }} onClick={() => { console.log('Overlay clicked, closing...'); setShowCart(false); }}>
-          <div className="modal-content" style={{ zIndex: 10001, background: 'white', color: 'black', opacity: 1, transform: 'none' }} onClick={(e) => e.stopPropagation()}>
+        <div className="modal-overlay" style={{ zIndex: 10000, display: 'flex' }} onClick={() => setShowCart(false)}>
+          <div className="modal-content animate-scale-up" style={{ zIndex: 10001, background: 'white', color: 'black', opacity: 1, transform: 'none', padding: '2rem', borderRadius: '1.5rem', maxWidth: '450px', width: '90%' }} onClick={(e) => e.stopPropagation()}>
             <button className="close-modal" type="button" style={{ position: 'absolute', top: '15px', right: '15px', color: 'black' }} onClick={() => setShowCart(false)}><X size={28} /></button>
             
             <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-              <h3 style={{ fontSize: '1.5rem', fontWeight: '800' }}>Your Shopping Cart</h3>
+              <h3 style={{ fontSize: '1.5rem', fontWeight: '800' }}>Your Cart</h3>
               <p style={{ color: '#666' }}>
-                {cart.length === 0 ? 'Your cart is empty' : `Total Items: ${cartCount}`}
+                {cart.length === 0 ? 'Your cart is empty' : `Items: ${cartCount}`}
               </p>
             </div>
 
@@ -418,14 +368,14 @@ export default function Marketplace() {
                 </div>
 
                 <div className="modal-actions" style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <button type="button" onClick={() => { setShowCart(false); alert('Checkout Triggered!'); }} className="btn-primary" style={{ width: '100%', padding: '12px' }}>Proceed to Checkout</button>
-                  <button type="button" onClick={() => setShowCart(false)} style={{ color: '#666', cursor: 'pointer' }}>Continue Shopping</button>
+                  <button type="button" onClick={() => { setShowCart(false); alert('Checkout Triggered!'); }} className="btn-primary" style={{ width: '100%', padding: '12px', borderRadius: '9999px' }}>Proceed to Checkout</button>
+                  <button type="button" onClick={() => setShowCart(false)} style={{ color: '#666', cursor: 'pointer', textAlign: 'center' }}>Continue Shopping</button>
                 </div>
               </>
             ) : (
               <div style={{ textAlign: 'center', padding: '40px 0' }}>
                 <ShoppingCart size={48} style={{ opacity: 0.2, marginBottom: '20px' }} />
-                <button type="button" onClick={() => setShowCart(false)} className="btn-primary" style={{ width: '100%' }}>Back to Market</button>
+                <button type="button" onClick={() => setShowCart(false)} className="btn-primary" style={{ width: '100%', borderRadius: '9999px' }}>Back to Market</button>
               </div>
             )}
           </div>
