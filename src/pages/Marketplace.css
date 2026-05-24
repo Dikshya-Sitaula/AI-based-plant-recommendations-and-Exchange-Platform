@@ -6,8 +6,8 @@
 
 .floating-cart {
   position: fixed;
-  top: 1.5rem;
-  right: 2rem;
+  top: 1rem;
+  right: 1.5rem;
   background: white;
   width: 50px;
   height: 50px;
