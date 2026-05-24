@@ -5,25 +5,27 @@
 }
 
 .floating-cart {
-  position: relative;
+  position: fixed;
+  top: 1.5rem;
+  right: 1.5rem;
   background: white;
-  width: 50px;
-  height: 50px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   color: var(--primary);
-  z-index: 10;
+  z-index: 5000; /* Lower than modal, but higher than everything else */
   cursor: pointer;
   border: 1px solid var(--border-color);
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .floating-cart:hover {
-  transform: scale(1.05);
-  background: var(--bg-secondary);
+  transform: scale(1.1);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
 }
 
 .cart-badge {

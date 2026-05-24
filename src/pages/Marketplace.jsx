@@ -251,14 +251,13 @@ export default function Marketplace() {
 
   return (
     <div className="animate-fade-in marketplace-container">
+      <div className="floating-cart" onClick={() => { console.log('Fixed Cart Clicked!'); setShowCart(true); }}>
+        <ShoppingCart size={24} />
+        {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
+      </div>
+
       <div className="marketplace-header">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2 className="title-medium">Marketplace</h2>
-          <div className="floating-cart" onClick={() => setShowCart(true)}>
-            <ShoppingCart size={24} />
-            {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
-          </div>
-        </div>
+        <h2 className="title-medium">Marketplace</h2>
         <div className="search-bar">
           <Search size={20} className="icon" />
           <input 
@@ -363,56 +362,64 @@ export default function Marketplace() {
       )}
 
       {showCart && (
-        <div className="modal-overlay" onClick={() => setShowCart(false)}>
-          <div className="glass-panel modal-content animate-scale-up" onClick={(e) => e.stopPropagation()}>
-            <button className="close-modal" type="button" onClick={() => setShowCart(false)}><X size={20} /></button>
-            <div className="modal-header">
-              <h3>Your Cart</h3>
-              <p>{cart.length === 0 ? 'Your cart is empty' : `You have ${cartCount} items in your cart`}</p>
+        <div className="modal-overlay" style={{ display: 'flex', visibility: 'visible', opacity: 1 }} onClick={() => { console.log('Overlay clicked, closing...'); setShowCart(false); }}>
+          <div className="glass-panel modal-content animate-scale-up" style={{ zIndex: 10001, position: 'relative' }} onClick={(e) => e.stopPropagation()}>
+            <button className="close-modal" type="button" style={{ background: 'var(--bg-secondary)', borderRadius: '50%', padding: '5px', top: '10px', right: '10px' }} onClick={() => setShowCart(false)}><X size={24} /></button>
+            
+            <div className="modal-header" style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+              <h3 style={{ fontSize: '1.5rem', fontWeight: '700' }}>Your Shopping Cart</h3>
+              <p style={{ color: 'var(--text-secondary)' }}>
+                {cart.length === 0 ? 'Your cart is currently empty' : `Total Items: ${cartCount}`}
+              </p>
             </div>
 
-            {cart.length > 0 && (
+            {cart.length > 0 ? (
               <>
-                <div className="cart-items-list">
+                <div className="cart-items-list" style={{ maxHeight: '400px', overflowY: 'auto' }}>
                   {cart.map((item, index) => (
-                    <div key={item.id || index} className="cart-item">
+                    <div key={item.id || `cart-${index}`} className="cart-item" style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem 0', borderBottom: '1px solid var(--border-color)' }}>
                       <img 
                         src={item.image} 
                         alt={item.name} 
-                        className="cart-item-img" 
+                        style={{ width: '60px', height: '60px', borderRadius: '12px', objectFit: 'cover' }}
                         onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1545239351-ef35f43d514b?q=80&w=400'; }}
                       />
-                      <div className="cart-item-info">
-                        <h4>{item.name}</h4>
-                        <div className="cart-item-qty-row">
-                          <p>{item.price}</p>
-                          <div className="cart-item-qty">x{item.quantity}</div>
+                      <div style={{ flex: 1 }}>
+                        <h4 style={{ margin: 0, fontSize: '1rem' }}>{item.name}</h4>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.25rem' }}>
+                          <span style={{ color: 'var(--primary)', fontWeight: '700' }}>{item.price}</span>
+                          <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>x {item.quantity}</span>
                         </div>
                       </div>
                       <button 
                         className="remove-item-btn" 
                         onClick={() => handleRemoveFromCart(item.id)}
-                        title="Remove from cart"
+                        style={{ color: '#ff4b4b', cursor: 'pointer' }}
                       >
-                        <Trash2 size={18} />
+                        <Trash2 size={20} />
                       </button>
                     </div>
                   ))}
                 </div>
-                <div className="cart-total">
-                  <span>Total Amount</span>
-                  <span>Rs. {cart.reduce((sum, item) => sum + (parsePrice(item.price) * item.quantity), 0)}</span>
+                
+                <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'var(--bg-secondary)', borderRadius: '12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontWeight: '600' }}>Total Amount</span>
+                    <span style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--primary)' }}>
+                      Rs. {cart.reduce((sum, item) => sum + (parsePrice(item.price) * item.quantity), 0)}
+                    </span>
+                  </div>
                 </div>
-                <div className="modal-actions">
-                  <button type="button" onClick={() => { setShowCart(false); alert('Checkout feature coming soon!'); }} className="btn-primary w-full">Proceed to Checkout</button>
-                  <button type="button" onClick={() => { setCart([]); setShowCart(false); }} className="btn-text w-full">Clear Cart</button>
+
+                <div className="modal-actions" style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <button type="button" onClick={() => { setShowCart(false); alert('Redirecting to checkout...'); }} className="btn-primary" style={{ width: '100%' }}>Proceed to Payment</button>
+                  <button type="button" onClick={() => { if(window.confirm('Clear all items?')) setCart([]); }} className="btn-text" style={{ width: '100%', color: 'var(--text-muted)' }}>Empty Cart</button>
                 </div>
               </>
-            )}
-            
-            {cart.length === 0 && (
-              <div className="modal-actions">
-                <button type="button" onClick={() => setShowCart(false)} className="btn-primary w-full">Back to Shopping</button>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '2rem 0' }}>
+                <div style={{ marginBottom: '1.5rem', color: 'var(--text-muted)' }}><ShoppingCart size={48} style={{ opacity: 0.3 }} /></div>
+                <button type="button" onClick={() => setShowCart(false)} className="btn-primary" style={{ width: '100%' }}>Start Shopping</button>
               </div>
             )}
           </div>
