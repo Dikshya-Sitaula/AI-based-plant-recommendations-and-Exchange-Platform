@@ -4,18 +4,9 @@ import { Search, Filter, Heart, MapPin, ShoppingCart, X, Minus, Plus, QrCode, Ch
 import './Marketplace.css';
 
 function PlantCard({ plant, onAddToCart, onClick }) {
-  const [showQty, setShowQty] = useState(false);
-  const [qty, setQty] = useState(1);
-
   const handleAction = (e) => {
     e.stopPropagation();
-    if (!showQty) {
-      setShowQty(true);
-    } else {
-      onAddToCart(plant, qty);
-      setShowQty(false);
-      setQty(1);
-    }
+    onAddToCart(plant, 1);
   };
 
   return (
@@ -35,26 +26,13 @@ function PlantCard({ plant, onAddToCart, onClick }) {
           <span>{plant.location}</span>
         </div>
         
-        {showQty ? (
-          <div className="card-qty-selector-row" onClick={(e) => e.stopPropagation()}>
-            <div className="daraz-selector small">
-              <button className="daraz-btn" onClick={() => setQty(Math.max(1, qty - 1))}><Minus size={14} /></button>
-              <input type="text" className="daraz-input" value={qty} readOnly />
-              <button className="daraz-btn" onClick={() => setQty(Math.min(10, qty + 1))}><Plus size={14} /></button>
-            </div>
-            <button className="confirm-btn-small" onClick={handleAction}>
-              <CheckCircle size={18} />
-            </button>
-          </div>
-        ) : (
-          <button 
-            className="add-to-cart-card" 
-            onClick={handleAction}
-          >
-            <ShoppingCart size={16} />
-            Add to Cart
-          </button>
-        )}
+        <button 
+          className="add-to-cart-card" 
+          onClick={handleAction}
+        >
+          <ShoppingCart size={16} />
+          Add to Cart
+        </button>
       </div>
     </div>
   );
