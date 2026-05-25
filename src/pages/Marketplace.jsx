@@ -21,10 +21,6 @@ function PlantCard({ plant, onAddToCart, onClick }) {
           <h3>{plant.name}</h3>
           <p className="price">{plant.price}</p>
         </div>
-        <div className="location">
-          <MapPin size={14} />
-          <span>{plant.location}</span>
-        </div>
         
         <button 
           className="add-to-cart-card" 

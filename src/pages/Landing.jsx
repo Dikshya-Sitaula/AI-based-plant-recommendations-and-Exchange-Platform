@@ -233,7 +233,7 @@ export default function Landing() {
                   <div className="lp-mini lp-mini-solid lp-float-up-delayed">
                     <Sparkles size={32} />
                     <p className="lp-mini-title">Smart Recommendation</p>
-                    <p className="lp-mini-sub"> & Specialized Care Tips</p>
+                    <p className="lp-mini-sub">Perfect Matches</p>
                   </div>
                 </div>
                 <div className="lp-mini-col lp-mini-col-offset">
@@ -290,13 +290,13 @@ export default function Landing() {
             <button type="button" className="lp-feat-card" onClick={() => handleFeatureNav('/scan')}>
               <div className="lp-feat-icon-wrap"><Camera size={28} className="lp-feat-icon" /></div>
               <h3 className="lp-feat-title">AI-Based Plant Identification</h3>
-              <p className="lp-feat-desc">Upload a plant image and instantly identify the plant along with care tips and environmental benefits.</p>
+              <p className="lp-feat-desc">Upload a plant image and instantly identify species with high accuracy.</p>
             </button>
 
             <button type="button" className="lp-feat-card" onClick={() => handleFeatureNav('/recommendation')}>
               <div className="lp-feat-icon-wrap"><MapPin size={28} className="lp-feat-icon" /></div>
               <h3 className="lp-feat-title">Smart Space &amp; Location</h3>
-              <p className="lp-feat-desc">Receive personalized plant suggestions based on available space, sunlight conditions, and your location.</p>
+              <p className="lp-feat-desc">Receive personalized plant suggestions based on available space and your location.</p>
             </button>
 
             <button type="button" className="lp-feat-card" onClick={() => handleFeatureNav('/marketplace')}>
@@ -307,8 +307,8 @@ export default function Landing() {
 
             <button type="button" className="lp-feat-card" onClick={() => handleFeatureNav('/dashboard')}>
               <div className="lp-feat-icon-wrap"><HeartPulse size={28} className="lp-feat-icon" /></div>
-              <h3 className="lp-feat-title">Personalized Care Guidance</h3>
-              <p className="lp-feat-desc">Get customized watering, placement, and maintenance instructions for healthier plants.</p>
+              <h3 className="lp-feat-title">Personalized Plant Portfolio</h3>
+              <p className="lp-feat-desc">Manage your plant collection and track your contributions to a greener environment.</p>
             </button>
 
             <button type="button" className="lp-feat-card" onClick={() => handleFeatureNav('/dashboard')}>

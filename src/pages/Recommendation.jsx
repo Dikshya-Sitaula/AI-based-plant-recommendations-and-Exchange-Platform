@@ -165,38 +165,6 @@ export default function Recommendation() {
               <p className="rec-subtitle">Based on your specific environment and local climate.</p>
             </header>
 
-            {/* Summary Box */}
-            {summaryData && (
-              <div className="rec-card" style={{ padding: '1.5rem', marginBottom: '2rem', border: '1px solid var(--primary)', background: 'rgba(168, 230, 207, 0.1)' }}>
-                <h3 style={{ fontSize: '1.125rem', fontWeight: '700', color: 'var(--primary)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Sparkles size={18} /> Environmental Summary
-                </h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '1.5rem' }}>
-                  <div>
-                    <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-secondary)', fontWeight: '700' }}>Location</div>
-                    <div style={{ fontWeight: '600' }}>{summaryData.location}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-secondary)', fontWeight: '700' }}>Avg. Temp</div>
-                    <div style={{ fontWeight: '600', color: 'var(--accent)' }}>{summaryData.averageTemp}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-secondary)', fontWeight: '700' }}>Space Type</div>
-                    <div style={{ fontWeight: '600', textTransform: 'capitalize' }}>{summaryData.space}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-secondary)', fontWeight: '700' }}>Smart Profile</div>
-                    <div style={{ fontWeight: '600' }}>#{summaryData.profileId} / 144</div>
-                  </div>
-                </div>
-                {summaryData.note && (
-                  <div style={{ marginTop: '1rem', fontSize: '0.875rem', color: 'var(--primary)', fontStyle: 'italic', borderTop: '1px solid rgba(168, 230, 207, 0.2)', paddingTop: '0.5rem' }}>
-                    💡 {summaryData.note}
-                  </div>
-                )}
-              </div>
-            )}
-
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <h3 style={{ fontSize: '1.25rem', fontWeight: '700' }}>Recommended for You</h3>
               <button className="btn-secondary" onClick={() => setShowResults(false)} style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', height: 'auto' }}>
@@ -221,18 +189,10 @@ export default function Recommendation() {
                       <img src={`http://localhost:5000${plant.image}`} alt={plant.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </div>
                     <div style={{ padding: '1.25rem' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                         <h4 style={{ fontSize: '1.125rem', fontWeight: '700', margin: 0 }}>{plant.name}</h4>
                         <span style={{ color: 'var(--primary)', fontWeight: '700' }}>{plant.price}</span>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>
-                        <MapPin size={14} /> {plant.location}
-                      </div>
-                      {plant.rule && (
-                        <div style={{ fontSize: '0.8125rem', color: 'var(--primary)', background: 'rgba(168, 230, 207, 0.1)', padding: '0.4rem 0.75rem', borderRadius: '0.5rem', marginBottom: '1rem', border: '1px dashed var(--primary)' }}>
-                          <strong>Smart Rule:</strong> {plant.rule}
-                        </div>
-                      )}
                       
                       <button 
                         onClick={() => handlePlantClick(plant)}

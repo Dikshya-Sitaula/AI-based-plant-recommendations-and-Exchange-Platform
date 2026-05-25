@@ -139,15 +139,6 @@ export default function Scan() {
             </div>
           </div>
           
-          <div className="glass-panel p-4 mb-4">
-            <h3 className="section-title">Care Tips for {location || 'Your Area'}</h3>
-            <ul className="care-list">
-              <li>💧 <strong>Water:</strong> Every 1-2 weeks, allowing soil to dry out between waterings.</li>
-              <li>☀️ <strong>Light:</strong> Perfect for your {spaceType.replace('-', ' ')} space!</li>
-              <li>🌡️ <strong>Temp:</strong> Ideal between 65°F-85°F. Keep away from drafts.</li>
-            </ul>
-          </div>
-
           <h3 className="section-title">Similar Plants in Marketplace</h3>
           <div className="recommendations">
             {[1, 2].map(i => (

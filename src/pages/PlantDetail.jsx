@@ -210,48 +210,11 @@ export default function PlantDetail() {
           </div>
 
           <div className="detail-info-section">
-            <div className="detail-header">
+            <div className="detail-header" style={{ marginBottom: '2rem' }}>
               <div>
                 <h1 className="detail-title">{detail.name}</h1>
-                <p className="scientific-name"><i>{detail.scientificName}</i></p>
               </div>
               <p className="detail-price">{plant.price}</p>
-            </div>
-
-            <p className="detail-description">{detail.description}</p>
-
-            <div className="detail-grid">
-              <div className="detail-item">
-                <MapPin className="detail-icon" size={24} />
-                <div className="detail-text">
-                  <span className="detail-label">Suitable Location</span>
-                  <span className="detail-value">{detail.suitableLocation}</span>
-                </div>
-              </div>
-
-              <div className="detail-item">
-                <Thermometer className="detail-icon" size={24} />
-                <div className="detail-text">
-                  <span className="detail-label">Temperature Range</span>
-                  <span className="detail-value">{detail.minTemp} - {detail.maxTemp}</span>
-                </div>
-              </div>
-
-              <div className="detail-item">
-                <Sun className="detail-icon" size={24} />
-                <div className="detail-text">
-                  <span className="detail-label">Sunlight</span>
-                  <span className="detail-value">{detail.sunlight}</span>
-                </div>
-              </div>
-
-              <div className="detail-item">
-                <Wind className="detail-icon" size={24} />
-                <div className="detail-text">
-                  <span className="detail-label">Air Quality Score</span>
-                  <span className="detail-value">{detail.airQualityScore}/10</span>
-                </div>
-              </div>
             </div>
 
             <div className="detail-actions">

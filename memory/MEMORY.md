@@ -1,5 +1,14 @@
 # Leaf-Life Project Memory
 
+## UI Simplification & Minimalist Plant Display (May 25, 2026)
+- **Minimalist Plant Cards:** Simplified the plant display across the Marketplace and Recommendation results. Removed secondary details like "Location," "Smart Rules," "Health Impact," and "Air Quality Scores" to focus on the plant name and price.
+- **Simplified Plant Details:** Overhauled `src/pages/PlantDetail.jsx` to remove scientific names, descriptions, and the environmental requirement grid (Temp, Sunlight, Location). The detail view now focuses on a clean, action-oriented layout.
+- **Removed Care Tips:** 
+    - Deleted the "Care Tips" section from the Smart Scan results in `src/pages/Scan.jsx`.
+    - Updated the Landing page (`src/pages/Landing.jsx`) to remove all references to care guidance, aligning the marketing copy with the new minimalist product direction.
+- **Unified Shopping Experience:** Continued refining the "Add to Cart" flow, ensuring consistency in quantity selection and cart management across all simplified views.
+- **Git Branch:** Pushed these UI/UX refinements to the `rishu-2.0` branch.
+
 ## Smart Recommendation System (May 25, 2026)
 - **144 Profile Logic:** Implemented a sophisticated recommendation engine that categorizes user environments into 144 unique profiles (4 Space Types × 3 Light Levels × 12 Monthly Climate Cycles).
 - **Rule-Based Matching:**
