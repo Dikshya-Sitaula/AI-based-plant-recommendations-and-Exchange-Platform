@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Thermometer, Sun, Wind, MapPin, ShoppingCart, X, Minus, Plus, QrCode, CheckCircle, Loader2, Trash2 } from 'lucide-react';
+import { ArrowLeft, Thermometer, Sun, Wind, MapPin, ShoppingCart, X, Minus, Plus, QrCode, CheckCircle, Loader2, Trash2, Leaf } from 'lucide-react';
+import PLANT_DETAILS from './plantData';
 import './PlantDetail.css';
 
 export default function PlantDetail() {
@@ -248,16 +249,28 @@ export default function PlantDetail() {
             </div>
           </div>
 
-          {/* 3. Nepali Name / Also Known As */}
-          <div className="detail-section">
-            <h3 className="section-subtitle">Also Known As</h3>
-            <p className="detail-value-text">{plant.nepali_name}</p>
+          {/* 3. Scientific & Nepali Names */}
+          <div className="detail-section" style={{ borderBottom: '1px solid #eee', paddingBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Scientific Name:</span>
+                <span style={{ fontSize: '1.1rem', color: '#333', fontStyle: 'italic' }}>{detail.scientificName || plant.scientific_name}</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Nepali Name:</span>
+                <span style={{ fontSize: '1.1rem', color: '#333', fontWeight: '600' }}>{detail.nepaliName || plant.nepali_name}</span>
+              </div>
+            </div>
           </div>
 
           {/* 4. About This Plant */}
-          <div className="detail-section">
-            <h3 className="section-subtitle">About This Plant</h3>
-            <p className="description-text">{plant.description}</p>
+          <div className="detail-section" style={{ marginTop: '1.5rem' }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#1a1a1a', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Leaf size={20} className="text-primary" /> About This Plant
+            </h3>
+            <p style={{ lineHeight: '1.8', color: '#4a4a4a', fontSize: '1.05rem', textAlign: 'justify' }}>
+              {detail.description || plant.description}
+            </p>
           </div>
 
           {/* 5. Listing Details (Price, Location) */}
