@@ -87,7 +87,7 @@ export default function Marketplace() {
   useEffect(() => {
     const fetchPlants = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/plants');
+        const response = await fetch(`http://${window.location.hostname}:5000/api/plants`);
         const data = await response.json();
         setPlants(data);
       } catch (err) {
@@ -105,7 +105,7 @@ export default function Marketplace() {
     if (showQRPrompt && paymentSessionId && paymentStatus === 'pending') {
       interval = setInterval(async () => {
         try {
-          const response = await fetch(`http://localhost:5000/api/payment/status/${paymentSessionId}`);
+          const response = await fetch(`http://${window.location.hostname}:5000/api/payment/status/${paymentSessionId}`);
           const data = await response.json();
           if (data.status === 'completed') {
             setPaymentStatus('completed');
@@ -189,7 +189,7 @@ export default function Marketplace() {
     const amount = cart.reduce((sum, item) => sum + (parsePrice(item.price) * (item.quantity || 1)), 0);
 
     try {
-      const response = await fetch('http://localhost:5000/api/payment/initiate', {
+      const response = await fetch(`http://${window.location.hostname}:5000/api/payment/initiate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -392,7 +392,7 @@ export default function Marketplace() {
                   {cart.map((item, index) => (
                     <div key={item.id || `cart-${index}`} style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', padding: '15px 0', borderBottom: '1px solid #eee' }}>
                       <img 
-                        src={item.image} 
+                        src={item.image.startsWith('http') ? item.image.replace('localhost', window.location.hostname) : `http://${window.location.hostname}:5000${item.image}`} 
                         alt={item.name} 
                         style={{ width: '70px', height: '70px', borderRadius: '14px', objectFit: 'cover' }}
                         onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1545239351-ef35f43d514b?q=80&w=400'; }}

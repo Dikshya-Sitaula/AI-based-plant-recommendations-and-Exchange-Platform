@@ -111,7 +111,7 @@ export default function AuthModal({ open, onClose, onSuccess }) {
         return;
       }
 
-      onSuccess?.({ email: emailTrimmed, rememberMe, mode, fullName: data.fullName });
+      onSuccess?.({ email: emailTrimmed, rememberMe, mode, fullName: data.fullName, userId: data.userId });
     } catch (err) {
       setError('Could not connect to the server.');
     } finally {

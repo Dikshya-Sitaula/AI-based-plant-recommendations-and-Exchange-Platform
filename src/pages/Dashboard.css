@@ -34,7 +34,13 @@
 
 @media (min-width: 768px) {
   .dashboard-stats-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .dashboard-stats-grid {
+    grid-template-columns: repeat(4, 1fr);
   }
 }
 
@@ -81,10 +87,34 @@
 .text-orange { color: #F97316; }
 .bg-orange { background-color: #F97316; }
 
+.bg-teal-light { background-color: #F0FDFA; }
+.text-teal { color: #0D9488; }
+
 .stat-card-body {
   flex: 1;
   display: flex;
   flex-direction: column;
+}
+
+/* Value Display (Generic for Stats) */
+.stat-value-display {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.stat-value-number {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.stat-value-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-muted);
 }
 
 /* AQI Card specifics */

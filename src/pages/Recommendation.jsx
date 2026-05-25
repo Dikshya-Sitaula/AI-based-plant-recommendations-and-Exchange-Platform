@@ -42,7 +42,7 @@ export default function Recommendation() {
     if (showQRPrompt && paymentSessionId && paymentStatus === 'pending') {
       interval = setInterval(async () => {
         try {
-          const response = await fetch(`http://localhost:5000/api/payment/status/${paymentSessionId}`);
+          const response = await fetch(`http://${window.location.hostname}:5000/api/payment/status/${paymentSessionId}`);
           const data = await response.json();
           if (data.status === 'completed') {
             setPaymentStatus('completed');
@@ -75,7 +75,7 @@ export default function Recommendation() {
         location: location
       });
 
-      const response = await fetch(`http://localhost:5000/api/recommend?${params.toString()}`);
+      const response = await fetch(`http://${window.location.hostname}:5000/api/recommend?${params.toString()}`);
       if (!response.ok) throw new Error('Failed to fetch recommendations');
       
       const data = await response.json();
@@ -102,11 +102,6 @@ export default function Recommendation() {
   };
 
   const handleAddToCart = () => {
-    const plantWithFixedImage = {
-      ...selectedPlant,
-      image: selectedPlant.image.startsWith('http') ? selectedPlant.image : `http://localhost:5000${selectedPlant.image}`
-    };
-
     const existingItem = cart.find(item => item.id === selectedPlant.id);
     if (existingItem) {
       setCart(cart.map(item => 
@@ -115,7 +110,7 @@ export default function Recommendation() {
           : item
       ));
     } else {
-      setCart([...cart, { ...plantWithFixedImage, quantity: quantity }]);
+      setCart([...cart, { ...selectedPlant, quantity: quantity }]);
     }
     
     setShowQuantitySelector(false);
@@ -136,7 +131,7 @@ export default function Recommendation() {
     const amount = cart.reduce((sum, item) => sum + (parsePrice(item.price) * (item.quantity || 1)), 0);
 
     try {
-      const response = await fetch('http://localhost:5000/api/payment/initiate', {
+      const response = await fetch(`http://${window.location.hostname}:5000/api/payment/initiate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ cartItems: cart, userId: 1, amount })
@@ -254,7 +249,7 @@ export default function Recommendation() {
                       onClick={() => navigate(`/marketplace/${plant.id}`)}
                       style={{ height: '200px', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', cursor: 'pointer' }}
                     >
-                      <img src={`http://localhost:5000${plant.image}`} alt={plant.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <img src={`http://${window.location.hostname}:5000${plant.image}`} alt={plant.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </div>
                     <div style={{ padding: '1.25rem' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>

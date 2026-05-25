@@ -399,6 +399,34 @@ const plantDetailsMap = require('./plantDetails');
        }
      });
 
+     // --- Dashboard Endpoints ---
+     app.get('/api/user/:userId/collection', async (req, res) => {
+       try {
+         const { userId } = req.params;
+         const [plants] = await db.execute('SELECT * FROM plants WHERE buyer_id = ?', [userId]);
+         res.json(plants);
+       } catch (error) {
+         console.error('Error fetching collection:', error);
+         res.status(500).json({ error: 'Failed to fetch collection' });
+       }
+     });
+
+     app.get('/api/user/:userId/stats', async (req, res) => {
+       try {
+         const { userId } = req.params;
+         const [rows] = await db.execute('SELECT COUNT(*) as ownedCount FROM plants WHERE buyer_id = ?', [userId]);
+         const [co2Rows] = await db.execute('SELECT SUM(purification_score) as totalCO2 FROM plants WHERE buyer_id = ?', [userId]);
+         
+         res.json({
+           ownedCount: rows[0].ownedCount || 0,
+           totalCO2: (co2Rows[0].totalCO2 * 0.1).toFixed(1) || "0.0" // Simple formula: score * 0.1kg
+         });
+       } catch (error) {
+         console.error('Error fetching stats:', error);
+         res.status(500).json({ error: 'Failed to fetch stats' });
+       }
+     });
+
      // Basic Route
      app.get('/', (req, res) => {      res.send('Leaf-Life API is running...');
     });

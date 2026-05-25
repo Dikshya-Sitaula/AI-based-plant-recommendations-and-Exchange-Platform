@@ -99,7 +99,7 @@ export default function MobileBill() {
             {session.cart_items.map((item, idx) => (
               <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                 <img 
-                  src={item.image.startsWith('http') ? item.image : `http://localhost:5000${item.image}`} 
+                  src={item.image.startsWith('http') ? item.image.replace('localhost', window.location.hostname) : `http://${window.location.hostname}:5000${item.image}`} 
                   alt={item.name} 
                   style={{ width: '60px', height: '60px', borderRadius: '12px', objectFit: 'cover' }}
                 />
