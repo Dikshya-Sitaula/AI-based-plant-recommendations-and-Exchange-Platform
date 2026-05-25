@@ -392,9 +392,81 @@ const plantDetailsMap = require('./plantDetails');
 
      app.post('/api/payment/complete/:sessionId', async (req, res) => {
        try {
-         await db.execute('UPDATE payment_sessions SET status = ? WHERE id = ?', ['completed', req.params.sessionId]);
+         const { sessionId } = req.params;
+         console.log(`[PAYMENT] Completing session: ${sessionId}`);
+         
+         // 1. Fetch session details
+         const [sessionRows] = await db.execute('SELECT * FROM payment_sessions WHERE id = ?', [sessionId]);
+         const session = sessionRows[0];
+         
+         if (!session) {
+           console.error(`[PAYMENT] Session not found: ${sessionId}`);
+           return res.status(404).json({ error: 'Session not found' });
+         }
+
+         if (session.status === 'completed') {
+           console.log(`[PAYMENT] Session ${sessionId} already completed.`);
+           return res.json({ success: true, message: 'Already completed' });
+         }
+
+         const cartItems = JSON.parse(session.cart_items || '[]');
+         const userId = session.user_id || 1;
+         console.log(`[PAYMENT] Processing ${cartItems.length} items for User ID: ${userId}`);
+
+         // 2. Process each item in the cart
+         for (const item of cartItems) {
+           try {
+             const plantId = item.id;
+             if (!plantId) {
+               console.warn(`[PAYMENT] Missing plant ID for item ${item.name}. Skipping.`);
+               continue;
+             }
+             const quantity = item.quantity || 1;
+
+             // Fetch original plant details
+             const [plantRows] = await db.execute('SELECT * FROM plants WHERE id = ?', [plantId]);
+             const plant = plantRows[0];
+
+             if (plant) {
+               // Only update if not already sold (or if sold to this user previously - retry case)
+               const [updateResult] = await db.execute(
+                 'UPDATE plants SET is_sold = 1, buyer_id = ? WHERE id = ? AND (is_sold = 0 OR buyer_id = ?)', 
+                 [userId, plantId, userId]
+               );
+               
+               console.log(`[PAYMENT] Processed plant ${plantId} (${plant.name}). Result: ${updateResult.affectedRows} row(s) updated.`);
+
+               // If multiple quantities were bought, create extra rows
+               if (quantity > 1) {
+                 const insertQuery = `INSERT INTO plants 
+                   (name, type, price, location, image, space_tag, sunlight_need, min_temp, max_temp, purification_score, rule, scientific_name, nepali_name, description, is_sold, buyer_id) 
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)`;
+                 
+                 for (let i = 1; i < quantity; i++) {
+                   await db.execute(insertQuery, [
+                     plant.name, plant.type, plant.price, plant.location, plant.image, 
+                     plant.space_tag, plant.sunlight_need, plant.min_temp, plant.max_temp, 
+                     plant.purification_score, plant.rule || '', plant.scientific_name || '', 
+                     plant.nepali_name || '', plant.description || '', userId
+                   ]);
+                 }
+                 console.log(`[PAYMENT] Inserted ${quantity - 1} duplicate rows for ${plant.name}`);
+               }
+             } else {
+               console.warn(`[PAYMENT] Plant ID ${plantId} not found in DB. Skipping.`);
+             }
+           } catch (itemError) {
+             console.error(`[PAYMENT] Item processing error:`, itemError.message);
+           }
+         }
+
+         // 3. Update session status
+         await db.execute('UPDATE payment_sessions SET status = ? WHERE id = ?', ['completed', sessionId]);
+         console.log(`[PAYMENT] Session ${sessionId} marked as completed.`);
+         
          res.json({ success: true });
        } catch (error) {
+         console.error('[PAYMENT] Critical error completing payment:', error);
          res.status(500).json({ error: 'Failed to complete payment' });
        }
      });

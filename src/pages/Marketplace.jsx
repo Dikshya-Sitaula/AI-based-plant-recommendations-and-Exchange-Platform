@@ -188,13 +188,15 @@ export default function Marketplace() {
     // Calculate total amount from cart
     const amount = cart.reduce((sum, item) => sum + (parsePrice(item.price) * (item.quantity || 1)), 0);
 
+    const userId = localStorage.getItem('leafLifeUserId') || 1;
+
     try {
       const response = await fetch(`http://${window.location.hostname}:5000/api/payment/initiate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           cartItems: cart, 
-          userId: 1, // Default user ID for now 
+          userId, 
           amount 
         })
       });
