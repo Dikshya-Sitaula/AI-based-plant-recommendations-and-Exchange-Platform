@@ -18,6 +18,12 @@ export default function Recommendation() {
     }
   });
   const [showCart, setShowCart] = useState(false);
+  
+  // Quantity Selection State
+  const [selectedPlant, setSelectedPlant] = useState(null);
+  const [showQuantitySelector, setShowQuantitySelector] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -58,23 +64,31 @@ export default function Recommendation() {
     }
   };
 
-  const handleAddToCart = (plant) => {
+  const handlePlantClick = (plant) => {
+    setSelectedPlant(plant);
+    setQuantity(1);
+    setShowQuantitySelector(true);
+  };
+
+  const handleAddToCart = () => {
     const plantWithFixedImage = {
-      ...plant,
-      image: plant.image.startsWith('http') ? plant.image : `http://localhost:5000${plant.image}`
+      ...selectedPlant,
+      image: selectedPlant.image.startsWith('http') ? selectedPlant.image : `http://localhost:5000${selectedPlant.image}`
     };
 
-    const existingItem = cart.find(item => item.id === plant.id);
+    const existingItem = cart.find(item => item.id === selectedPlant.id);
     if (existingItem) {
       setCart(cart.map(item => 
-        item.id === plant.id 
-          ? { ...item, quantity: item.quantity + 1 } 
+        item.id === selectedPlant.id 
+          ? { ...item, quantity: item.quantity + quantity } 
           : item
       ));
     } else {
-      setCart([...cart, { ...plantWithFixedImage, quantity: 1 }]);
+      setCart([...cart, { ...plantWithFixedImage, quantity: quantity }]);
     }
-    // Optionally open cart automatically or show a notification
+    
+    setShowQuantitySelector(false);
+    setSelectedPlant(null);
   };
 
   const handleRemoveFromCart = (id) => {
@@ -95,16 +109,12 @@ export default function Recommendation() {
       <div className="rec-blob rec-blob1" />
       <div className="rec-blob rec-blob2" />
 
-      {/* Floating Cart Icon (Only visible when results shown) */}
-      {showResults && (
+      {/* Header with Cart Count */}
+      <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 1000, display: 'flex', gap: '10px' }}>
         <div 
           className="header-cart-icon" 
           onClick={() => setShowCart(true)} 
           style={{ 
-            position: 'fixed', 
-            top: '20px', 
-            right: '20px', 
-            zIndex: 1000, 
             cursor: 'pointer', 
             padding: '12px', 
             background: 'white',
@@ -113,7 +123,8 @@ export default function Recommendation() {
             color: 'var(--primary)',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            position: 'relative'
           }}
         >
           <ShoppingCart size={24} />
@@ -138,7 +149,7 @@ export default function Recommendation() {
             </span>
           )}
         </div>
-      )}
+      </div>
 
       <div className="rec-container">
         {!showResults ? (
@@ -223,20 +234,13 @@ export default function Recommendation() {
                         </div>
                       )}
                       
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto' }}>
-                        <span style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem', background: 'rgba(168, 230, 207, 0.2)', color: 'var(--primary)', borderRadius: '1rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                          <Sparkles size={12} /> {plant.purification_score * 10}% Health
-                        </span>
-                        
-                        <button 
-                          onClick={() => handleAddToCart(plant)}
-                          className="btn-primary"
-                          style={{ padding: '0.5rem', height: 'auto', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                          title="Add to Cart"
-                        >
-                          <ShoppingCart size={18} />
-                        </button>
-                      </div>
+                      <button 
+                        onClick={() => handlePlantClick(plant)}
+                        className="btn-primary"
+                        style={{ width: '100%', padding: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginTop: '0.5rem' }}
+                      >
+                        <ShoppingCart size={18} /> Add to Cart
+                      </button>
                     </div>
                   </div>
                 ))
@@ -260,11 +264,44 @@ export default function Recommendation() {
         )}
       </div>
 
-      {/* Cart Modal (Shared with Marketplace logic) */}
+      {/* Select Quantity Modal (Matching Marketplace UI) */}
+      {showQuantitySelector && (
+        <div className="modal-overlay" style={{ zIndex: 10000, display: 'flex' }} onClick={() => setShowQuantitySelector(false)}>
+          <div className="glass-panel modal-content animate-scale-up" style={{ zIndex: 10001, background: 'white', color: 'black', opacity: 1, transform: 'none', textAlign: 'center', padding: '2.5rem', borderRadius: '2rem', maxWidth: '420px', width: '95%' }} onClick={(e) => e.stopPropagation()}>
+            <button className="close-modal" type="button" style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', background: '#f5f5f5', borderRadius: '50%', padding: '5px', border: 'none', cursor: 'pointer' }} onClick={() => setShowQuantitySelector(false)}><X size={20} /></button>
+            
+            <div className="modal-header">
+              <h3 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '0.5rem' }}>Select Quantity</h3>
+              <p style={{ color: '#666', fontSize: '1rem' }}>How many <b>{selectedPlant?.name}</b>s do you want?</p>
+            </div>
+
+            <div className="quantity-controls" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2rem', margin: '2rem 0' }}>
+              <button type="button" onClick={() => setQuantity(Math.max(1, quantity - 1))} className="qty-btn" style={{ width: '45px', height: '45px', borderRadius: '50%', border: '1px solid #ddd', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                <Minus size={20} />
+              </button>
+              <span className="qty-value" style={{ fontSize: '2rem', fontWeight: '800', minWidth: '40px' }}>{quantity}</span>
+              <button type="button" onClick={() => setQuantity(Math.min(10, quantity + 1))} className="qty-btn" style={{ width: '45px', height: '45px', borderRadius: '50%', border: '1px solid #ddd', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                <Plus size={20} />
+              </button>
+            </div>
+
+            <button 
+              type="button" 
+              onClick={handleAddToCart} 
+              className="btn-primary" 
+              style={{ width: '100%', padding: '1.1rem', fontSize: '1.1rem', marginTop: '1rem', borderRadius: '9999px' }}
+            >
+              Add to Cart
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Cart Modal */}
       {showCart && (
         <div className="modal-overlay" style={{ zIndex: 10000, display: 'flex' }} onClick={() => setShowCart(false)}>
           <div className="glass-panel modal-content animate-scale-up" style={{ zIndex: 10001, background: 'white', color: 'black', opacity: 1, transform: 'none', maxWidth: '460px', width: '95%', padding: '2rem', borderRadius: '2rem' }} onClick={(e) => e.stopPropagation()}>
-            <button className="close-modal" type="button" style={{ position: 'absolute', top: '15px', right: '15px', color: 'black', background: '#f5f5f5', borderRadius: '50%', padding: '5px' }} onClick={() => setShowCart(false)}><X size={28} /></button>
+            <button className="close-modal" type="button" style={{ position: 'absolute', top: '15px', right: '15px', color: 'black', background: '#f5f5f5', borderRadius: '50%', padding: '5px', border: 'none', cursor: 'pointer' }} onClick={() => setShowCart(false)}><X size={28} /></button>
             
             <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
               <h3 style={{ fontSize: '1.75rem', fontWeight: '800' }}>Your Cart</h3>
