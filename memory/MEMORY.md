@@ -1,8 +1,9 @@
 # Leaf-Life Project Memory
 
 ## UI Simplification & Minimalist Plant Display (May 25, 2026)
+- **Persistent Cart Icon:** Refined the shopping UX by making the cart icon (with real-time quantity badge) **fixed** at the top-right of the screen. It remains visible even when scrolling, ensuring constant access to the cart.
+- **Enriched Plant Details:** Overhauled `src/pages/PlantDetail.jsx` and `src/pages/plantData.js` to include **Scientific Names**, **Nepali Names (Devanagari)**, and comprehensive "About This Plant" descriptions for all 47 species.
 - **Minimalist Plant Cards:** Simplified the plant display across the Marketplace and Recommendation results. Removed secondary details like "Location," "Smart Rules," "Health Impact," and "Air Quality Scores" to focus on the plant name and price.
-- **Simplified Plant Details:** Overhauled `src/pages/PlantDetail.jsx` to remove scientific names, descriptions, and the environmental requirement grid (Temp, Sunlight, Location). The detail view now focuses on a clean, action-oriented layout.
 - **Removed Care Tips:** 
     - Deleted the "Care Tips" section from the Smart Scan results in `src/pages/Scan.jsx`.
     - Updated the Landing page (`src/pages/Landing.jsx`) to remove all references to care guidance, aligning the marketing copy with the new minimalist product direction.
