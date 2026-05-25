@@ -1,5 +1,6 @@
  const express = require('express');
      const cors = require('cors');
+     const path = require('path');
      require('dotenv').config();
      const { MVP_PLANTS } = require('./plantRules');
     
@@ -12,6 +13,7 @@
      // Middleware
      app.use(cors());
      app.use(express.json());
+     app.use('/plants', express.static(path.join(__dirname, '../public/plants')));
 
      // Routes
      app.use('/api/auth', authRoutes);
@@ -63,6 +65,7 @@
            min_temp INT DEFAULT 10,
            max_temp INT DEFAULT 35,
            purification_score INT DEFAULT 5,
+           rule VARCHAR(255),
            is_sold TINYINT(1) DEFAULT 0,
            buyer_id INT
          )`);
@@ -71,7 +74,7 @@
          const [rows] = await db.execute('SELECT COUNT(*) as count FROM plants');
          if (rows[0].count === 0) {
            console.log('Seeding initial plant data...');
-           const insertQuery = 'INSERT INTO plants (name, type, price, location, image, space_tag, sunlight_need, min_temp, max_temp, purification_score) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+           const insertQuery = 'INSERT INTO plants (name, type, price, location, image, space_tag, sunlight_need, min_temp, max_temp, purification_score, rule) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
            
            for (const plant of MVP_PLANTS) {
              await db.execute(insertQuery, [
@@ -84,7 +87,8 @@
                plant.sunlight_need, 
                plant.min_temp, 
                plant.max_temp, 
-               plant.purification_score
+               plant.purification_score,
+               plant.rule || ''
              ]);
            }
            console.log('✅ MVP seed plants added to database');
@@ -99,6 +103,114 @@
      initDB();
 
      // --- Marketplace Endpoints ---
+
+     // Helper for fetching weather data (Monthly Average)
+     async function getMonthlyAverage(city) {
+       try {
+         const API_KEY = 'TFWSDCS3ZFEDCCJUHYLQHR7GD';
+         const month = new Date().getMonth() + 1; // 1-12
+         const currentYear = new Date().getFullYear();
+
+         const date1 = `${currentYear}-${month.toString().padStart(2, '0')}-01`;
+         const date2 = `${currentYear}-${month.toString().padStart(2, '0')}-28`;
+
+         const cleanCity = (city || 'Kathmandu').split(',')[0].trim();
+
+         const url = `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${encodeURIComponent(cleanCity)}/${date1}/${date2}?unitGroup=metric&include=stats&key=${API_KEY}&contentType=json`;
+
+         const response = await fetch(url);
+         if (!response.ok) throw new Error(`Weather API returned ${response.status}`);
+
+         const data = await response.json();
+         return data.currentConditions?.temp || data.days?.[0]?.temp || 22;
+       } catch (error) {
+         console.error('Weather API Error:', error.message);
+         return 22; // Default safe temp for recommendations
+       }
+     }
+
+     /**
+      * SMART RECOMMENDATION SYSTEM (144 Combinations)
+      * 4 Spaces x 3 Light Levels x 12 Climate Profiles
+      */
+     app.get('/api/recommend', async (req, res) => {
+       try {
+         const { space, sunlight, location } = req.query;
+
+         if (!space || !sunlight || !location) {
+           return res.status(400).json({ error: 'Missing required parameters: space, sunlight, and location are required.' });
+         }
+         
+         // 1. Environmental Context
+         const detectedTemp = await getMonthlyAverage(location);
+         const monthIndex = new Date().getMonth(); // 0-11
+         const lightMap = { 'Low': 1, 'Medium': 2, 'High': 3 };
+         const lightVal = lightMap[sunlight] || 2;
+
+         // 2. Identify the specific profile out of 144
+         // (For internal tracking and logic precision)
+         const spaceOptions = ['indoor', 'balcony', 'rooftop', 'garden'];
+         const spaceIdx = spaceOptions.indexOf(space?.toLowerCase()) || 0;
+         const profileId = (spaceIdx * 36) + ((lightVal - 1) * 12) + monthIndex + 1;
+
+         console.log(`[RECOMMEND] Profile #${profileId}/144 | Space=${space}, Light=${sunlight}, Month=${monthIndex + 1}, Temp=${detectedTemp}°C`);
+         
+         // 3. Build Dynamic Query based on Plant Rules
+         let query = 'SELECT * FROM plants WHERE is_sold = 0';
+         const params = [];
+
+         if (space && space !== 'Any') {
+           query += ' AND LOWER(space_tag) LIKE ?';
+           params.push(`%${space.toLowerCase()}%`);
+         }
+
+         if (sunlight && sunlight !== 'Any') {
+           query += ' AND CAST(sunlight_need AS UNSIGNED) <= ?';
+           params.push(lightVal);
+         }
+
+         // Temperature Rule
+         const finalQuery = query + ' AND ? BETWEEN min_temp AND max_temp';
+         const finalParams = [...params, Math.round(detectedTemp)];
+         
+         let [plants] = await db.execute(finalQuery, finalParams);
+         let note = `Perfect match found for Profile #${profileId}.`;
+
+         // 4. Smart Fallbacks (Relaxing constraints systematically)
+         if (plants.length === 0) {
+           console.log('[RECOMMEND] No climate matches. Relaxing climate constraint.');
+           [plants] = await db.execute(query, params);
+           note = "Climate threshold relaxed for best-fit recommendation.";
+         }
+
+         if (plants.length === 0) {
+           console.log('[RECOMMEND] Still no matches. Relaxing sunlight constraint.');
+           let basicQuery = 'SELECT * FROM plants WHERE is_sold = 0';
+           const basicParams = [];
+           if (space && space !== 'Any') {
+             basicQuery += ' AND LOWER(space_tag) LIKE ?';
+             basicParams.push(`%${space.toLowerCase()}%`);
+           }
+           [plants] = await db.execute(basicQuery, basicParams);
+           note = "Search broadened to find any suitable plants for your space.";
+         }
+
+         res.json({
+           summary: {
+             location: location || 'Kathmandu',
+             averageTemp: `${Math.round(detectedTemp)}°C`,
+             space: space || 'Indoor',
+             sunlight: sunlight || 'Medium',
+             profileId: profileId,
+             note: note
+           },
+           plants: plants
+         });
+       } catch (error) {
+         console.error('[RECOMMEND] Error:', error);
+         res.status(500).json({ error: 'Failed to generate plant arrangements' });
+       }
+     });
 
      app.get('/api/plants', async (req, res) => {
        try {

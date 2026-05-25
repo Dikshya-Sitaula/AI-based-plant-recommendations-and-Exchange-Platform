@@ -1,15 +1,327 @@
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Sparkles, MapPin, ArrowRight, ShoppingCart, X, Trash2, Plus, Minus } from 'lucide-react';
 import RecommendationForm from '../components/RecommendationForm';
 import './Recommendation.css';
 
 export default function Recommendation() {
+  const [showResults, setShowResults] = useState(false);
+  const [recommendedPlants, setRecommendedPlants] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [summaryData, setSummaryData] = useState(null);
+  const [cart, setCart] = useState(() => {
+    try {
+      const savedCart = localStorage.getItem('cart');
+      return savedCart ? JSON.parse(savedCart) : [];
+    } catch (err) {
+      return [];
+    }
+  });
+  const [showCart, setShowCart] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    localStorage.setItem('cart', JSON.stringify(cart));
+  }, [cart]);
+
+  const handleRecommendationSubmit = async (e, { location, selectedSpace, lightLevel }) => {
+    setLoading(true);
+    
+    const lightMap = { 0: 'Low', 1: 'Medium', 2: 'High' };
+    const sunlight = lightMap[lightLevel];
+    const space = selectedSpace;
+
+    try {
+      const params = new URLSearchParams({
+        space: space,
+        sunlight: sunlight,
+        location: location
+      });
+
+      const response = await fetch(`http://localhost:5000/api/recommend?${params.toString()}`);
+      if (!response.ok) throw new Error('Failed to fetch recommendations');
+      
+      const data = await response.json();
+      
+      setRecommendedPlants(data.plants || []);
+      setSummaryData(data.summary || null);
+      setShowResults(true);
+      
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 100);
+    } catch (error) {
+      console.error('RECOMMENDATION ERROR:', error);
+      alert(`Error: ${error.message}. Please ensure the backend is running.`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddToCart = (plant) => {
+    const plantWithFixedImage = {
+      ...plant,
+      image: plant.image.startsWith('http') ? plant.image : `http://localhost:5000${plant.image}`
+    };
+
+    const existingItem = cart.find(item => item.id === plant.id);
+    if (existingItem) {
+      setCart(cart.map(item => 
+        item.id === plant.id 
+          ? { ...item, quantity: item.quantity + 1 } 
+          : item
+      ));
+    } else {
+      setCart([...cart, { ...plantWithFixedImage, quantity: 1 }]);
+    }
+    // Optionally open cart automatically or show a notification
+  };
+
+  const handleRemoveFromCart = (id) => {
+    setCart(cart.filter(item => item.id !== id));
+  };
+
+  const parsePrice = (priceStr) => {
+    if (!priceStr) return 0;
+    const numeric = priceStr.toString().replace(/[^0-9]/g, '');
+    return parseInt(numeric) || 0;
+  };
+
+  const cartCount = cart.reduce((sum, item) => sum + (item.quantity || 0), 0);
+  const totalAmount = cart.reduce((sum, item) => sum + (parsePrice(item.price) * item.quantity), 0);
+
   return (
     <div className="rec-page">
       <div className="rec-blob rec-blob1" />
       <div className="rec-blob rec-blob2" />
 
+      {/* Floating Cart Icon (Only visible when results shown) */}
+      {showResults && (
+        <div 
+          className="header-cart-icon" 
+          onClick={() => setShowCart(true)} 
+          style={{ 
+            position: 'fixed', 
+            top: '20px', 
+            right: '20px', 
+            zIndex: 1000, 
+            cursor: 'pointer', 
+            padding: '12px', 
+            background: 'white',
+            borderRadius: '50%',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+            color: 'var(--primary)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          <ShoppingCart size={24} />
+          {cartCount > 0 && (
+            <span style={{ 
+              position: 'absolute', 
+              top: '-2px', 
+              right: '-2px', 
+              background: '#ff4b4b', 
+              color: 'white', 
+              fontSize: '0.65rem', 
+              fontWeight: 'bold', 
+              width: '18px', 
+              height: '18px', 
+              borderRadius: '50%', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              border: '2px solid white' 
+            }}>
+              {cartCount}
+            </span>
+          )}
+        </div>
+      )}
+
       <div className="rec-container">
-        <RecommendationForm showHeader />
+        {!showResults ? (
+          <RecommendationForm 
+            showHeader 
+            onSubmit={handleRecommendationSubmit} 
+            loading={loading}
+          />
+        ) : (
+          <div className="results-view animate-fade-in" style={{ width: '100%', maxWidth: '800px', margin: '0 auto' }}>
+            <header style={{ marginBottom: '2rem', textAlign: 'center' }}>
+              <h1 className="rec-title">Your Perfect <em>Plant Matches</em></h1>
+              <p className="rec-subtitle">Based on your specific environment and local climate.</p>
+            </header>
+
+            {/* Summary Box */}
+            {summaryData && (
+              <div className="rec-card" style={{ padding: '1.5rem', marginBottom: '2rem', border: '1px solid var(--primary)', background: 'rgba(168, 230, 207, 0.1)' }}>
+                <h3 style={{ fontSize: '1.125rem', fontWeight: '700', color: 'var(--primary)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Sparkles size={18} /> Environmental Summary
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '1.5rem' }}>
+                  <div>
+                    <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-secondary)', fontWeight: '700' }}>Location</div>
+                    <div style={{ fontWeight: '600' }}>{summaryData.location}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-secondary)', fontWeight: '700' }}>Avg. Temp</div>
+                    <div style={{ fontWeight: '600', color: 'var(--accent)' }}>{summaryData.averageTemp}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-secondary)', fontWeight: '700' }}>Space Type</div>
+                    <div style={{ fontWeight: '600', textTransform: 'capitalize' }}>{summaryData.space}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-secondary)', fontWeight: '700' }}>Smart Profile</div>
+                    <div style={{ fontWeight: '600' }}>#{summaryData.profileId} / 144</div>
+                  </div>
+                </div>
+                {summaryData.note && (
+                  <div style={{ marginTop: '1rem', fontSize: '0.875rem', color: 'var(--primary)', fontStyle: 'italic', borderTop: '1px solid rgba(168, 230, 207, 0.2)', paddingTop: '0.5rem' }}>
+                    💡 {summaryData.note}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: '700' }}>Recommended for You</h3>
+              <button className="btn-secondary" onClick={() => setShowResults(false)} style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', height: 'auto' }}>
+                Edit Details
+              </button>
+            </div>
+            
+            <div className="plant-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
+              {recommendedPlants.length > 0 ? (
+                recommendedPlants.map(plant => (
+                  <div key={plant.id} className="rec-card" style={{ 
+                    padding: 0,
+                    overflow: 'hidden', 
+                    transition: 'all 0.3s ease',
+                    display: 'flex',
+                    flexDirection: 'column'
+                  }}>
+                    <div 
+                      onClick={() => navigate(`/marketplace/${plant.id}`)}
+                      style={{ height: '200px', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', cursor: 'pointer' }}
+                    >
+                      <img src={`http://localhost:5000${plant.image}`} alt={plant.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
+                    <div style={{ padding: '1.25rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                        <h4 style={{ fontSize: '1.125rem', fontWeight: '700', margin: 0 }}>{plant.name}</h4>
+                        <span style={{ color: 'var(--primary)', fontWeight: '700' }}>{plant.price}</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>
+                        <MapPin size={14} /> {plant.location}
+                      </div>
+                      {plant.rule && (
+                        <div style={{ fontSize: '0.8125rem', color: 'var(--primary)', background: 'rgba(168, 230, 207, 0.1)', padding: '0.4rem 0.75rem', borderRadius: '0.5rem', marginBottom: '1rem', border: '1px dashed var(--primary)' }}>
+                          <strong>Smart Rule:</strong> {plant.rule}
+                        </div>
+                      )}
+                      
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto' }}>
+                        <span style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem', background: 'rgba(168, 230, 207, 0.2)', color: 'var(--primary)', borderRadius: '1rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                          <Sparkles size={12} /> {plant.purification_score * 10}% Health
+                        </span>
+                        
+                        <button 
+                          onClick={() => handleAddToCart(plant)}
+                          className="btn-primary"
+                          style={{ padding: '0.5rem', height: 'auto', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          title="Add to Cart"
+                        >
+                          <ShoppingCart size={18} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '4rem 2rem', background: 'rgba(0,0,0,0.03)', borderRadius: '1.5rem' }}>
+                  <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🪴</div>
+                  <h4 style={{ fontWeight: '700', marginBottom: '0.5rem' }}>No exact matches found</h4>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', maxWidth: '300px', margin: '0 auto' }}>
+                    We couldn't find any plants matching all your criteria. Try loosening your light or space requirements!
+                  </p>
+                </div>
+              )}
+            </div>
+            
+            <div style={{ marginTop: '3rem', textAlign: 'center' }}>
+              <button className="btn-primary" onClick={() => navigate('/marketplace')} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+                Browse All Plants <ArrowRight size={18} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Cart Modal (Shared with Marketplace logic) */}
+      {showCart && (
+        <div className="modal-overlay" style={{ zIndex: 10000, display: 'flex' }} onClick={() => setShowCart(false)}>
+          <div className="glass-panel modal-content animate-scale-up" style={{ zIndex: 10001, background: 'white', color: 'black', opacity: 1, transform: 'none', maxWidth: '460px', width: '95%', padding: '2rem', borderRadius: '2rem' }} onClick={(e) => e.stopPropagation()}>
+            <button className="close-modal" type="button" style={{ position: 'absolute', top: '15px', right: '15px', color: 'black', background: '#f5f5f5', borderRadius: '50%', padding: '5px' }} onClick={() => setShowCart(false)}><X size={28} /></button>
+            
+            <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+              <h3 style={{ fontSize: '1.75rem', fontWeight: '800' }}>Your Cart</h3>
+              <p style={{ color: '#666' }}>
+                {cart.length === 0 ? 'Your cart is empty' : `Items: ${cartCount}`}
+              </p>
+            </div>
+
+            {cart.length > 0 ? (
+              <>
+                <div className="cart-items-list" style={{ maxHeight: '350px', overflowY: 'auto', textAlign: 'left', paddingRight: '5px' }}>
+                  {cart.map((item, index) => (
+                    <div key={item.id || `cart-${index}`} style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', padding: '15px 0', borderBottom: '1px solid #eee' }}>
+                      <img 
+                        src={item.image} 
+                        alt={item.name} 
+                        style={{ width: '70px', height: '70px', borderRadius: '14px', objectFit: 'cover' }}
+                        onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1545239351-ef35f43d514b?q=80&w=400'; }}
+                      />
+                      <div style={{ flex: 1 }}>
+                        <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '600' }}>{item.name}</h4>
+                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: '5px' }}>
+                          <span style={{ color: 'var(--primary)', fontWeight: '800', fontSize: '1rem' }}>{item.price}</span>
+                          <span style={{ background: '#f0f4f1', color: '#555', padding: '2px 8px', borderRadius: '6px', fontSize: '0.85rem', fontWeight: '700' }}>x {item.quantity}</span>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => handleRemoveFromCart(item.id)}
+                        style={{ color: '#ff4b4b', padding: '10px', background: '#fff0f0', borderRadius: '12px', border: 'none', cursor: 'pointer' }}
+                      >
+                        <Trash2 size={20} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                
+                <div style={{ marginTop: '25px', padding: '20px', background: '#f8fbf9', borderRadius: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontWeight: '600', color: '#555' }}>Total Amount</span>
+                  <span style={{ fontSize: '1.5rem', fontWeight: '900', color: 'var(--primary)' }}>Rs. {totalAmount}</span>
+                </div>
+
+                <div className="modal-actions" style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <button type="button" onClick={() => { setShowCart(false); navigate('/marketplace'); }} className="btn-primary" style={{ width: '100%', padding: '1.25rem', borderRadius: '9999px', fontSize: '1.1rem' }}>Proceed to Checkout</button>
+                  <button type="button" onClick={() => setShowCart(false)} style={{ color: '#888', fontWeight: '500', cursor: 'pointer', textAlign: 'center', padding: '5px', background: 'none', border: 'none' }}>Back to Recommendations</button>
+                </div>
+              </>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '50px 0' }}>
+                <div style={{ background: '#f5f7f5', width: '100px', height: '100px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 25px' }}>
+                  <ShoppingCart size={45} style={{ opacity: 0.3, color: 'var(--primary)' }} />
+                </div>
+                <button type="button" onClick={() => setShowCart(false)} className="btn-primary" style={{ width: '100%' }}>Explore More Plants</button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

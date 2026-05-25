@@ -35,20 +35,43 @@ export default function RecommendationForm({
   showHeader = true,
   onSubmit: onSubmitProp,
   submitLabel = 'Get Recommendations',
+  loading: externalLoading = false,
 }) {
   const [location, setLocation] = useState('');
   const [locating, setLocating] = useState(false);
   const [selectedSpace, setSelectedSpace] = useState('indoor');
   const [lightLevel, setLightLevel] = useState(1);
-  const [loading, setLoading] = useState(false);
+  const [internalLoading, setInternalLoading] = useState(false);
+  const [showError, setShowError] = useState(false);
+
+  const loading = externalLoading || internalLoading;
 
   const handleUseMyLocation = () => {
     if (!navigator.geolocation) return;
     setLocating(true);
+    setShowError(false);
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLocation(`${pos.coords.latitude.toFixed(3)}, ${pos.coords.longitude.toFixed(3)}`);
-        setLocating(false);
+      async (pos) => {
+        try {
+          const { latitude, longitude } = pos.coords;
+          const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+          const data = await response.json();
+          
+          const address = data.address;
+          const place = address.suburb || address.neighbourhood || address.city_district || address.village || address.town;
+          const city = address.city || address.county || "";
+          
+          const preciseLocation = place && city && place !== city 
+            ? `${place}, ${city}` 
+            : (place || city || "Kathmandu");
+            
+          setLocation(preciseLocation);
+        } catch (error) {
+          console.error("Geocoding error:", error);
+          setLocation("Kathmandu");
+        } finally {
+          setLocating(false);
+        }
       },
       () => {
         setLocation('');
@@ -59,12 +82,17 @@ export default function RecommendationForm({
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!location.trim()) {
+      setShowError(true);
+      return;
+    }
+
     if (onSubmitProp) {
       onSubmitProp(e, { location, selectedSpace, lightLevel });
       return;
     }
-    setLoading(true);
-    setTimeout(() => setLoading(false), 2000);
+    setInternalLoading(true);
+    setTimeout(() => setInternalLoading(false), 2000);
   };
 
   return (
@@ -93,14 +121,17 @@ export default function RecommendationForm({
             <span className="rec-step-label">Where are you located?</span>
           </div>
           <div className="rec-location-row">
-            <div className="rec-input-wrap">
+            <div className={`rec-input-wrap ${showError ? 'rec-input-error' : ''}`} style={showError ? { border: '1px solid #ff4d4d', boxShadow: '0 0 0 2px rgba(255, 77, 77, 0.2)' } : {}}>
               <MapPin size={16} className="rec-input-icon" />
               <input
                 className="rec-input"
                 type="text"
                 placeholder="Enter city or zip code"
                 value={location}
-                onChange={(e) => setLocation(e.target.value)}
+                onChange={(e) => {
+                  setLocation(e.target.value);
+                  if (e.target.value.trim()) setShowError(false);
+                }}
               />
             </div>
             <button
@@ -117,6 +148,11 @@ export default function RecommendationForm({
               {locating ? 'Detecting…' : 'Use My Location'}
             </button>
           </div>
+          {showError && (
+            <p style={{ color: '#ff4d4d', fontSize: '0.8rem', marginTop: '0.5rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              ⚠️ Please fill this part of the form to continue.
+            </p>
+          )}
         </div>
 
         <div className="rec-divider" />
