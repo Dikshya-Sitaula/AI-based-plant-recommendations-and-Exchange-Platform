@@ -260,6 +260,18 @@ export default function Marketplace() {
   return (
     <>
       <div className="marketplace-container" style={{ animation: 'none' }}>
+        {/* Fixed Floating Cart Icon */}
+        <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 1000 }}>
+          <div className="header-cart-icon" onClick={() => setShowCart(true)} style={{ position: 'relative', cursor: 'pointer', padding: '12px', background: 'white', borderRadius: '50%', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <ShoppingCart size={24} />
+            {cartCount > 0 && (
+              <span style={{ position: 'absolute', top: '-2px', right: '-2px', background: '#ff4b4b', color: 'white', fontSize: '0.65rem', fontWeight: 'bold', width: '20px', height: '20px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid white' }}>
+                {cartCount}
+              </span>
+            )}
+          </div>
+        </div>
+
         <div className="marketplace-header">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h2 className="title-medium" style={{ margin: 0 }}>Marketplace</h2>
@@ -274,14 +286,6 @@ export default function Marketplace() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
             <div style={{ display: 'flex', alignItems: 'center' }}>
-              <div className="header-cart-icon" onClick={() => setShowCart(true)} style={{ position: 'relative', cursor: 'pointer', padding: '8px', color: 'var(--primary)', marginRight: '5px' }}>
-                <ShoppingCart size={24} />
-                {cartCount > 0 && (
-                  <span style={{ position: 'absolute', top: '-2px', right: '-2px', background: '#ff4b4b', color: 'white', fontSize: '0.65rem', fontWeight: 'bold', width: '18px', height: '18px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid white' }}>
-                    {cartCount}
-                  </span>
-                )}
-              </div>
               <button className="btn-icon" type="button"><Filter size={20} /></button>
             </div>
           </div>

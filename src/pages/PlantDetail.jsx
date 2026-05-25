@@ -200,11 +200,9 @@ export default function PlantDetail() {
   return (
     <>
       <div className="animate-fade-in plant-detail-container">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-          <button className="back-btn" onClick={() => navigate('/marketplace')} style={{ marginBottom: 0 }}>
-            <ArrowLeft size={20} /> Back to Marketplace
-          </button>
-          <div className="header-cart-icon" onClick={() => setShowCart(true)} style={{ position: 'relative', cursor: 'pointer', padding: '10px', background: 'white', borderRadius: '50%', boxShadow: 'var(--shadow-sm)', color: 'var(--primary)', border: '1px solid var(--border-color)' }}>
+        {/* Fixed Floating Cart Icon */}
+        <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 1000 }}>
+          <div className="header-cart-icon" onClick={() => setShowCart(true)} style={{ position: 'relative', cursor: 'pointer', padding: '10px', background: 'white', borderRadius: '50%', boxShadow: 'var(--shadow-sm)', color: 'var(--primary)', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <ShoppingCart size={24} />
             {cartCount > 0 && (
               <span style={{ position: 'absolute', top: '-2px', right: '-2px', background: '#ff4b4b', color: 'white', fontSize: '0.7rem', fontWeight: 'bold', width: '20px', height: '20px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid white' }}>
@@ -212,6 +210,12 @@ export default function PlantDetail() {
               </span>
             )}
           </div>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+          <button className="back-btn" onClick={() => navigate('/marketplace')} style={{ marginBottom: 0 }}>
+            <ArrowLeft size={20} /> Back to Marketplace
+          </button>
         </div>
 
         <div className="plant-detail-card">
