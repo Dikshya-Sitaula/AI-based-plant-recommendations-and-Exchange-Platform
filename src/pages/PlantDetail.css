@@ -158,7 +158,6 @@
   font-size: 1.5rem;
   color: var(--text-muted);
 }
-
 @media (min-width: 768px) {
   .detail-layout {
     grid-template-columns: 1fr 1fr;
@@ -166,5 +165,230 @@
   
   .detail-image-section {
     aspect-ratio: auto;
+  }
+}
+
+/* New Stack and Carousel Layout Styles */
+.plant-detail-card {
+  background: var(--bg-surface, #ffffff);
+  border-radius: 2rem;
+  padding: 2.5rem;
+  box-shadow: var(--shadow-md, 0 10px 30px rgba(0,0,0,0.05));
+  border: 1px solid var(--border-color, #eaeaea);
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.detail-header-new {
+  margin-bottom: 0.5rem;
+}
+
+.detail-title-new {
+  font-size: 2.75rem;
+  font-weight: 800;
+  color: var(--text-primary, #111111);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.scientific-name-new {
+  font-size: 1.25rem;
+  color: var(--text-secondary, #666666);
+  font-style: italic;
+  margin: 0.5rem 0 0 0;
+  font-weight: 500;
+}
+
+.carousel-section {
+  width: 100%;
+}
+
+.carousel-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16/9;
+  border-radius: 1.5rem;
+  overflow: hidden;
+  box-shadow: var(--shadow-lg, 0 15px 35px rgba(0,0,0,0.1));
+}
+
+.carousel-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.carousel-badge {
+  position: absolute;
+  top: 1.25rem;
+  left: 1.25rem;
+  background: var(--primary, #2e603a);
+  color: white;
+  padding: 0.5rem 1.25rem;
+  border-radius: var(--radius-full, 9999px);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+.carousel-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  color: #111111;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 10;
+}
+
+.carousel-arrow:hover {
+  background: #ffffff;
+  transform: translateY(-50%) scale(1.1);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+}
+
+.carousel-arrow.left {
+  left: 1.25rem;
+}
+
+.carousel-arrow.right {
+  right: 1.25rem;
+}
+
+.carousel-counter {
+  position: absolute;
+  bottom: 1.25rem;
+  right: 1.25rem;
+  background: rgba(0, 0, 0, 0.75);
+  color: white;
+  padding: 0.4rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  backdrop-filter: blur(4px);
+}
+
+.detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.section-subtitle {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text-primary, #111111);
+  margin: 0;
+  position: relative;
+  padding-bottom: 0.5rem;
+}
+
+.section-subtitle::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 40px;
+  height: 3px;
+  background: var(--primary, #2e603a);
+  border-radius: 2px;
+}
+
+.detail-value-text {
+  font-size: 1.15rem;
+  color: var(--text-secondary, #333333);
+  margin: 0.25rem 0 0 0;
+  font-weight: 500;
+}
+
+.description-text {
+  font-size: 1.15rem;
+  line-height: 1.7;
+  color: var(--text-secondary, #444444);
+  margin: 0.25rem 0 0 0;
+}
+
+.metadata-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  background: var(--bg-secondary, #f7f9f7);
+  padding: 1.5rem;
+  border-radius: 1.25rem;
+  border: 1px solid var(--border-color, #eaeaea);
+  margin: 0.5rem 0;
+}
+
+.metadata-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.metadata-label {
+  font-size: 0.85rem;
+  color: var(--text-muted, #777777);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.metadata-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--primary, #2e603a);
+}
+
+.detail-actions-bottom {
+  margin-top: 1rem;
+}
+
+.add-to-cart-big-new {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  background: var(--gradient-primary, linear-gradient(135deg, #2e603a 0%, #4a8c5d 100%));
+  color: white;
+  padding: 1.35rem;
+  border-radius: 9999px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 10px 25px rgba(46, 96, 58, 0.25);
+}
+
+.add-to-cart-big-new:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 30px rgba(46, 96, 58, 0.35);
+  filter: brightness(1.05);
+}
+
+.add-to-cart-big-new:active {
+  transform: translateY(-1px);
+}
+
+/* Responsive adjustment for wider screens */
+@media (min-width: 900px) {
+  .carousel-container {
+    aspect-ratio: 21/9;
   }
 }

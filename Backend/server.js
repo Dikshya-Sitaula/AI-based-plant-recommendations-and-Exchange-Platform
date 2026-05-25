@@ -1,8 +1,10 @@
- const express = require('express');
-     const cors = require('cors');
-     const path = require('path');
-     require('dotenv').config();
-     const { MVP_PLANTS } = require('./plantRules');
+const express = require('express');
+const cors = require('cors');
+const path = require('path');
+const fs = require('fs');
+require('dotenv').config();
+const { MVP_PLANTS } = require('./plantRules');
+const plantDetailsMap = require('./plantDetails');
     
      const app = express();
      const PORT = process.env.PORT || 5000;
@@ -52,49 +54,83 @@
            )
          `);
 
-         // Create Plants Table
-         await db.execute(`CREATE TABLE IF NOT EXISTS plants (
-           id INT AUTO_INCREMENT PRIMARY KEY,
-           name VARCHAR(255) NOT NULL,
-           type VARCHAR(255) NOT NULL,
-           price VARCHAR(255) NOT NULL,
-           location VARCHAR(255) NOT NULL,
-           image VARCHAR(255) NOT NULL,
-           space_tag VARCHAR(255) NOT NULL,
-           sunlight_need VARCHAR(50) NOT NULL,
-           min_temp INT DEFAULT 10,
-           max_temp INT DEFAULT 35,
-           purification_score INT DEFAULT 5,
-           rule VARCHAR(255),
-           is_sold TINYINT(1) DEFAULT 0,
-           buyer_id INT
-         )`);
+          // Create Plants Table
+          await db.execute(`CREATE TABLE IF NOT EXISTS plants (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            type VARCHAR(255) NOT NULL,
+            price VARCHAR(255) NOT NULL,
+            location VARCHAR(255) NOT NULL,
+            image VARCHAR(255) NOT NULL,
+            space_tag VARCHAR(255) NOT NULL,
+            sunlight_need VARCHAR(50) NOT NULL,
+            min_temp INT DEFAULT 10,
+            max_temp INT DEFAULT 35,
+            purification_score INT DEFAULT 5,
+            rule VARCHAR(255),
+            scientific_name VARCHAR(255),
+            nepali_name VARCHAR(255),
+            description TEXT,
+            is_sold TINYINT(1) DEFAULT 0,
+            buyer_id INT
+          )`);
 
-         // Seed initial data if table is empty
-         const [rows] = await db.execute('SELECT COUNT(*) as count FROM plants');
-         if (rows[0].count === 0) {
-           console.log('Seeding initial plant data...');
-           const insertQuery = 'INSERT INTO plants (name, type, price, location, image, space_tag, sunlight_need, min_temp, max_temp, purification_score, rule) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-           
-           for (const plant of MVP_PLANTS) {
-             await db.execute(insertQuery, [
-               plant.name, 
-               plant.type, 
-               plant.price, 
-               plant.location, 
-               plant.image, 
-               plant.space_tag, 
-               plant.sunlight_need, 
-               plant.min_temp, 
-               plant.max_temp, 
-               plant.purification_score,
-               plant.rule || ''
-             ]);
-           }
-           console.log('✅ MVP seed plants added to database');
-         }
-         
-         console.log('✅ Database tables initialized');
+          // Alter table dynamically to add new columns if they do not exist
+          try {
+            await db.execute('ALTER TABLE plants ADD COLUMN scientific_name VARCHAR(255)');
+          } catch (err) {
+            // Column already exists
+          }
+          try {
+            await db.execute('ALTER TABLE plants ADD COLUMN nepali_name VARCHAR(255)');
+          } catch (err) {
+            // Column already exists
+          }
+          try {
+            await db.execute('ALTER TABLE plants ADD COLUMN description TEXT');
+          } catch (err) {
+            // Column already exists
+          }
+
+          // Seed initial data if table is empty
+          const [rows] = await db.execute('SELECT COUNT(*) as count FROM plants');
+          if (rows[0].count === 0) {
+            console.log('Seeding initial plant data...');
+            const insertQuery = 'INSERT INTO plants (name, type, price, location, image, space_tag, sunlight_need, min_temp, max_temp, purification_score, rule, scientific_name, nepali_name, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+            
+            for (const plant of MVP_PLANTS) {
+              const detail = plantDetailsMap[plant.name] || {};
+              await db.execute(insertQuery, [
+                plant.name, 
+                plant.type, 
+                plant.price, 
+                plant.location, 
+                plant.image, 
+                plant.space_tag, 
+                plant.sunlight_need, 
+                plant.min_temp, 
+                plant.max_temp, 
+                plant.purification_score,
+                plant.rule || '',
+                detail.scientificName || '',
+                detail.nepaliName || '',
+                detail.description || ''
+              ]);
+            }
+            console.log('✅ MVP seed plants added to database');
+          }
+
+          // Backfill details for all existing plants
+          console.log('Backfilling plant details into database...');
+          for (const [name, detail] of Object.entries(plantDetailsMap)) {
+            await db.execute(
+              'UPDATE plants SET scientific_name = ?, nepali_name = ?, description = ? WHERE name = ? AND (scientific_name IS NULL OR nepali_name IS NULL OR description IS NULL OR scientific_name = \'\' OR nepali_name = \'\' OR description = \'\')',
+              [detail.scientificName, detail.nepaliName, detail.description, name]
+            );
+          }
+          console.log('✅ Backfilling completed successfully');
+          
+          console.log('✅ Database tables initialized');
        } catch (err) {
          console.error('❌ Database initialization failed:', err.message);
        }
@@ -221,6 +257,48 @@
        }
      });
 
+      app.get('/api/plants/:id/images', async (req, res) => {
+        try {
+          const { id } = req.params;
+          const [rows] = await db.execute('SELECT name, image FROM plants WHERE id = ?', [id]);
+          const plant = rows[0];
+          if (!plant) {
+            return res.status(404).json({ error: 'Plant not found' });
+          }
+
+          const plantName = plant.name;
+          const plantsDir = path.join(__dirname, '../public/plants');
+
+          try {
+            const folders = fs.readdirSync(plantsDir);
+            const matchedFolder = folders.find(f => {
+              const cleanFolder = f.split('(')[0].trim().toLowerCase();
+              return cleanFolder === plantName.toLowerCase() || f.toLowerCase() === plantName.toLowerCase();
+            });
+
+            if (matchedFolder) {
+              const folderPath = path.join(plantsDir, matchedFolder);
+              const files = fs.readdirSync(folderPath);
+              const images = files
+                .filter(file => /\.(jpe?g|png|webp|gif)$/i.test(file))
+                .map(file => `/plants/${matchedFolder}/${file}`);
+              
+              if (images.length > 0) {
+                return res.json(images);
+              }
+            }
+          } catch (err) {
+            console.error("Error reading plant images directory:", err);
+          }
+
+          // Fallback to the main image if folder search fails or returns no images
+          res.json([plant.image]);
+        } catch (error) {
+          console.error("Error in images endpoint:", error);
+          res.status(500).json({ error: 'Failed to fetch plant images' });
+        }
+      });
+
      app.post('/api/plants/:id/buy', async (req, res) => {
        try {
          const { id } = req.params;
@@ -232,12 +310,28 @@
          
          await db.execute('UPDATE plants SET is_sold = 1, buyer_id = ? WHERE id = ?', [userId, id]);
 
-         if (quantity > 1) {
-           const insertQuery = 'INSERT INTO plants (name, type, price, location, image, space_tag, sunlight_need, min_temp, max_temp, purification_score, is_sold, buyer_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)';
-           for (let i = 1; i < quantity; i++) {
-             await db.execute(insertQuery, [plant.name, plant.type, plant.price, plant.location, plant.image, plant.space_tag, plant.sunlight_need, plant.min_temp, plant.max_temp, plant.purification_score, userId]);
-           }
-         }
+          if (quantity > 1) {
+            const insertQuery = 'INSERT INTO plants (name, type, price, location, image, space_tag, sunlight_need, min_temp, max_temp, purification_score, rule, scientific_name, nepali_name, description, is_sold, buyer_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)';
+            for (let i = 1; i < quantity; i++) {
+              await db.execute(insertQuery, [
+                plant.name, 
+                plant.type, 
+                plant.price, 
+                plant.location, 
+                plant.image, 
+                plant.space_tag, 
+                plant.sunlight_need, 
+                plant.min_temp, 
+                plant.max_temp, 
+                plant.purification_score,
+                plant.rule || '',
+                plant.scientific_name || '',
+                plant.nepali_name || '',
+                plant.description || '',
+                userId
+              ]);
+            }
+          }
 
          res.json({ message: `Success` });
        } catch (error) {

@@ -1,19 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Thermometer, Sun, Wind, MapPin, ShoppingCart, X, Minus, Plus, QrCode, CheckCircle, Loader2, Trash2 } from 'lucide-react';
-import PLANT_DETAILS from './plantData';
 import './PlantDetail.css';
-
-// Using the same mock data array for consistency with detailed info
-const PLANTS_LIST = [
-  { id: 1, name: 'African Violet', type: 'buy', price: 'Rs. 35', location: 'City Nursery', image: '/plants/African Violet (Saintpaulia ionantha)/1.jpg' },
-  { id: 2, name: 'Aloe Vera', type: 'buy', price: 'Rs. 15', location: 'Local Nursery', image: '/plants/Aloe Vera/1.jpg' },
-];
 
 export default function PlantDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [plant, setPlant] = useState(null);
+  const [images, setImages] = useState([]);
+  const [currentSlide, setCurrentSlide] = useState(0);
   const [loading, setLoading] = useState(true);
   const [cart, setCart] = useState(() => {
     try {
@@ -43,23 +38,38 @@ export default function PlantDetail() {
   const [success, setSuccess] = useState(false);
 
   const plantId = parseInt(id);
-  const detail = PLANT_DETAILS[plantId];
 
   useEffect(() => {
-    const fetchPlant = async () => {
+    const fetchPlantAndImages = async () => {
       try {
         const response = await fetch('http://localhost:5000/api/plants');
         const data = await response.json();
         const found = data.find(p => p.id === plantId);
-        setPlant(found);
+        if (found) {
+          setPlant(found);
+          // Fetch carousel images from the backend
+          const imagesResponse = await fetch(`http://localhost:5000/api/plants/${plantId}/images`);
+          const imagesData = await imagesResponse.json();
+          setImages(imagesData);
+        }
       } catch (err) {
-        console.error("Error fetching plant:", err);
+        console.error("Error fetching plant details or images:", err);
       } finally {
         setLoading(false);
       }
     };
-    fetchPlant();
+    fetchPlantAndImages();
   }, [plantId]);
+
+  const carouselImages = images.length > 0 ? images : (plant ? [plant.image] : []);
+
+  const handlePrevSlide = () => {
+    setCurrentSlide((prev) => (prev === 0 ? carouselImages.length - 1 : prev - 1));
+  };
+
+  const handleNextSlide = () => {
+    setCurrentSlide((prev) => (prev === carouselImages.length - 1 ? 0 : prev + 1));
+  };
 
   useEffect(() => {
     localStorage.setItem('cart', JSON.stringify(cart));
@@ -173,7 +183,7 @@ export default function PlantDetail() {
   };
 
   if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading plant details...</div>;
-  if (!plant || !detail) {
+  if (!plant) {
     return (
       <div className="plant-detail-container">
         <button className="back-btn" onClick={() => navigate('/marketplace')}>
@@ -191,7 +201,7 @@ export default function PlantDetail() {
       <div className="animate-fade-in plant-detail-container">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
           <button className="back-btn" onClick={() => navigate('/marketplace')} style={{ marginBottom: 0 }}>
-            <ArrowLeft size={20} /> Back
+            <ArrowLeft size={20} /> Back to Marketplace
           </button>
           <div className="header-cart-icon" onClick={() => setShowCart(true)} style={{ position: 'relative', cursor: 'pointer', padding: '10px', background: 'white', borderRadius: '50%', boxShadow: 'var(--shadow-sm)', color: 'var(--primary)', border: '1px solid var(--border-color)' }}>
             <ShoppingCart size={24} />
@@ -203,26 +213,71 @@ export default function PlantDetail() {
           </div>
         </div>
 
-        <div className="detail-layout">
-          <div className="detail-image-section">
-            <img src={plant.image} alt={plant.name} className="detail-img" onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1545239351-ef35f43d514b?q=80&w=400'; }} />
-            <div className="detail-badge">{plant.type}</div>
+        <div className="plant-detail-card">
+          {/* 1. Name & Scientific Name */}
+          <div className="detail-header-new">
+            <h1 className="detail-title-new">{plant.name}</h1>
+            <p className="scientific-name-new"><i>({plant.scientific_name})</i></p>
           </div>
 
-          <div className="detail-info-section">
-            <div className="detail-header" style={{ marginBottom: '2rem' }}>
-              <div>
-                <h1 className="detail-title">{detail.name}</h1>
-              </div>
-              <p className="detail-price">{plant.price}</p>
-            </div>
+          {/* 2. Image Carousel */}
+          <div className="carousel-section">
+            <div className="carousel-container">
+              <img 
+                src={carouselImages[currentSlide]?.startsWith('http') ? carouselImages[currentSlide] : `http://localhost:5000${carouselImages[currentSlide]}`} 
+                alt={plant.name} 
+                className="carousel-img" 
+                onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1545239351-ef35f43d514b?q=80&w=400'; }} 
+              />
+              
+              <div className="carousel-badge">{plant.type}</div>
 
-            <div className="detail-actions">
-              <button className="add-to-cart-big" onClick={handleBuyClick}>
-                <ShoppingCart size={20} />
-                Add to Cart
-              </button>
+              {carouselImages.length > 1 && (
+                <>
+                  <button className="carousel-arrow left" onClick={handlePrevSlide}>
+                    <ArrowLeft size={20} />
+                  </button>
+                  <button className="carousel-arrow right" onClick={handleNextSlide}>
+                    <span style={{ transform: 'rotate(180deg)', display: 'inline-block' }}><ArrowLeft size={20} /></span>
+                  </button>
+                  <div className="carousel-counter">
+                    {currentSlide + 1}/{carouselImages.length}
+                  </div>
+                </>
+              )}
             </div>
+          </div>
+
+          {/* 3. Nepali Name / Also Known As */}
+          <div className="detail-section">
+            <h3 className="section-subtitle">Also Known As</h3>
+            <p className="detail-value-text">{plant.nepali_name}</p>
+          </div>
+
+          {/* 4. About This Plant */}
+          <div className="detail-section">
+            <h3 className="section-subtitle">About This Plant</h3>
+            <p className="description-text">{plant.description}</p>
+          </div>
+
+          {/* 5. Listing Details (Price, Location) */}
+          <div className="metadata-grid">
+            <div className="metadata-item">
+              <span className="metadata-label">Price</span>
+              <span className="metadata-value">{plant.price}</span>
+            </div>
+            <div className="metadata-item">
+              <span className="metadata-label">Nursery / Location</span>
+              <span className="metadata-value">{plant.location}</span>
+            </div>
+          </div>
+
+          {/* 6. Add to Cart Option at last */}
+          <div className="detail-actions-bottom">
+            <button className="add-to-cart-big-new" onClick={handleBuyClick}>
+              <ShoppingCart size={22} />
+              Add to Cart
+            </button>
           </div>
         </div>
       </div>
