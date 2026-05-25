@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, MapPin, ArrowRight, ShoppingCart, X, Trash2, Plus, Minus, QrCode, Loader2, CheckCircle } from 'lucide-react';
+import { Sparkles, MapPin, ArrowRight, ShoppingCart, X, Trash2, Plus, Minus, QrCode, Loader2, CheckCircle, Droplets, Sun, Sprout, Info } from 'lucide-react';
 import RecommendationForm from '../components/RecommendationForm';
+import careTipsData from './careTips.json';
 import './Recommendation.css';
 
 export default function Recommendation() {
@@ -25,9 +26,9 @@ export default function Recommendation() {
   const [paymentStatus, setPaymentStatus] = useState('pending');
   const [success, setSuccess] = useState(false);
 
-  // Quantity Selection State
+  // Quantity/Care Selection State
   const [selectedPlant, setSelectedPlant] = useState(null);
-  const [showQuantitySelector, setShowQuantitySelector] = useState(false);
+  const [showCareModal, setShowCareModal] = useState(false);
   const [quantity, setQuantity] = useState(1);
   
   const navigate = useNavigate();
@@ -98,7 +99,7 @@ export default function Recommendation() {
   const handlePlantClick = (plant) => {
     setSelectedPlant(plant);
     setQuantity(1);
-    setShowQuantitySelector(true);
+    setShowCareModal(true);
   };
 
   const handleAddToCart = () => {
@@ -113,7 +114,7 @@ export default function Recommendation() {
       setCart([...cart, { ...selectedPlant, quantity: quantity }]);
     }
     
-    setShowQuantitySelector(false);
+    setShowCareModal(false);
     setSelectedPlant(null);
   };
 
@@ -166,6 +167,17 @@ export default function Recommendation() {
   const API_BASE = `http://${window.location.hostname}:5000`;
   const HOST_IP = '192.168.16.102'; // Your computer's local IP
   const billURL = `http://${HOST_IP}:5173/bill/${paymentSessionId}`;
+
+  // Care Tips helper
+  const getCareTips = (plantName) => {
+    const cleanName = plantName.split('(')[0].trim();
+    return careTipsData[cleanName] || {
+      watering: "General watering (once a week).",
+      sunlight: "General indirect light.",
+      soil: "Standard well-draining potting mix.",
+      tips: "Keep away from extreme temperatures."
+    };
+  };
 
   return (
     <div className="rec-page">
@@ -238,16 +250,16 @@ export default function Recommendation() {
             <div className="plant-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
               {recommendedPlants.length > 0 ? (
                 recommendedPlants.map(plant => (
-                  <div key={plant.id} className="rec-card" style={{ 
+                  <div key={plant.id} className="rec-card" onClick={() => handlePlantClick(plant)} style={{ 
                     padding: 0,
                     overflow: 'hidden', 
                     transition: 'all 0.3s ease',
                     display: 'flex',
-                    flexDirection: 'column'
+                    flexDirection: 'column',
+                    cursor: 'pointer'
                   }}>
                     <div 
-                      onClick={() => navigate(`/marketplace/${plant.id}`)}
-                      style={{ height: '200px', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', cursor: 'pointer' }}
+                      style={{ height: '200px', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}
                     >
                       <img src={`http://${window.location.hostname}:5000${plant.image}`} alt={plant.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </div>
@@ -257,12 +269,16 @@ export default function Recommendation() {
                         <span style={{ color: 'var(--primary)', fontWeight: '700' }}>{plant.price}</span>
                       </div>
                       
+                      <p style={{ fontSize: '0.85rem', color: '#666', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <Sparkles size={14} color="var(--primary)" /> View Specialized Care Guide
+                      </p>
+
                       <button 
-                        onClick={() => handlePlantClick(plant)}
+                        onClick={(e) => { e.stopPropagation(); handlePlantClick(plant); }}
                         className="btn-primary"
-                        style={{ width: '100%', padding: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginTop: '0.5rem' }}
+                        style={{ width: '100%', padding: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
                       >
-                        <ShoppingCart size={18} /> Add to Cart
+                        <ShoppingCart size={18} /> Buy Now
                       </button>
                     </div>
                   </div>
@@ -287,145 +303,100 @@ export default function Recommendation() {
         )}
       </div>
 
-      {/* Select Quantity Modal */}
-      {showQuantitySelector && (
-        <div className="modal-overlay" style={{ zIndex: 10000, display: 'flex' }} onClick={() => setShowQuantitySelector(false)}>
-          <div className="glass-panel modal-content animate-scale-up" style={{ zIndex: 10001, background: 'white', color: 'black', opacity: 1, transform: 'none', textAlign: 'center', padding: '2.5rem', borderRadius: '2rem', maxWidth: '420px', width: '95%' }} onClick={(e) => e.stopPropagation()}>
-            <button className="close-modal" type="button" style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', background: '#f5f5f5', borderRadius: '50%', padding: '5px', border: 'none', cursor: 'pointer' }} onClick={() => setShowQuantitySelector(false)}><X size={20} /></button>
+      {/* Specialized Care & Quantity Modal */}
+      {showCareModal && selectedPlant && (
+        <div className="modal-overlay" style={{ zIndex: 10000, display: 'flex' }} onClick={() => setShowCareModal(false)}>
+          <div className="glass-panel modal-content animate-scale-up" style={{ zIndex: 10001, background: 'white', color: 'black', opacity: 1, transform: 'none', textAlign: 'left', padding: '0', borderRadius: '2rem', maxWidth: '600px', width: '95%', overflow: 'hidden' }} onClick={(e) => e.stopPropagation()}>
+            <button className="close-modal" type="button" style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', background: 'rgba(0,0,0,0.05)', borderRadius: '50%', padding: '8px', border: 'none', cursor: 'pointer', zIndex: 10 }} onClick={() => setShowCareModal(false)}><X size={20} /></button>
             
-            <div className="modal-header">
-              <h3 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '0.5rem' }}>Select Quantity</h3>
-              <p style={{ color: '#666', fontSize: '1rem' }}>How many <b>{selectedPlant?.name}</b>s do you want?</p>
-            </div>
-
-            <div className="quantity-controls" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2rem', margin: '2rem 0' }}>
-              <button type="button" onClick={() => setQuantity(Math.max(1, quantity - 1))} className="qty-btn" style={{ width: '45px', height: '45px', borderRadius: '50%', border: '1px solid #ddd', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                <Minus size={20} />
-              </button>
-              <span className="qty-value" style={{ fontSize: '2rem', fontWeight: '800', minWidth: '40px' }}>{quantity}</span>
-              <button type="button" onClick={() => setQuantity(Math.min(10, quantity + 1))} className="qty-btn" style={{ width: '45px', height: '45px', borderRadius: '50%', border: '1px solid #ddd', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                <Plus size={20} />
-              </button>
-            </div>
-
-            <button 
-              type="button" 
-              onClick={handleAddToCart} 
-              className="btn-primary" 
-              style={{ width: '100%', padding: '1.1rem', fontSize: '1.1rem', marginTop: '1rem', borderRadius: '9999px' }}
-            >
-              Add to Cart
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* QR Modal */}
-      {showQRPrompt && (
-        <div className="modal-overlay" style={{ zIndex: 10000, display: 'flex' }} onClick={() => setShowQRPrompt(false)}>
-          <div className="glass-panel modal-content text-center animate-scale-up" style={{ zIndex: 10001, background: 'white', color: 'black', opacity: 1, transform: 'none', padding: '2rem', borderRadius: '2rem', maxWidth: '420px', width: '95%' }} onClick={(e) => e.stopPropagation()}>
-            <button className="close-modal" type="button" onClick={() => setShowQRPrompt(false)} style={{ position: 'absolute', top: '15px', right: '15px', color: 'black', background: '#f5f5f5', borderRadius: '50%', padding: '5px' }}><X size={20} /></button>
-            <div className="modal-header">
-              <div className="qr-icon" style={{ marginBottom: '1rem', color: 'var(--primary)', display: 'flex', justifyContent: 'center' }}><QrCode size={48} /></div>
-              <h3>Scan to Pay</h3>
-              <p style={{ fontSize: '0.875rem', color: '#666' }}>Scan this with your mobile to see the bill and pay.</p>
-              <p style={{ fontWeight: '700', color: 'var(--primary)', fontSize: '1.25rem', marginTop: '0.5rem' }}>
-                Total: Rs. {totalAmount}
-              </p>
-            </div>
-
-            <div style={{ backgroundColor: 'white', padding: '1rem', borderRadius: '1rem', display: 'inline-block', margin: '1.5rem 0', border: '1px solid #eee' }}>
-              <img 
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(billURL)}`} 
-                alt="Payment QR Code" 
-                style={{ width: '200px', height: '200px' }}
-              />
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', padding: '1rem', backgroundColor: '#f5f5f5', borderRadius: '1rem' }}>
-              <Loader2 className="animate-spin" size={20} color="var(--primary)" />
-              <span style={{ fontSize: '0.875rem', fontWeight: '600' }}>Waiting for mobile scan...</span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {success && (
-        <div className="modal-overlay" style={{ zIndex: 10000, display: 'flex' }} onClick={() => setSuccess(false)}>
-          <div className="glass-panel modal-content text-center animate-scale-up" style={{ zIndex: 10001, background: 'white', padding: '2rem', borderRadius: '1.5rem', maxWidth: '420px', width: '95%' }} onClick={(e) => e.stopPropagation()}>
-            <div style={{ width: '80px', height: '80px', background: '#eef2ef', color: 'var(--primary)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}><CheckCircle size={48} /></div>
-            <h3>Purchase Successful!</h3>
-            <p>Your order has been placed successfully.</p>
-            <div className="modal-actions" style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <button type="button" onClick={() => navigate('/dashboard')} className="btn-primary w-full">Go to Dashboard</button>
-              <button type="button" onClick={() => setSuccess(false)} className="btn-text w-full">Continue Browsing</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Cart Modal */}
-      {showCart && (
-        <div className="modal-overlay" style={{ zIndex: 10000, display: 'flex' }} onClick={() => setShowCart(false)}>
-          <div className="glass-panel modal-content animate-scale-up" style={{ zIndex: 10001, background: 'white', color: 'black', opacity: 1, transform: 'none', maxWidth: '460px', width: '95%', padding: '2rem', borderRadius: '2rem' }} onClick={(e) => e.stopPropagation()}>
-            <button className="close-modal" type="button" style={{ position: 'absolute', top: '15px', right: '15px', color: 'black', background: '#f5f5f5', borderRadius: '50%', padding: '5px', border: 'none', cursor: 'pointer' }} onClick={() => setShowCart(false)}><X size={28} /></button>
-            
-            <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-              <h3 style={{ fontSize: '1.75rem', fontWeight: '800' }}>Your Cart</h3>
-              <p style={{ color: '#666' }}>
-                {cart.length === 0 ? 'Your cart is empty' : `Items: ${cartCount}`}
-              </p>
-            </div>
-
-            {cart.length > 0 ? (
-              <>
-                <div className="cart-items-list" style={{ maxHeight: '350px', overflowY: 'auto', textAlign: 'left', paddingRight: '5px' }}>
-                  {cart.map((item, index) => (
-                    <div key={item.id || `cart-${index}`} style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', padding: '15px 0', borderBottom: '1px solid #eee' }}>
-                      <img 
-                        src={item.image} 
-                        alt={item.name} 
-                        style={{ width: '70px', height: '70px', borderRadius: '14px', objectFit: 'cover' }}
-                        onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1545239351-ef35f43d514b?q=80&w=400'; }}
-                      />
-                      <div style={{ flex: 1 }}>
-                        <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '600' }}>{item.name}</h4>
-                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: '5px' }}>
-                          <span style={{ color: 'var(--primary)', fontWeight: '800', fontSize: '1rem' }}>{item.price}</span>
-                          <span style={{ background: '#f0f4f1', color: '#555', padding: '2px 8px', borderRadius: '6px', fontSize: '0.85rem', fontWeight: '700' }}>x {item.quantity}</span>
-                        </div>
-                      </div>
-                      <button 
-                        onClick={() => handleRemoveFromCart(item.id)}
-                        style={{ color: '#ff4b4b', padding: '10px', background: '#fff0f0', borderRadius: '12px', border: 'none', cursor: 'pointer' }}
-                      >
-                        <Trash2 size={20} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-                
-                <div style={{ marginTop: '25px', padding: '20px', background: '#f8fbf9', borderRadius: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontWeight: '600', color: '#555' }}>Total Amount</span>
-                  <span style={{ fontSize: '1.5rem', fontWeight: '900', color: 'var(--primary)' }}>Rs. {totalAmount}</span>
-                </div>
-
-                <div className="modal-actions" style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <button type="button" onClick={handleProceedToPayment} className="btn-primary" style={{ width: '100%', padding: '1.25rem', borderRadius: '9999px', fontSize: '1.1rem' }}>Proceed to Checkout</button>
-                  <button type="button" onClick={() => setShowCart(false)} style={{ color: '#888', fontWeight: '500', cursor: 'pointer', textAlign: 'center', padding: '5px', background: 'none', border: 'none' }}>Back to Recommendations</button>
-                </div>
-              </>
-            ) : (
-              <div style={{ textAlign: 'center', padding: '50px 0' }}>
-                <div style={{ background: '#f5f7f5', width: '100px', height: '100px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 25px' }}>
-                  <ShoppingCart size={45} style={{ opacity: 0.3, color: 'var(--primary)' }} />
-                </div>
-                <button type="button" onClick={() => setShowCart(false)} className="btn-primary" style={{ width: '100%' }}>Explore More Plants</button>
+            {/* Top Section: Plant Info */}
+            <div style={{ display: 'flex', gap: '1.5rem', padding: '2rem', background: 'var(--bg-secondary)' }}>
+              <div style={{ width: '120px', height: '120px', borderRadius: '1.5rem', overflow: 'hidden', flexShrink: 0 }}>
+                <img src={`http://${window.location.hostname}:5000${selectedPlant.image}`} alt={selectedPlant.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               </div>
-            )}
+              <div style={{ flex: 1 }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '1px' }}>Personalized Guide</span>
+                <h3 style={{ fontSize: '1.75rem', fontWeight: '800', margin: '0.25rem 0' }}>{selectedPlant.name}</h3>
+                <p style={{ color: 'var(--primary)', fontWeight: '800', fontSize: '1.25rem' }}>{selectedPlant.price}</p>
+              </div>
+            </div>
+
+            {/* Care Guide Grid */}
+            <div style={{ padding: '2rem' }}>
+              <h4 style={{ fontSize: '1rem', fontWeight: '700', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Sprout size={20} color="var(--primary)" /> Specialized Care Guide
+              </h4>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  <div style={{ width: '40px', height: '40px', background: '#eef2ff', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Droplets size={20} color="#3b82f6" />
+                  </div>
+                  <div>
+                    <h5 style={{ fontSize: '0.85rem', fontWeight: '700', margin: '0 0 4px 0' }}>Watering</h5>
+                    <p style={{ fontSize: '0.8rem', color: '#666', lineHeight: '1.4', margin: 0 }}>{getCareTips(selectedPlant.name).watering}</p>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  <div style={{ width: '40px', height: '40px', background: '#fff7ed', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Sun size={20} color="#f59e0b" />
+                  </div>
+                  <div>
+                    <h5 style={{ fontSize: '0.85rem', fontWeight: '700', margin: '0 0 4px 0' }}>Sunlight</h5>
+                    <p style={{ fontSize: '0.8rem', color: '#666', lineHeight: '1.4', margin: 0 }}>{getCareTips(selectedPlant.name).sunlight}</p>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  <div style={{ width: '40px', height: '40px', background: '#f0fdf4', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Sprout size={20} color="#10b981" />
+                  </div>
+                  <div>
+                    <h5 style={{ fontSize: '0.85rem', fontWeight: '700', margin: '0 0 4px 0' }}>Soil</h5>
+                    <p style={{ fontSize: '0.8rem', color: '#666', lineHeight: '1.4', margin: 0 }}>{getCareTips(selectedPlant.name).soil}</p>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  <div style={{ width: '40px', height: '40px', background: '#f5f3ff', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Info size={20} color="#8b5cf6" />
+                  </div>
+                  <div>
+                    <h5 style={{ fontSize: '0.85rem', fontWeight: '700', margin: '0 0 4px 0' }}>Expert Tip</h5>
+                    <p style={{ fontSize: '0.8rem', color: '#666', lineHeight: '1.4', margin: 0 }}>{getCareTips(selectedPlant.name).tips}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Quantity Selector */}
+              <div style={{ marginTop: '2.5rem', borderTop: '1px solid #eee', paddingTop: '2rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                  <div>
+                    <h4 style={{ fontSize: '1rem', fontWeight: '700', margin: 0 }}>Select Quantity</h4>
+                    <p style={{ fontSize: '0.8rem', color: '#888', margin: '4px 0 0 0' }}>How many would you like to buy?</p>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                    <button type="button" onClick={() => setQuantity(Math.max(1, quantity - 1))} style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1px solid #ddd', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                      <Minus size={16} />
+                    </button>
+                    <span style={{ fontSize: '1.25rem', fontWeight: '800', minWidth: '24px', textAlign: 'center' }}>{quantity}</span>
+                    <button type="button" onClick={() => setQuantity(Math.min(10, quantity + 1))} style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1px solid #ddd', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                      <Plus size={16} />
+                    </button>
+                  </div>
+                </div>
+
+                <button 
+                  type="button" 
+                  onClick={handleAddToCart} 
+                  className="btn-primary" 
+                  style={{ width: '100%', padding: '1.1rem', fontSize: '1.1rem', borderRadius: '9999px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
+                >
+                  <ShoppingCart size={20} /> Add to Cart — Rs. {parsePrice(selectedPlant.price) * quantity}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
-    </div>
-  );
-}

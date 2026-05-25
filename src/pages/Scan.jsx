@@ -1,19 +1,19 @@
 import { useState, useRef, useEffect } from 'react';
-import { Camera } from 'lucide-react';
+import { Camera, MapPin, Search, Leaf, ArrowRight, Home, Loader2, CheckCircle, ShoppingCart, RefreshCw, X, Info, Droplets, Sun, Sprout } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import RecommendationForm from '../components/RecommendationForm';
+import careTipsData from './careTips.json';
 import './Scan.css';
 
 export default function Scan() {
-  const [step, setStep] = useState('scan'); // 'scan', 'location', 'results'
+  const [step, setStep] = useState('scan'); // 'scan', 'results'
   const [stream, setStream] = useState(null);
-  const [location, setLocation] = useState('');
-  const [spaceType, setSpaceType] = useState('indoor');
   const [isScanning, setIsScanning] = useState(false);
+  const [identification, setIdentification] = useState(null);
   const videoRef = useRef(null);
+  const canvasRef = useRef(null);
   const navigate = useNavigate();
 
-  // Initialize camera when step is 'scan'
+  // Initialize camera
   useEffect(() => {
     if (step === 'scan') {
       startCamera();
@@ -25,14 +25,15 @@ export default function Scan() {
 
   const startCamera = async () => {
     try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      const mediaStream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } 
+      });
       setStream(mediaStream);
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
       }
     } catch (err) {
       console.error("Error accessing camera:", err);
-      // Fallback if camera fails
     }
   };
 
@@ -43,124 +44,216 @@ export default function Scan() {
     }
   };
 
-  const handleCapture = () => {
+  const handleIdentify = async () => {
+    if (!videoRef.current || !canvasRef.current) return;
+    
     setIsScanning(true);
-    // Simulate AI scanning delay
-    setTimeout(() => {
-      setIsScanning(false);
-      setStep('location');
-    }, 2000);
+    
+    // Capture frame from video
+    const canvas = canvasRef.current;
+    const video = videoRef.current;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    // Convert canvas to blob
+    canvas.toBlob(async (blob) => {
+      const formData = new FormData();
+      formData.append('image', blob, 'capture.jpg');
+
+      try {
+        const response = await fetch(`http://${window.location.hostname}:5000/api/identify`, {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (!response.ok) throw new Error('Identification failed');
+        
+        const data = await response.json();
+        setIdentification(data);
+        setStep('results');
+      } catch (err) {
+        console.error("Identify error:", err);
+        alert("Sorry, we couldn't identify this plant. Please try a clearer shot of a leaf.");
+      } finally {
+        setIsScanning(false);
+      }
+    }, 'image/jpeg', 0.8);
   };
 
-  const handleSubmitLocation = (e, { location: loc, selectedSpace }) => {
-    e.preventDefault();
-    if (loc) setLocation(loc);
-    setSpaceType(selectedSpace);
-    setStep('results');
+  const getCareTips = (plantName) => {
+    if (!plantName) return {
+      watering: "General watering (once a week).",
+      sunlight: "General indirect light.",
+      soil: "Standard well-draining potting mix.",
+      tips: "Keep away from extreme temperatures."
+    };
+
+    const cleanName = plantName.split('(')[0].trim();
+    return careTipsData[cleanName] || {
+      watering: "General watering (once a week).",
+      sunlight: "General indirect light.",
+      soil: "Standard well-draining potting mix.",
+      tips: "Keep away from extreme temperatures."
+    };
   };
 
   return (
     <div className="animate-fade-in scan-container">
+      <canvas ref={canvasRef} style={{ display: 'none' }} />
+
       {step === 'scan' && (
         <div className="scan-view">
-          <h2 className="title-medium text-center">Identify Plant</h2>
-          <p className="text-subtle text-center mb-4">Center the plant in the frame</p>
+          <div className="scan-header">
+            <h2 className="title-medium text-center">AI Plant Identifier</h2>
+            <p className="text-subtle text-center">Powered by Pl@ntNet™ Technology</p>
+          </div>
           
           <div className="camera-container">
             {stream ? (
               <video ref={videoRef} autoPlay playsInline className="camera-feed" />
             ) : (
               <div className="camera-fallback">
-                <Camera size={48} color="var(--text-muted)" />
-                <p>Camera access required</p>
+                <Loader2 className="animate-spin" size={48} color="var(--primary)" />
+                <p>Initializing Camera...</p>
               </div>
             )}
             
-            {/* Viewfinder overlay */}
             <div className="viewfinder">
               <div className="corner top-left"></div>
               <div className="corner top-right"></div>
               <div className="corner bottom-left"></div>
               <div className="corner bottom-right"></div>
+              
+              <div className="scan-hint">
+                <Info size={14} /> Center a leaf in the frame for best results
+              </div>
             </div>
             
             {isScanning && (
               <div className="scanning-overlay">
                 <div className="scan-line"></div>
-                <p>Analyzing plant...</p>
+                <div className="scan-status">
+                  <RefreshCw className="animate-spin" size={20} />
+                  <span>Analyzing Species...</span>
+                </div>
               </div>
             )}
           </div>
           
-          <button 
-            className="btn-capture"
-            onClick={handleCapture}
-            disabled={isScanning || !stream}
-          >
-            <div className="inner-circle"></div>
-          </button>
+          <div className="scan-controls">
+            <button 
+              className="btn-capture-main"
+              onClick={handleIdentify}
+              disabled={isScanning || !stream}
+            >
+              <div className="inner-circle">
+                <Camera size={32} />
+              </div>
+            </button>
+            <p className="capture-label">Tap to Identify</p>
+          </div>
         </div>
       )}
 
-      {step === 'location' && (
-        <div className="location-view">
-          <div className="identified-header">
-            <div className="plant-image-bg">
-              <img src="https://images.unsplash.com/photo-1614594975525-e45190c55d0b?auto=format&fit=crop&w=800&q=80" alt="Monstera" />
-              <div className="identified-overlay">
-                <span className="badge-identified">✓ IDENTIFIED</span>
-                <h2>Monstera Deliciosa</h2>
-                <p>Swiss Cheese Plant</p>
-              </div>
+      {step === 'results' && identification && (
+        <div className="results-view animate-slide-up" style={{ paddingBottom: '4rem' }}>
+          <div className="result-header-modern">
+            <div className="res-back-btn" onClick={() => setStep('scan')}>
+              <X size={24} />
+            </div>
+            <div className="confidence-badge">
+              {Math.round(identification.score * 100)}% Match Confidence
             </div>
           </div>
 
-          <div className="location-form-container scan-rec-form-wrap">
-            <h3 className="text-center form-title">Let's find the perfect spot</h3>
-            <div className="rec-page rec-page--embedded">
-              <div className="rec-container">
-                <RecommendationForm
-                  showHeader={false}
-                  onSubmit={handleSubmitLocation}
+          <div className="identified-hero">
+            <div className="res-plant-icon">🌿</div>
+            <h1 className="res-scientific">{identification.scientificName}</h1>
+            <h2 className="res-common">{identification.commonName || 'Rare Species'}</h2>
+          </div>
+
+          {identification.localPlant ? (
+            <div className="local-match-card animate-scale-up">
+              <div className="match-tag">✨ MATCH FOUND IN NURSERY</div>
+              <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+                <img 
+                  src={`http://${window.location.hostname}:5000${identification.localPlant.image}`} 
+                  alt={identification.localPlant.name}
+                  style={{ width: '90px', height: '90px', borderRadius: '1rem', objectFit: 'cover' }}
                 />
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: '700' }}>{identification.localPlant.name}</h3>
+                  <p style={{ color: 'var(--primary)', fontWeight: '800', fontSize: '1.25rem', margin: '4px 0' }}>{identification.localPlant.price}</p>
+                  <button 
+                    onClick={() => navigate(`/marketplace`)} 
+                    className="btn-primary" 
+                    style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', width: 'auto', marginTop: '5px' }}
+                  >
+                    <ShoppingCart size={14} /> View in Marketplace
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      )}
+          ) : (
+            <div className="no-local-match">
+              <p>This specific variety isn't in our local nursery yet, but we've generated a care guide for you!</p>
+            </div>
+          )}
 
-      {step === 'results' && (
-        <div className="results-view">
-          <div className="result-header">
-            <div className="plant-avatar">🌿</div>
-            <div>
-              <h2 className="title-medium" style={{ marginBottom: 0 }}>Monstera Deliciosa</h2>
-              <p className="text-subtle">Swiss Cheese Plant</p>
-            </div>
-          </div>
-          
-          <h3 className="section-title">Similar Plants in Marketplace</h3>
-          <div className="recommendations">
-            {[1, 2].map(i => (
-              <div key={i} className="plant-card" onClick={() => navigate('/marketplace')}>
-                <div className="plant-img-placeholder" style={{ overflow: 'hidden' }}>
-                  <img 
-                    src={i === 1 ? "https://images.unsplash.com/photo-1613145451296-6d601b0b3d88?auto=format&fit=crop&w=400&q=80" : "https://images.unsplash.com/photo-1599598425947-33001c402cd0?auto=format&fit=crop&w=400&q=80"} 
-                    alt="Philodendron" 
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                  />
-                </div>
-                <div className="plant-info">
-                  <h4>Philodendron</h4>
-                  <p>$25 • Thrift</p>
+          {/* Care Guide Section */}
+          <div className="specialized-care-section">
+            <h3 className="section-title-res">
+              <Sprout size={20} color="var(--primary)" /> Personalized Care Guide
+            </h3>
+            
+            <div className="care-grid-res">
+              <div className="care-item-res">
+                <div className="care-icon-wrap" style={{ background: '#eef2ff' }}><Droplets size={20} color="#3b82f6" /></div>
+                <div>
+                  <label>Watering</label>
+                  <p>{getCareTips(identification.commonName || identification.scientificName).watering}</p>
                 </div>
               </div>
-            ))}
+              <div className="care-item-res">
+                <div className="care-icon-wrap" style={{ background: '#fff7ed' }}><Sun size={20} color="#f59e0b" /></div>
+                <div>
+                  <label>Sunlight</label>
+                  <p>{getCareTips(identification.commonName || identification.scientificName).sunlight}</p>
+                </div>
+              </div>
+              <div className="care-item-res">
+                <div className="care-icon-wrap" style={{ background: '#f0fdf4' }}><Sprout size={20} color="#10b981" /></div>
+                <div>
+                  <label>Soil</label>
+                  <p>{getCareTips(identification.commonName || identification.scientificName).soil}</p>
+                </div>
+              </div>
+              <div className="care-item-res">
+                <div className="care-icon-wrap" style={{ background: '#f5f3ff' }}><Info size={20} color="#8b5cf6" /></div>
+                <div>
+                  <label>Expert Tip</label>
+                  <p>{getCareTips(identification.commonName || identification.scientificName).tips}</p>
+                </div>
+              </div>
+            </div>
           </div>
-          
-          <button className="btn-secondary w-full mt-4" onClick={() => setStep('scan')}>
-            Scan Another Plant
-          </button>
+
+          <div style={{ padding: '0 1.5rem', marginTop: '2rem' }}>
+            <h4 style={{ fontSize: '0.9rem', fontWeight: '700', color: '#888', marginBottom: '1rem' }}>OTHER POSSIBLE MATCHES</h4>
+            <div className="other-matches">
+              {identification.allMatches.slice(1).map((match, i) => (
+                <div key={i} className="other-match-pill">
+                  {match.name} <span>{Math.round(match.score * 100)}%</span>
+                </div>
+              ))}
+            </div>
+            
+            <button className="btn-secondary w-full" style={{ marginTop: '2rem' }} onClick={() => setStep('scan')}>
+              <RefreshCw size={18} /> Scan Another Plant
+            </button>
+          </div>
         </div>
       )}
     </div>

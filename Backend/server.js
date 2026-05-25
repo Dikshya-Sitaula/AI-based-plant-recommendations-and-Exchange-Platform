@@ -11,6 +11,11 @@ const plantDetailsMap = require('./plantDetails');
 
      // Import routes
      const authRoutes = require('./auth');
+     const multer = require('multer');
+     const FormData = require('form-data');
+     const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+     
+     const upload = multer({ storage: multer.memoryStorage() });
 
      // Middleware
      app.use(cors());
@@ -496,6 +501,66 @@ const plantDetailsMap = require('./plantDetails');
        } catch (error) {
          console.error('Error fetching stats:', error);
          res.status(500).json({ error: 'Failed to fetch stats' });
+       }
+     });
+
+     // --- Identification Endpoint ---
+     app.post('/api/identify', upload.single('image'), async (req, res) => {
+       try {
+         if (!req.file) return res.status(400).json({ error: 'No image uploaded' });
+
+         const API_KEY = process.env.PLANTNET_API_KEY || '2b10EyS9kfkdkzj40wPpe7cnf';
+         const url = `https://my-api.plantnet.org/v2/identify/all?api-key=${API_KEY}`;
+
+         const form = new FormData();
+         form.append('images', req.file.buffer, { filename: 'image.jpg' });
+         form.append('organs', 'leaf');
+
+         console.log('[IDENTIFY] Sending image to Pl@ntNet...');
+         const response = await fetch(url, {
+           method: 'POST',
+           body: form,
+           headers: form.getHeaders()
+         });
+
+         if (!response.ok) {
+           const errText = await response.text();
+           console.error('[IDENTIFY] Pl@ntNet error:', errText);
+           return res.status(response.status).json({ error: 'Identification service failed' });
+         }
+
+         const data = await response.json();
+         const bestMatch = data.results[0];
+         
+         if (!bestMatch) return res.json({ found: false });
+
+         // Match with local database
+         const scientificName = bestMatch.species.scientificNameWithoutAuthor;
+         const commonName = bestMatch.species.commonNames[0];
+
+         console.log(`[IDENTIFY] Best match: ${scientificName} (${commonName}) | Score: ${bestMatch.score}`);
+
+         // Try to find in our DB by scientific name or common name
+         const [localPlants] = await db.execute(
+           'SELECT * FROM plants WHERE LOWER(scientific_name) LIKE ? OR LOWER(name) LIKE ? OR LOWER(name) LIKE ? LIMIT 1',
+           [`%${scientificName.toLowerCase()}%`, `%${commonName?.toLowerCase() || ''}%`, `%${scientificName.split(' ')[0].toLowerCase()}%`]
+         );
+
+         res.json({
+           found: true,
+           score: bestMatch.score,
+           scientificName: scientificName,
+           commonName: commonName,
+           localPlant: localPlants[0] || null,
+           allMatches: data.results.slice(0, 3).map(r => ({
+             name: r.species.commonNames[0] || r.species.scientificNameWithoutAuthor,
+             score: r.score
+           }))
+         });
+
+       } catch (error) {
+         console.error('[IDENTIFY] Error:', error);
+         res.status(500).json({ error: 'Internal server error during identification' });
        }
      });
 
