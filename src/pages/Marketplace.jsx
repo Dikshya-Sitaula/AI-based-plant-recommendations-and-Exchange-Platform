@@ -179,67 +179,46 @@ export default function Marketplace() {
   };
 
   const handleProceedToPayment = async () => {
-    const userStr = localStorage.getItem('user');
+    const userStr = localStorage.getItem('leafLifeAuthenticated');
     if (!userStr) {
       alert('Please log in to purchase.');
       return;
     }
-    const user = JSON.parse(userStr);
-    const amount = parseInt(selectedPlant.price.replace('Rs. ', '').replace('$', '')) * quantity;
+    
+    // Calculate total amount from cart
+    const amount = cart.reduce((sum, item) => sum + (parsePrice(item.price) * (item.quantity || 1)), 0);
 
     try {
       const response = await fetch('http://localhost:5000/api/payment/initiate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plantId: selectedPlant.id, userId: user.id, quantity, amount })
+        body: JSON.stringify({ 
+          cartItems: cart, 
+          userId: 1, // Default user ID for now 
+          amount 
+        })
       });
       const data = await response.json();
 
-      // Save to localStorage for persistence
-      localStorage.setItem('pendingMarketplacePurchase', JSON.stringify({
-        sessionId: data.sessionId,
-        plant: selectedPlant,
-        quantity: quantity
-      }));
-
       setPaymentSessionId(data.sessionId);
       setPaymentStatus('pending');
-      setShowQuantitySelector(false);
+      setShowCart(false);
       setShowQRPrompt(true);
     } catch (err) {
+      console.error("Payment initiation error:", err);
       alert("Failed to initiate payment.");
     }
   };
 
   const handleFinalizePurchase = async () => {
-    const userStr = localStorage.getItem('user');
-    const user = JSON.parse(userStr);
-    
-    try {
-      const buyResponse = await fetch(`http://localhost:5000/api/plants/${selectedPlant.id}/buy`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id, quantity })
-      });
-
-      if (buyResponse.ok) {
-        localStorage.removeItem('pendingMarketplacePurchase'); // Clear session
-        setShowQRPrompt(false);
-        setSuccess(true);
-        // Refresh plants
-        const refreshRes = await fetch('http://localhost:5000/api/plants');
-        const newData = await refreshRes.json();
-        setPlants(newData);
-      }
-    } catch (err) {
-      console.error("Finalization error:", err);
-    }
+    // Clear cart upon successful payment
+    setCart([]);
+    localStorage.removeItem('cart');
+    setSuccess(true);
+    setShowQRPrompt(false);
   };
 
   const closeModals = () => {
-    if (showQRPrompt) {
-      localStorage.removeItem('pendingMarketplacePurchase');
-    }
     setShowQuantitySelector(false);
     setShowQRPrompt(false);
     setSuccess(false);
@@ -253,7 +232,7 @@ export default function Marketplace() {
 
   // Determine local IP for mobile access
   const localIP = window.location.hostname === 'localhost' ? 'localhost' : window.location.hostname;
-  const paymentURL = `http://${localIP}:5173/payment-mobile/${paymentSessionId}`;
+  const billURL = `http://${localIP}:5173/bill/${paymentSessionId}`;
 
   const cartCount = cart.reduce((sum, item) => sum + (item.quantity || 0), 0);
 
@@ -360,13 +339,13 @@ export default function Marketplace() {
               <h3>Scan to Pay</h3>
               <p style={{ fontSize: '0.875rem', color: '#666' }}>Scan this with your mobile to see the bill and pay.</p>
               <p style={{ fontWeight: '700', color: 'var(--primary)', fontSize: '1.25rem', marginTop: '0.5rem' }}>
-                Total: Rs. {parseInt(selectedPlant?.price.replace('Rs. ', '').replace('$', '')) * quantity}
+                Total: Rs. {cart.reduce((sum, item) => sum + (parsePrice(item.price) * (item.quantity || 1)), 0)}
               </p>
             </div>
 
             <div style={{ backgroundColor: 'white', padding: '1rem', borderRadius: '1rem', display: 'inline-block', margin: '1.5rem 0', border: '1px solid #eee' }}>
               <img 
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(paymentURL)}`} 
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(billURL)}`} 
                 alt="Payment QR Code" 
                 style={{ width: '200px', height: '200px' }}
               />
@@ -440,7 +419,7 @@ export default function Marketplace() {
                 </div>
 
                 <div className="modal-actions" style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <button type="button" onClick={() => { setShowCart(false); alert('Checkout Triggered!'); }} className="buy-btn" style={{ width: '100%', padding: '1.25rem', borderRadius: '9999px', fontSize: '1.1rem' }}>Proceed to Checkout</button>
+                  <button type="button" onClick={handleProceedToPayment} className="buy-btn" style={{ width: '100%', padding: '1.25rem', borderRadius: '9999px', fontSize: '1.1rem' }}>Proceed to Checkout</button>
                   <button type="button" onClick={() => setShowCart(false)} style={{ color: '#888', fontWeight: '500', cursor: 'pointer', textAlign: 'center', padding: '5px' }}>Back to Shopping</button>
                 </div>
               </>

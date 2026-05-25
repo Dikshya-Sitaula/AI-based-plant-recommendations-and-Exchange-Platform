@@ -18,7 +18,7 @@ function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/about" element={<AboutUs />} />
         <Route path="/contact" element={<Contact />} />
-        <Route path="/payment-mobile/:sessionId" element={<MobileBill />} />
+        <Route path="/bill/:sessionId" element={<MobileBill />} />
         <Route element={<Layout />}>
           <Route path="marketplace" element={<Marketplace />} />
           <Route path="marketplace/:id" element={<PlantDetail />} />

@@ -23,9 +23,6 @@ const plantDetailsMap = require('./plantDetails');
      // Test Database Connection and Initialize Tables
      const db = require('./db');
      
-     // In-memory store for payment sessions
-     const paymentSessions = new Map();
-
      const initDB = async () => {
        try {
          await db.execute('SELECT 1');
@@ -38,6 +35,18 @@ const plantDetailsMap = require('./plantDetails');
              full_name VARCHAR(255) NOT NULL,
              email VARCHAR(255) NOT NULL UNIQUE,
              password VARCHAR(255) NOT NULL,
+             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+           )
+         `);
+
+         // Create payment_sessions table
+         await db.execute(`
+           CREATE TABLE IF NOT EXISTS payment_sessions (
+             id VARCHAR(255) PRIMARY KEY,
+             user_id INT,
+             cart_items LONGTEXT,
+             total_amount INT,
+             status VARCHAR(50) DEFAULT 'pending',
              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
            )
          `);
@@ -344,45 +353,50 @@ const plantDetailsMap = require('./plantDetails');
 
      app.post('/api/payment/initiate', async (req, res) => {
        try {
-         const { plantId, userId, quantity, amount } = req.body;
-         
-         const [rows] = await db.execute('SELECT name FROM plants WHERE id = ?', [plantId]);
-         const plant = rows[0];
-         const plantName = plant ? plant.name : 'Plant';
-
+         const { cartItems, userId, amount } = req.body;
          const sessionId = `PAY-${Date.now()}`;
-         paymentSessions.set(sessionId, { 
-           id: sessionId, 
-           plantId, 
-           plantName,
-           userId, 
-           quantity, 
-           amount, 
-           status: 'pending', 
-           createdAt: new Date() 
-         });
+         
+         await db.execute(
+           'INSERT INTO payment_sessions (id, user_id, cart_items, total_amount, status) VALUES (?, ?, ?, ?, ?)',
+           [sessionId, userId, JSON.stringify(cartItems), amount, 'pending']
+         );
+
          res.json({ sessionId });
        } catch (error) {
+         console.error('Payment initiation error:', error);
          res.status(500).json({ error: 'Failed to initiate payment' });
        }
      });
 
-     app.get('/api/payment/status/:sessionId', (req, res) => {
-       const session = paymentSessions.get(req.params.sessionId);
-       res.json({ status: session?.status || 'expired' });
-     });
-
-     app.get('/api/payment/bill/:sessionId', (req, res) => {
-       res.json(paymentSessions.get(req.params.sessionId));
-     });
-
-     app.post('/api/payment/complete/:sessionId', (req, res) => {
-       const session = paymentSessions.get(req.params.sessionId);
-       if (session) {
-         session.status = 'completed';
-         paymentSessions.set(req.params.sessionId, session);
+     app.get('/api/payment/status/:sessionId', async (req, res) => {
+       try {
+         const [rows] = await db.execute('SELECT status FROM payment_sessions WHERE id = ?', [req.params.sessionId]);
+         res.json({ status: rows[0]?.status || 'expired' });
+       } catch (error) {
+         res.status(500).json({ error: 'Failed to fetch payment status' });
        }
-       res.json({ success: true });
+     });
+
+     app.get('/api/payment/bill/:sessionId', async (req, res) => {
+       try {
+         const [rows] = await db.execute('SELECT * FROM payment_sessions WHERE id = ?', [req.params.sessionId]);
+         const session = rows[0];
+         if (session) {
+           session.cart_items = JSON.parse(session.cart_items);
+         }
+         res.json(session);
+       } catch (error) {
+         res.status(500).json({ error: 'Failed to fetch bill' });
+       }
+     });
+
+     app.post('/api/payment/complete/:sessionId', async (req, res) => {
+       try {
+         await db.execute('UPDATE payment_sessions SET status = ? WHERE id = ?', ['completed', req.params.sessionId]);
+         res.json({ success: true });
+       } catch (error) {
+         res.status(500).json({ error: 'Failed to complete payment' });
+       }
      });
 
      // Basic Route

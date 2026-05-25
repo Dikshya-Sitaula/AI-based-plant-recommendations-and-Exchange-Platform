@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, MapPin, ArrowRight, ShoppingCart, X, Trash2, Plus, Minus } from 'lucide-react';
+import { Sparkles, MapPin, ArrowRight, ShoppingCart, X, Trash2, Plus, Minus, QrCode, Loader2, CheckCircle } from 'lucide-react';
 import RecommendationForm from '../components/RecommendationForm';
 import './Recommendation.css';
 
@@ -19,6 +19,12 @@ export default function Recommendation() {
   });
   const [showCart, setShowCart] = useState(false);
   
+  // Payment Flow State
+  const [showQRPrompt, setShowQRPrompt] = useState(false);
+  const [paymentSessionId, setPaymentSessionId] = useState(null);
+  const [paymentStatus, setPaymentStatus] = useState('pending');
+  const [success, setSuccess] = useState(false);
+
   // Quantity Selection State
   const [selectedPlant, setSelectedPlant] = useState(null);
   const [showQuantitySelector, setShowQuantitySelector] = useState(false);
@@ -29,6 +35,31 @@ export default function Recommendation() {
   useEffect(() => {
     localStorage.setItem('cart', JSON.stringify(cart));
   }, [cart]);
+
+  // Polling for payment status
+  useEffect(() => {
+    let interval;
+    if (showQRPrompt && paymentSessionId && paymentStatus === 'pending') {
+      interval = setInterval(async () => {
+        try {
+          const response = await fetch(`http://localhost:5000/api/payment/status/${paymentSessionId}`);
+          const data = await response.json();
+          if (data.status === 'completed') {
+            setPaymentStatus('completed');
+            clearInterval(interval);
+            handleFinalizePurchase();
+          } else if (data.status === 'expired') {
+            clearInterval(interval);
+            setShowQRPrompt(false);
+            alert("Payment session expired. Please try again.");
+          }
+        } catch (err) {
+          console.error("Polling error:", err);
+        }
+      }, 2000);
+    }
+    return () => clearInterval(interval);
+  }, [showQRPrompt, paymentSessionId, paymentStatus]);
 
   const handleRecommendationSubmit = async (e, { location, selectedSpace, lightLevel }) => {
     setLoading(true);
@@ -95,6 +126,39 @@ export default function Recommendation() {
     setCart(cart.filter(item => item.id !== id));
   };
 
+  const handleProceedToPayment = async () => {
+    const userStr = localStorage.getItem('leafLifeAuthenticated');
+    if (!userStr) {
+      alert('Please log in to purchase.');
+      return;
+    }
+    
+    const amount = cart.reduce((sum, item) => sum + (parsePrice(item.price) * (item.quantity || 1)), 0);
+
+    try {
+      const response = await fetch('http://localhost:5000/api/payment/initiate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cartItems: cart, userId: 1, amount })
+      });
+      const data = await response.json();
+
+      setPaymentSessionId(data.sessionId);
+      setPaymentStatus('pending');
+      setShowCart(false);
+      setShowQRPrompt(true);
+    } catch (err) {
+      alert("Failed to initiate payment.");
+    }
+  };
+
+  const handleFinalizePurchase = () => {
+    setCart([]);
+    localStorage.removeItem('cart');
+    setSuccess(true);
+    setShowQRPrompt(false);
+  };
+
   const parsePrice = (priceStr) => {
     if (!priceStr) return 0;
     const numeric = priceStr.toString().replace(/[^0-9]/g, '');
@@ -104,12 +168,15 @@ export default function Recommendation() {
   const cartCount = cart.reduce((sum, item) => sum + (item.quantity || 0), 0);
   const totalAmount = cart.reduce((sum, item) => sum + (parsePrice(item.price) * item.quantity), 0);
 
+  const localIP = window.location.hostname === 'localhost' ? 'localhost' : window.location.hostname;
+  const billURL = `http://${localIP}:5173/bill/${paymentSessionId}`;
+
   return (
     <div className="rec-page">
       <div className="rec-blob rec-blob1" />
       <div className="rec-blob rec-blob2" />
 
-      {/* Header with Cart Count */}
+      {/* Header with Cart Count (Fixed) */}
       <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 1000, display: 'flex', gap: '10px' }}>
         <div 
           className="header-cart-icon" 
@@ -224,7 +291,7 @@ export default function Recommendation() {
         )}
       </div>
 
-      {/* Select Quantity Modal (Matching Marketplace UI) */}
+      {/* Select Quantity Modal */}
       {showQuantitySelector && (
         <div className="modal-overlay" style={{ zIndex: 10000, display: 'flex' }} onClick={() => setShowQuantitySelector(false)}>
           <div className="glass-panel modal-content animate-scale-up" style={{ zIndex: 10001, background: 'white', color: 'black', opacity: 1, transform: 'none', textAlign: 'center', padding: '2.5rem', borderRadius: '2rem', maxWidth: '420px', width: '95%' }} onClick={(e) => e.stopPropagation()}>
@@ -253,6 +320,50 @@ export default function Recommendation() {
             >
               Add to Cart
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* QR Modal */}
+      {showQRPrompt && (
+        <div className="modal-overlay" style={{ zIndex: 10000, display: 'flex' }} onClick={() => setShowQRPrompt(false)}>
+          <div className="glass-panel modal-content text-center animate-scale-up" style={{ zIndex: 10001, background: 'white', color: 'black', opacity: 1, transform: 'none', padding: '2rem', borderRadius: '2rem', maxWidth: '420px', width: '95%' }} onClick={(e) => e.stopPropagation()}>
+            <button className="close-modal" type="button" onClick={() => setShowQRPrompt(false)} style={{ position: 'absolute', top: '15px', right: '15px', color: 'black', background: '#f5f5f5', borderRadius: '50%', padding: '5px' }}><X size={20} /></button>
+            <div className="modal-header">
+              <div className="qr-icon" style={{ marginBottom: '1rem', color: 'var(--primary)', display: 'flex', justifyContent: 'center' }}><QrCode size={48} /></div>
+              <h3>Scan to Pay</h3>
+              <p style={{ fontSize: '0.875rem', color: '#666' }}>Scan this with your mobile to see the bill and pay.</p>
+              <p style={{ fontWeight: '700', color: 'var(--primary)', fontSize: '1.25rem', marginTop: '0.5rem' }}>
+                Total: Rs. {totalAmount}
+              </p>
+            </div>
+
+            <div style={{ backgroundColor: 'white', padding: '1rem', borderRadius: '1rem', display: 'inline-block', margin: '1.5rem 0', border: '1px solid #eee' }}>
+              <img 
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(billURL)}`} 
+                alt="Payment QR Code" 
+                style={{ width: '200px', height: '200px' }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', padding: '1rem', backgroundColor: '#f5f5f5', borderRadius: '1rem' }}>
+              <Loader2 className="animate-spin" size={20} color="var(--primary)" />
+              <span style={{ fontSize: '0.875rem', fontWeight: '600' }}>Waiting for mobile scan...</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {success && (
+        <div className="modal-overlay" style={{ zIndex: 10000, display: 'flex' }} onClick={() => setSuccess(false)}>
+          <div className="glass-panel modal-content text-center animate-scale-up" style={{ zIndex: 10001, background: 'white', padding: '2rem', borderRadius: '1.5rem', maxWidth: '420px', width: '95%' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ width: '80px', height: '80px', background: '#eef2ef', color: 'var(--primary)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}><CheckCircle size={48} /></div>
+            <h3>Purchase Successful!</h3>
+            <p>Your order has been placed successfully.</p>
+            <div className="modal-actions" style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <button type="button" onClick={() => navigate('/dashboard')} className="btn-primary w-full">Go to Dashboard</button>
+              <button type="button" onClick={() => setSuccess(false)} className="btn-text w-full">Continue Browsing</button>
+            </div>
           </div>
         </div>
       )}
@@ -304,7 +415,7 @@ export default function Recommendation() {
                 </div>
 
                 <div className="modal-actions" style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <button type="button" onClick={() => { setShowCart(false); navigate('/marketplace'); }} className="btn-primary" style={{ width: '100%', padding: '1.25rem', borderRadius: '9999px', fontSize: '1.1rem' }}>Proceed to Checkout</button>
+                  <button type="button" onClick={handleProceedToPayment} className="btn-primary" style={{ width: '100%', padding: '1.25rem', borderRadius: '9999px', fontSize: '1.1rem' }}>Proceed to Checkout</button>
                   <button type="button" onClick={() => setShowCart(false)} style={{ color: '#888', fontWeight: '500', cursor: 'pointer', textAlign: 'center', padding: '5px', background: 'none', border: 'none' }}>Back to Recommendations</button>
                 </div>
               </>
