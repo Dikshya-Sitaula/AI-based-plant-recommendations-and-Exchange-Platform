@@ -175,8 +175,10 @@ export default function PlantDetail() {
 
   const detail = PLANT_DETAILS[plant.id] || {};
   const cartCount = cart.reduce((sum, item) => sum + (item.quantity || 0), 0);
-  const localIP = window.location.hostname === 'localhost' ? 'localhost' : window.location.hostname;
-  const billURL = `http://${localIP}:5173/bill/${paymentSessionId}`;
+  
+  const API_BASE = `http://${window.location.hostname}:5000`;
+  const HOST_IP = '192.168.16.102'; // Your computer's local IP
+  const billURL = `http://${HOST_IP}:5173/bill/${paymentSessionId}`;
 
   return (
     <>

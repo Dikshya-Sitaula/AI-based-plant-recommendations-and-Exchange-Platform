@@ -13,7 +13,7 @@ export default function MobileBill() {
   useEffect(() => {
     const fetchBill = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/payment/bill/${sessionId}`);
+        const response = await fetch(`http://${window.location.hostname}:5000/api/payment/bill/${sessionId}`);
         const data = await response.json();
         if (data) {
           setSession(data);
@@ -34,7 +34,7 @@ export default function MobileBill() {
     // Simulate bank processing delay
     setTimeout(async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/payment/complete/${sessionId}`, {
+        const response = await fetch(`http://${window.location.hostname}:5000/api/payment/complete/${sessionId}`, {
           method: 'POST'
         });
         if (response.ok) {
