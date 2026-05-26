@@ -164,8 +164,9 @@ export default function Recommendation() {
   const cartCount = cart.reduce((sum, item) => sum + (item.quantity || 0), 0);
   const totalAmount = cart.reduce((sum, item) => sum + (parsePrice(item.price) * item.quantity), 0);
 
-  const HOST_IP = '192.168.16.102'; // Your computer's local IP
-  const billURL = `http://${HOST_IP}:5173/bill/${paymentSessionId}`;
+  // Determine host for mobile access
+  const HOST_URL = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
+  const billURL = `${HOST_URL}/bill/${paymentSessionId}`;
 
   return (
     <div className="rec-page">

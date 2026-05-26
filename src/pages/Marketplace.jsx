@@ -232,10 +232,10 @@ export default function Marketplace() {
     navigate(`/marketplace/${id}`);
   };
 
-  // Determine local IP for mobile access
+  // Determine host for mobile access
   const API_BASE = `http://${window.location.hostname}:5000`;
-  const HOST_IP = '192.168.16.102'; // Your computer's local IP
-  const billURL = `http://${HOST_IP}:5173/bill/${paymentSessionId}`;
+  const HOST_URL = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
+  const billURL = `${HOST_URL}/bill/${paymentSessionId}`;
 
   const cartCount = cart.reduce((sum, item) => sum + (item.quantity || 0), 0);
 
