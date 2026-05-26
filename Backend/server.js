@@ -186,8 +186,8 @@ const plantDetailsMap = require('./plantDetails');
      }
 
      /**
-      * SMART RECOMMENDATION SYSTEM (144 Combinations)
-      * 4 Spaces x 3 Light Levels x 12 Climate Profiles
+      * SMART RECOMMENDATION SYSTEM (36 Combinations)
+      * 3 Temperature Levels x 4 Spaces x 3 Light Levels (3x4x3)
       */
      app.get('/api/recommend', async (req, res) => {
        try {
@@ -199,17 +199,23 @@ const plantDetailsMap = require('./plantDetails');
          
          // 1. Environmental Context
          const detectedTemp = await getMonthlyAverage(location);
-         const monthIndex = new Date().getMonth(); // 0-11
+         
+         // Temperature Levels: 1 (Cold < 15), 2 (Moderate 15-25), 3 (Warm > 25)
+         let tempLevel = 2;
+         if (detectedTemp < 15) tempLevel = 1;
+         else if (detectedTemp > 25) tempLevel = 3;
+
          const lightMap = { 'Low': 1, 'Medium': 2, 'High': 3 };
          const lightVal = lightMap[sunlight] || 2;
 
-         // 2. Identify the specific profile out of 144
-         // (For internal tracking and logic precision)
+         // 2. Identify the specific profile out of 36 (3x4x3)
          const spaceOptions = ['indoor', 'balcony', 'rooftop', 'garden'];
          const spaceIdx = spaceOptions.indexOf(space?.toLowerCase()) || 0;
-         const profileId = (spaceIdx * 36) + ((lightVal - 1) * 12) + monthIndex + 1;
+         
+         // Calculation: (TempLevel-1 * 12) + (SpaceIdx * 3) + LightVal
+         const profileId = ((tempLevel - 1) * 12) + (spaceIdx * 3) + lightVal;
 
-         console.log(`[RECOMMEND] Profile #${profileId}/144 | Space=${space}, Light=${sunlight}, Month=${monthIndex + 1}, Temp=${detectedTemp}°C`);
+         console.log(`[RECOMMEND] Profile #${profileId}/36 | Temp=${detectedTemp}°C (Lvl ${tempLevel}), Space=${space}, Light=${sunlight}`);
          
          // 3. Build Dynamic Query based on Plant Rules
          let query = 'SELECT * FROM plants WHERE is_sold = 0';
@@ -230,7 +236,7 @@ const plantDetailsMap = require('./plantDetails');
          const finalParams = [...params, Math.round(detectedTemp)];
          
          let [plants] = await db.execute(finalQuery, finalParams);
-         let note = `Perfect match found for Profile #${profileId}.`;
+         let note = `Perfect match found for Profile #${profileId} (3x4x3 Matrix).`;
 
          // 4. Smart Fallbacks (Relaxing constraints systematically)
          if (plants.length === 0) {
