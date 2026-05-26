@@ -86,7 +86,8 @@ const plantDetailsMap = require('./plantDetails');
             nepali_name VARCHAR(255),
             description TEXT,
             is_sold TINYINT(1) DEFAULT 0,
-            buyer_id INT
+            buyer_id INT,
+            tips_unlocked TINYINT(1) DEFAULT 0
           )`);
 
           // Alter table dynamically to add new columns if they do not exist
@@ -102,6 +103,11 @@ const plantDetailsMap = require('./plantDetails');
           }
           try {
             await db.execute('ALTER TABLE plants ADD COLUMN description TEXT');
+          } catch (err) {
+            // Column already exists
+          }
+          try {
+            await db.execute('ALTER TABLE plants ADD COLUMN tips_unlocked TINYINT(1) DEFAULT 0');
           } catch (err) {
             // Column already exists
           }
@@ -426,6 +432,15 @@ const plantDetailsMap = require('./plantDetails');
                console.warn(`[PAYMENT] Missing plant ID for item ${item.name}. Skipping.`);
                continue;
              }
+
+             // Special case for "Specialized Care Tips" unlock
+             if (item.id.toString().startsWith('UNLOCK-TIPS-')) {
+                const actualPlantId = item.id.replace('UNLOCK-TIPS-', '');
+                await db.execute('UPDATE plants SET tips_unlocked = 1 WHERE id = ?', [actualPlantId]);
+                console.log(`[PAYMENT] Unlocked specialized tips for plant ID: ${actualPlantId}`);
+                continue;
+             }
+
              const quantity = item.quantity || 1;
 
              // Fetch original plant details
@@ -476,6 +491,16 @@ const plantDetailsMap = require('./plantDetails');
        }
      });
 
+     app.post('/api/plants/:id/unlock-tips-demo', async (req, res) => {
+        try {
+            const { id } = req.params;
+            await db.execute('UPDATE plants SET tips_unlocked = 1 WHERE id = ?', [id]);
+            res.json({ success: true });
+        } catch (err) {
+            res.status(500).json({ error: 'Failed to unlock tips' });
+        }
+     });
+
      // --- Dashboard Endpoints ---
      app.get('/api/user/:userId/collection', async (req, res) => {
        try {
@@ -506,17 +531,23 @@ const plantDetailsMap = require('./plantDetails');
 
      // --- Identification Endpoint ---
      app.post('/api/identify', upload.single('image'), async (req, res) => {
+       console.log('[IDENTIFY] Identification request received.');
        try {
-         if (!req.file) return res.status(400).json({ error: 'No image uploaded' });
+         if (!req.file) {
+           console.error('[IDENTIFY] No file in request.');
+           return res.status(400).json({ error: 'No image uploaded' });
+         }
 
          const API_KEY = process.env.PLANTNET_API_KEY || '2b10EyS9kfkdkzj40wPpe7cnf';
          const url = `https://my-api.plantnet.org/v2/identify/all?api-key=${API_KEY}`;
 
+         console.log(`[IDENTIFY] Processing image: ${req.file.originalname} (${req.file.size} bytes)`);
+
          const form = new FormData();
-         form.append('images', req.file.buffer, { filename: 'image.jpg' });
+         form.append('images', req.file.buffer, { filename: 'image.jpg', contentType: req.file.mimetype });
          form.append('organs', 'leaf');
 
-         console.log('[IDENTIFY] Sending image to Pl@ntNet...');
+         console.log('[IDENTIFY] Sending image to Pl@ntNet API...');
          const response = await fetch(url, {
            method: 'POST',
            body: form,
@@ -525,41 +556,51 @@ const plantDetailsMap = require('./plantDetails');
 
          if (!response.ok) {
            const errText = await response.text();
-           console.error('[IDENTIFY] Pl@ntNet error:', errText);
+           console.error(`[IDENTIFY] Pl@ntNet API error (${response.status}):`, errText);
            return res.status(response.status).json({ error: 'Identification service failed' });
          }
 
          const data = await response.json();
-         const bestMatch = data.results[0];
+         const bestMatch = data.results && data.results[0];
          
-         if (!bestMatch) return res.json({ found: false });
+         if (!bestMatch) {
+           console.log('[IDENTIFY] No matches found by Pl@ntNet.');
+           return res.json({ found: false });
+         }
 
          // Match with local database
          const scientificName = bestMatch.species.scientificNameWithoutAuthor;
-         const commonName = bestMatch.species.commonNames[0];
+         const commonName = (bestMatch.species.commonNames && bestMatch.species.commonNames[0]) || '';
 
          console.log(`[IDENTIFY] Best match: ${scientificName} (${commonName}) | Score: ${bestMatch.score}`);
 
          // Try to find in our DB by scientific name or common name
-         const [localPlants] = await db.execute(
-           'SELECT * FROM plants WHERE LOWER(scientific_name) LIKE ? OR LOWER(name) LIKE ? OR LOWER(name) LIKE ? LIMIT 1',
-           [`%${scientificName.toLowerCase()}%`, `%${commonName?.toLowerCase() || ''}%`, `%${scientificName.split(' ')[0].toLowerCase()}%`]
-         );
+         // Use more specific match logic
+         let localPlant = null;
+         try {
+            const [rows] = await db.execute(
+              'SELECT * FROM plants WHERE (LOWER(scientific_name) = ? OR LOWER(name) = ? OR LOWER(name) LIKE ?) AND is_sold = 0 LIMIT 1',
+              [scientificName.toLowerCase(), commonName.toLowerCase(), `%${scientificName.split(' ')[0].toLowerCase()}%`]
+            );
+            localPlant = rows[0] || null;
+         } catch (dbErr) {
+            console.error('[IDENTIFY] Database search error:', dbErr.message);
+         }
 
          res.json({
            found: true,
            score: bestMatch.score,
            scientificName: scientificName,
            commonName: commonName,
-           localPlant: localPlants[0] || null,
+           localPlant: localPlant,
            allMatches: data.results.slice(0, 3).map(r => ({
-             name: r.species.commonNames[0] || r.species.scientificNameWithoutAuthor,
+             name: (r.species.commonNames && r.species.commonNames[0]) || r.species.scientificNameWithoutAuthor,
              score: r.score
            }))
          });
 
        } catch (error) {
-         console.error('[IDENTIFY] Error:', error);
+         console.error('[IDENTIFY] Critical error:', error);
          res.status(500).json({ error: 'Internal server error during identification' });
        }
      });

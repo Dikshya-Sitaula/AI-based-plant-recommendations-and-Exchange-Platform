@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Thermometer, Sun, Wind, MapPin, ShoppingCart, X, Minus, Plus, QrCode, CheckCircle, Loader2, Trash2, Leaf } from 'lucide-react';
+import { ArrowLeft, Thermometer, Sun, Wind, MapPin, ShoppingCart, X, Minus, Plus, QrCode, CheckCircle, Loader2, Trash2, Leaf, Lock, Unlock, Droplets, Sparkles } from 'lucide-react';
 import PLANT_DETAILS from './plantData';
+import CARE_TIPS from './careTips.json';
 import './PlantDetail.css';
 
 export default function PlantDetail() {
@@ -11,6 +12,7 @@ export default function PlantDetail() {
   const [images, setImages] = useState([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [loading, setLoading] = useState(true);
+  const currentUserId = localStorage.getItem('leafLifeUserId') || 1;
   const [cart, setCart] = useState(() => {
     try {
       const savedCart = localStorage.getItem('cart');
@@ -33,29 +35,37 @@ export default function PlantDetail() {
   const [paymentSessionId, setPaymentSessionId] = useState(null);
   const [paymentStatus, setPaymentStatus] = useState('pending'); // pending, completed
   const [success, setSuccess] = useState(false);
+  const [isTipsPayment, setIsTipsPayment] = useState(false);
 
   const plantId = parseInt(id);
 
-  useEffect(() => {
-    const fetchPlantAndImages = async () => {
-      try {
-        const response = await fetch(`http://${window.location.hostname}:5000/api/plants`);
-        const data = await response.json();
-        const found = data.find(p => p.id === plantId);
-        if (found) {
-          setPlant(found);
-          const imagesResponse = await fetch(`http://${window.location.hostname}:5000/api/plants/${plantId}/images`);
-          const imagesData = await imagesResponse.json();
-          setImages(imagesData);
-        }
-      } catch (err) {
-        console.error("Error fetching plant details or images:", err);
-      } finally {
-        setLoading(false);
+  const fetchPlantAndImages = async () => {
+    try {
+      const response = await fetch(`http://${window.location.hostname}:5000/api/plants`);
+      const data = await response.json();
+      // Also fetch from collection if not in marketplace
+      const collResponse = await fetch(`http://${window.location.hostname}:5000/api/user/${currentUserId}/collection`);
+      const collData = await collResponse.json();
+      
+      const allPlants = [...data, ...collData];
+      const found = allPlants.find(p => p.id === plantId);
+      
+      if (found) {
+        setPlant(found);
+        const imagesResponse = await fetch(`http://${window.location.hostname}:5000/api/plants/${plantId}/images`);
+        const imagesData = await imagesResponse.json();
+        setImages(imagesData);
       }
-    };
+    } catch (err) {
+      console.error("Error fetching plant details or images:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchPlantAndImages();
-  }, [plantId]);
+  }, [plantId, currentUserId]);
 
   const carouselImages = images.length > 0 ? images : (plant ? [plant.image] : []);
 
@@ -134,7 +144,7 @@ export default function PlantDetail() {
       const response = await fetch(`http://${window.location.hostname}:5000/api/payment/initiate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cartItems: cart, userId: 1, amount })
+        body: JSON.stringify({ cartItems: cart, userId: currentUserId, amount })
       });
       const data = await response.json();
 
@@ -142,16 +152,56 @@ export default function PlantDetail() {
       setPaymentStatus('pending');
       setShowCart(false);
       setShowQRPrompt(true);
+      setIsTipsPayment(false);
     } catch (err) {
       alert("Failed to initiate payment.");
     }
   };
 
-  const handleFinalizePurchase = () => {
-    setCart([]);
-    localStorage.removeItem('cart');
-    setSuccess(true);
-    setShowQRPrompt(false);
+  const handleUnlockTips = async () => {
+    const userStr = localStorage.getItem('leafLifeAuthenticated');
+    if (!userStr) {
+      alert('Please log in to unlock specialized tips.');
+      return;
+    }
+
+    const tipsItem = {
+      id: `UNLOCK-TIPS-${plant.id}`,
+      name: `Specialized Care Tips for ${plant.name}`,
+      price: "Rs. 50",
+      quantity: 1,
+      image: plant.image
+    };
+
+    try {
+      const response = await fetch(`http://${window.location.hostname}:5000/api/payment/initiate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cartItems: [tipsItem], userId: currentUserId, amount: 50 })
+      });
+      const data = await response.json();
+
+      setPaymentSessionId(data.sessionId);
+      setPaymentStatus('pending');
+      setShowQRPrompt(true);
+      setIsTipsPayment(true);
+    } catch (err) {
+      alert("Failed to initiate payment for tips.");
+    }
+  };
+
+  const handleFinalizePurchase = async () => {
+    if (isTipsPayment) {
+        setSuccess(true);
+        setShowQRPrompt(false);
+        fetchPlantAndImages(); // Refresh to show tips
+    } else {
+        setCart([]);
+        localStorage.removeItem('cart');
+        setSuccess(true);
+        setShowQRPrompt(false);
+        fetchPlantAndImages();
+    }
   };
 
   const closeModals = () => {
@@ -159,6 +209,7 @@ export default function PlantDetail() {
     setShowQRPrompt(false);
     setSuccess(false);
     setPaymentSessionId(null);
+    setIsTipsPayment(false);
   };
 
   if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading plant details...</div>;
@@ -175,6 +226,9 @@ export default function PlantDetail() {
 
   const detail = PLANT_DETAILS[plant.id] || {};
   const cartCount = cart.reduce((sum, item) => sum + (item.quantity || 0), 0);
+  
+  const isOwned = plant.buyer_id === parseInt(currentUserId);
+  const careTips = CARE_TIPS[plant.name] || CARE_TIPS[plant.name.split(' (')[0]];
   
   const API_BASE = `http://${window.location.hostname}:5000`;
   const HOST_IP = '192.168.16.102'; // Your computer's local IP
@@ -196,8 +250,8 @@ export default function PlantDetail() {
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-          <button className="back-btn" onClick={() => navigate('/marketplace')} style={{ marginBottom: 0 }}>
-            <ArrowLeft size={20} /> Back to Marketplace
+          <button className="back-btn" onClick={() => isOwned ? navigate('/dashboard') : navigate('/marketplace')} style={{ marginBottom: 0 }}>
+            <ArrowLeft size={20} /> {isOwned ? 'Back to Dashboard' : 'Back to Marketplace'}
           </button>
         </div>
 
@@ -248,23 +302,81 @@ export default function PlantDetail() {
             </p>
           </div>
 
-          <div className="metadata-grid">
-            <div className="metadata-item">
-              <span className="metadata-label">Price</span>
-              <span className="metadata-value">{plant.price}</span>
+          {!isOwned && (
+            <div className="metadata-grid">
+              <div className="metadata-item">
+                <span className="metadata-label">Price</span>
+                <span className="metadata-value">{plant.price}</span>
+              </div>
+              <div className="metadata-item">
+                <span className="metadata-label">Nursery / Location</span>
+                <span className="metadata-value">{plant.location}</span>
+              </div>
             </div>
-            <div className="metadata-item">
-              <span className="metadata-label">Nursery / Location</span>
-              <span className="metadata-value">{plant.location}</span>
-            </div>
-          </div>
+          )}
 
-          <div className="detail-actions-bottom">
-            <button className="add-to-cart-big-new" onClick={handleBuyClick}>
-              <ShoppingCart size={22} />
-              Add to Cart
-            </button>
-          </div>
+          {/* Specialized Care Tips Section */}
+          {isOwned && (
+            <div className="detail-section" style={{ marginTop: '2rem', padding: '2rem', background: '#f8fbf9', borderRadius: '1.5rem', border: '1px solid #e0eadd' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                <h3 style={{ fontSize: '1.35rem', fontWeight: '800', color: '#1a1a1a', margin: 0, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <Sparkles size={22} style={{ color: '#FFD700' }} /> Specialized Care Tips
+                </h3>
+                {plant.tips_unlocked ? (
+                    <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#10b981', display: 'flex', alignItems: 'center', gap: '0.4rem', background: '#e6f7ef', padding: '0.4rem 0.8rem', borderRadius: '2rem' }}>
+                        <Unlock size={14} /> UNLOCKED
+                    </span>
+                ) : (
+                    <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '0.4rem', background: '#fffbeb', padding: '0.4rem 0.8rem', borderRadius: '2rem' }}>
+                        <Lock size={14} /> LOCKED
+                    </span>
+                )}
+              </div>
+
+              {plant.tips_unlocked ? (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
+                  <div style={{ background: 'white', padding: '1.25rem', borderRadius: '1rem', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
+                    <div style={{ color: '#3b82f6', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Droplets size={18} /> <strong>Watering</strong>
+                    </div>
+                    <p style={{ fontSize: '0.95rem', color: '#555', lineHeight: '1.5' }}>{careTips?.watering || 'Water when top soil is dry.'}</p>
+                  </div>
+                  <div style={{ background: 'white', padding: '1.25rem', borderRadius: '1rem', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
+                    <div style={{ color: '#f59e0b', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Sun size={18} /> <strong>Sunlight</strong>
+                    </div>
+                    <p style={{ fontSize: '0.95rem', color: '#555', lineHeight: '1.5' }}>{careTips?.sunlight || 'Prefers bright indirect light.'}</p>
+                  </div>
+                  <div style={{ background: 'white', padding: '1.25rem', borderRadius: '1rem', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
+                    <div style={{ color: '#10b981', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Leaf size={18} /> <strong>Pro Tip</strong>
+                    </div>
+                    <p style={{ fontSize: '0.95rem', color: '#555', lineHeight: '1.5' }}>{careTips?.tips || 'Keep away from cold drafts.'}</p>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '1.5rem 0' }}>
+                  <p style={{ color: '#666', marginBottom: '1.5rem', fontSize: '1rem' }}>Unlock personalized, expert care routines and maintenance schedules for your <strong>{plant.name}</strong>.</p>
+                  <button 
+                    onClick={handleUnlockTips}
+                    className="btn-primary" 
+                    style={{ padding: '0.8rem 2rem', fontSize: '1.05rem', display: 'inline-flex', alignItems: 'center', gap: '0.6rem', background: 'var(--gradient-primary)', border: 'none' }}
+                  >
+                    Unlock for Rs. 50 <Sparkles size={18} />
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {!isOwned && (
+            <div className="detail-actions-bottom">
+              <button className="add-to-cart-big-new" onClick={handleBuyClick}>
+                <ShoppingCart size={22} />
+                Add to Cart
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -297,7 +409,7 @@ export default function PlantDetail() {
               <h3>Scan to Pay</h3>
               <p style={{ fontSize: '0.875rem', color: '#666' }}>Scan this with your mobile to see the bill and pay.</p>
               <p style={{ fontWeight: '700', color: 'var(--primary)', fontSize: '1.25rem', marginTop: '0.5rem' }}>
-                Total: Rs. {cart.reduce((sum, item) => sum + (parsePrice(item.price) * item.quantity), 0)}
+                Total: Rs. {isTipsPayment ? 50 : cart.reduce((sum, item) => sum + (parsePrice(item.price) * item.quantity), 0)}
               </p>
             </div>
             <div style={{ backgroundColor: 'white', padding: '1rem', borderRadius: '1rem', display: 'inline-block', margin: '1.5rem 0', border: '1px solid #eee' }}>
@@ -315,10 +427,10 @@ export default function PlantDetail() {
         <div className="modal-overlay" style={{ zIndex: 10000, display: 'flex' }} onClick={closeModals}>
           <div className="glass-panel modal-content text-center animate-scale-up" style={{ zIndex: 10001, background: 'white', padding: '2rem', borderRadius: '1.5rem', maxWidth: '420px', width: '95%' }} onClick={(e) => e.stopPropagation()}>
             <div style={{ width: '80px', height: '80px', background: '#eef2ef', color: 'var(--primary)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}><CheckCircle size={48} /></div>
-            <h3>Purchase Successful!</h3>
-            <p>Your order has been placed successfully.</p>
+            <h3>{isTipsPayment ? 'Specialized Tips Unlocked!' : 'Purchase Successful!'}</h3>
+            <p>{isTipsPayment ? `You now have access to expert care tips for your ${plant.name}.` : 'Your order has been placed successfully.'}</p>
             <div className="modal-actions" style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <button type="button" onClick={() => navigate('/dashboard')} className="btn-primary w-full">Go to Dashboard</button>
+              <button type="button" onClick={isTipsPayment ? closeModals : () => navigate('/dashboard')} className="btn-primary w-full">{isTipsPayment ? 'View Tips' : 'Go to Dashboard'}</button>
               <button type="button" onClick={closeModals} className="btn-text w-full">Continue Browsing</button>
             </div>
           </div>

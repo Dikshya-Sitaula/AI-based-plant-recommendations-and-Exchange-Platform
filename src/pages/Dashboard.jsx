@@ -161,7 +161,7 @@ export default function Dashboard() {
 
         <div className="collection-grid">
           {collection.map(plant => (
-            <div key={plant.id} className="plant-card">
+            <div key={plant.id} className="plant-card" onClick={() => navigate(`/marketplace/${plant.id}`)} style={{ cursor: 'pointer' }}>
               <div className="plant-image-container">
                 <img 
                   src={plant.image.startsWith('http') ? plant.image : `http://${window.location.hostname}:5000${plant.image}`} 
