@@ -47,9 +47,31 @@ export default function RecommendationForm({
   const loading = externalLoading || internalLoading;
 
   const handleUseMyLocation = () => {
-    if (!navigator.geolocation) return;
     setLocating(true);
     setShowError(false);
+
+    const useIPFallback = async () => {
+      try {
+        console.log("Using IP-based location fallback...");
+        const res = await fetch('http://ip-api.com/json/');
+        const data = await res.json();
+        if (data.status === 'success') {
+          setLocation(`${data.city}, ${data.regionName}`);
+        } else {
+          setLocation("Kathmandu");
+        }
+      } catch (err) {
+        setLocation("Kathmandu");
+      } finally {
+        setLocating(false);
+      }
+    };
+
+    if (!navigator.geolocation) {
+      useIPFallback();
+      return;
+    }
+
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         try {
@@ -68,15 +90,16 @@ export default function RecommendationForm({
           setLocation(preciseLocation);
         } catch (error) {
           console.error("Geocoding error:", error);
-          setLocation("Kathmandu");
+          useIPFallback();
         } finally {
           setLocating(false);
         }
       },
-      () => {
-        setLocation('');
-        setLocating(false);
-      }
+      (error) => {
+        console.warn("Geolocation error code:", error.code);
+        useIPFallback();
+      },
+      { timeout: 5000 }
     );
   };
 
