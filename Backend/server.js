@@ -236,7 +236,9 @@ const plantDetailsMap = require('./plantDetails');
          const finalParams = [...params, Math.round(detectedTemp)];
          
          let [plants] = await db.execute(finalQuery, finalParams);
-         let note = `Perfect match found for Profile #${profileId} (3x4x3 Matrix).`;
+         let note = `Found ${plants.length} plant(s) perfectly matching Profile #${profileId} (3x4x3 Matrix).`;
+
+         console.log(`[RECOMMEND] Match count: ${plants.length} for Profile #${profileId}`);
 
          // 4. Smart Fallbacks (Relaxing constraints systematically)
          if (plants.length === 0) {
