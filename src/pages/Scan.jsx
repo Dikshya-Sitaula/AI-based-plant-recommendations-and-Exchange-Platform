@@ -11,17 +11,68 @@ export default function Scan() {
   const [identification, setIdentification] = useState(null);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
-  const navigate = useNavigate();
-
-  // Initialize camera
-  useEffect(() => {
-    if (step === 'scan') {
-      startCamera();
-    } else {
-      stopCamera();
+  const [cart, setCart] = useState(() => {
+    try {
+      const savedCart = localStorage.getItem('cart');
+      return savedCart ? JSON.parse(savedCart) : [];
+    } catch (err) {
+      return [];
     }
-    return () => stopCamera();
-  }, [step]);
+  });
+
+  const [quantity, setQuantity] = useState(1);
+  const [showQuantitySelector, setShowQuantitySelector] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem('cart', JSON.stringify(cart));
+  }, [cart]);
+
+  const handleAddToCart = () => {
+    if (!identification?.localPlant) return;
+    
+    const plant = identification.localPlant;
+    const existingItem = cart.find(item => item.id === plant.id);
+    if (existingItem) {
+      setCart(cart.map(item => 
+        item.id === plant.id 
+          ? { ...item, quantity: item.quantity + quantity } 
+          : item
+      ));
+    } else {
+      setCart([...cart, { ...plant, quantity }]);
+    }
+    setShowQuantitySelector(false);
+    alert("Added to cart!");
+  };
+
+  const handleLocalPlantClick = (id) => {
+    navigate(`/marketplace/${id}`, { 
+      state: { 
+        from: 'scan',
+        identification: {
+          commonName: identification.commonName,
+          scientificName: identification.scientificName,
+          score: identification.score
+        }
+      } 
+    });
+  };
+
+  return (
+    <div className="animate-fade-in scan-container">
+      {/* Floating Cart Icon */}
+      <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 1000 }}>
+        <div className="header-cart-icon" onClick={() => navigate('/marketplace')} style={{ cursor: 'pointer', padding: '10px', background: 'white', borderRadius: '50%', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', color: 'var(--primary)', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <ShoppingCart size={24} />
+          {cart.length > 0 && (
+            <span style={{ position: 'absolute', top: '-2px', right: '-2px', background: '#ff4b4b', color: 'white', fontSize: '0.7rem', fontWeight: 'bold', width: '20px', height: '20px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid white' }}>
+              {cart.reduce((sum, item) => sum + (item.quantity || 0), 0)}
+            </span>
+          )}
+        </div>
+      </div>
+
+      <canvas ref={canvasRef} style={{ display: 'none' }} />
 
   const startCamera = async () => {
     try {
@@ -181,18 +232,29 @@ export default function Scan() {
                 <img 
                   src={`http://${window.location.hostname}:5000${identification.localPlant.image}`} 
                   alt={identification.localPlant.name}
-                  style={{ width: '90px', height: '90px', borderRadius: '1rem', objectFit: 'cover' }}
+                  onClick={() => handleLocalPlantClick(identification.localPlant.id)}
+                  style={{ width: '90px', height: '90px', borderRadius: '1rem', objectFit: 'cover', cursor: 'pointer' }}
                 />
                 <div style={{ flex: 1 }}>
-                  <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: '700' }}>{identification.localPlant.name}</h3>
+                  <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: '700', cursor: 'pointer' }} onClick={() => handleLocalPlantClick(identification.localPlant.id)}>{identification.localPlant.name}</h3>
                   <p style={{ color: 'var(--primary)', fontWeight: '800', fontSize: '1.25rem', margin: '4px 0' }}>{identification.localPlant.price}</p>
-                  <button 
-                    onClick={() => navigate(`/marketplace`)} 
-                    className="btn-primary" 
-                    style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', width: 'auto', marginTop: '5px' }}
-                  >
-                    <ShoppingCart size={14} /> View in Marketplace
-                  </button>
+                  
+                  <div style={{ display: 'flex', gap: '0.75rem', marginTop: '5px' }}>
+                    <button 
+                      onClick={() => setShowQuantitySelector(true)} 
+                      className="btn-primary" 
+                      style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', width: 'auto' }}
+                    >
+                      <ShoppingCart size={14} /> Add to Cart
+                    </button>
+                    <button 
+                      onClick={() => handleLocalPlantClick(identification.localPlant.id)} 
+                      className="btn-secondary" 
+                      style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', width: 'auto' }}
+                    >
+                      Care Tips
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -253,6 +315,25 @@ export default function Scan() {
             <button className="btn-secondary w-full" style={{ marginTop: '2rem' }} onClick={() => setStep('scan')}>
               <RefreshCw size={18} /> Scan Another Plant
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Select Quantity Modal */}
+      {showQuantitySelector && (
+        <div className="modal-overlay" style={{ zIndex: 10000, display: 'flex' }} onClick={() => setShowQuantitySelector(false)}>
+          <div className="glass-panel modal-content animate-scale-up" style={{ zIndex: 10001, background: 'white', color: 'black', opacity: 1, transform: 'none', textAlign: 'center', padding: '2.5rem', borderRadius: '2rem', maxWidth: '420px', width: '95%' }} onClick={(e) => e.stopPropagation()}>
+            <button className="close-modal" type="button" style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', background: '#f5f5f5', borderRadius: '50%', padding: '5px', border: 'none', cursor: 'pointer' }} onClick={() => setShowQuantitySelector(false)}><X size={20} /></button>
+            <div className="modal-header">
+              <h3 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '0.5rem' }}>Select Quantity</h3>
+              <p style={{ color: '#666', fontSize: '1rem' }}>How many <b>{identification?.localPlant?.name}</b>s do you want?</p>
+            </div>
+            <div className="quantity-controls" style={{ display: 'flex', justifyContent: 'center', gap: '2rem', margin: '2rem 0' }}>
+              <button type="button" onClick={() => setQuantity(Math.max(1, quantity - 1))} style={{ width: '52px', height: '52px', borderRadius: '14px', border: '1px solid #ddd', background: '#f9f9f9', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Minus size={24} /></button>
+              <span style={{ fontSize: '2.25rem', fontWeight: '800' }}>{quantity}</span>
+              <button type="button" onClick={() => setQuantity(Math.min(10, quantity + 1))} style={{ width: '52px', height: '52px', borderRadius: '14px', border: '1px solid #ddd', background: '#f9f9f9', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Plus size={24} /></button>
+            </div>
+            <button type="button" onClick={handleAddToCart} style={{ width: '100%', padding: '1.1rem', borderRadius: '9999px', background: 'var(--gradient-primary)', color: 'white', fontWeight: '700', fontSize: '1.1rem', border: 'none', boxShadow: '0 4px 12px rgba(46, 96, 58, 0.2)', cursor: 'pointer' }}>Add to Cart</button>
           </div>
         </div>
       )}

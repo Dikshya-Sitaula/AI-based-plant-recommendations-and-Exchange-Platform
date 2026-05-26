@@ -98,24 +98,40 @@ export default function Recommendation() {
   const [networkIp, setNetworkIp] = useState(window.location.hostname);
 
   useEffect(() => {
-    const fetchNetworkIp = async () => {
-      try {
-        const response = await fetch(`http://${window.location.hostname}:5000/api/network-info`);
-        const data = await response.json();
-        if (data.ip && data.ip !== 'localhost') {
-          setNetworkIp(data.ip);
+    // Only try to detect network IP if we are on localhost
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      const fetchNetworkIp = async () => {
+        try {
+          const response = await fetch(`http://${window.location.hostname}:5000/api/network-info`);
+          const data = await response.json();
+          if (data.ip && data.ip !== 'localhost') {
+            setNetworkIp(data.ip);
+          }
+        } catch (err) {
+          console.error("Error fetching network IP:", err);
         }
-      } catch (err) {
-        console.error("Error fetching network IP:", err);
-      }
-    };
-    fetchNetworkIp();
+      };
+      fetchNetworkIp();
+    }
   }, []);
 
-  const handlePlantClick = (plant) => {
+  const handleAddToCartClick = (plant) => {
     setSelectedPlant(plant);
     setQuantity(1);
     setShowQuantitySelector(true);
+  };
+
+  const handlePlantCardClick = (plantId) => {
+    navigate(`/marketplace/${plantId}`, { 
+      state: { 
+        from: 'recommendation',
+        answers: {
+          location: summaryData?.location,
+          space: summaryData?.space,
+          sunlight: summaryData?.sunlight
+        }
+      } 
+    });
   };
 
   const handleAddToCart = () => {
@@ -308,7 +324,7 @@ export default function Recommendation() {
                     flexDirection: 'column'
                   }}>
                     <div 
-                      onClick={() => navigate(`/marketplace/${plant.id}`)}
+                      onClick={() => handlePlantCardClick(plant.id)}
                       style={{ height: '200px', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', cursor: 'pointer' }}
                     >
                       <img src={`http://${window.location.hostname}:5000${plant.image}`} alt={plant.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -320,7 +336,7 @@ export default function Recommendation() {
                       </div>
                       
                       <button 
-                        onClick={() => handlePlantClick(plant)}
+                        onClick={() => handleAddToCartClick(plant)}
                         className="btn-primary"
                         style={{ width: '100%', padding: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginTop: '0.5rem' }}
                       >

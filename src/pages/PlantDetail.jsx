@@ -1,9 +1,65 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Thermometer, Sun, Wind, MapPin, ShoppingCart, X, Minus, Plus, QrCode, CheckCircle, Loader2, Trash2, Leaf, Lock, Unlock, Droplets, Sparkles } from 'lucide-react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { 
+  ArrowLeft, Thermometer, Sun, Wind, MapPin, ShoppingCart, X, Minus, Plus, 
+  QrCode, CheckCircle, Loader2, Trash2, Leaf, Lock, Unlock, Droplets, 
+  Sparkles, Home, Maximize, Calendar, Scissors, Bug, Trophy, HelpCircle, 
+  CloudRain, Globe, Sprout
+} from 'lucide-react';
 import PLANT_DETAILS from './plantData';
 import CARE_TIPS from './careTips.json';
 import './PlantDetail.css';
+
+// Specialized Care Data Generator
+const getSpecializedCareData = (plantName, answers) => {
+  const commonData = {
+    "Outdoor Size Range": "6-12 feet (1.8-3.6 m)",
+    "Indoor Size Range": "12-36 inches (30-91 cm)",
+    "Light Requirements": "Prefers bright, indirect light. Protect from harsh afternoon sun.",
+    "Watering Schedule": "Water when the top inch of soil feels dry. Usually every 7-10 days.",
+    "Humidity Needs": "Thrives in 50-70% humidity. Mist leaves weekly.",
+    "Temperature Range": "Ideal between 65-80\u00b0F (18-27\u00b0C).",
+    "Fertilizing Schedule": "Feed once a month during growing season with balanced fertilizer.",
+    "Growing Season": "Active growth in Spring and Summer.",
+    "Pruning Guidelines": "Remove yellow or brown leaves regularly to promote new growth.",
+    "Growing Difficulty Level": "Beginner friendly. Relatively easy to maintain.",
+    "Common Pests and Diseases": "Watch for spider mites and mealybugs. Avoid overwatering.",
+    "USDA Hardiness Zones": "9-11"
+  };
+
+  // Specific data for Peace Lily as seen in image
+  if (plantName.toLowerCase().includes('peace lily')) {
+    return {
+      "Outdoor Size Range": "N/A",
+      "Indoor Size Range": "12-36 inches (30-91 cm)",
+      "Light Requirements": "Peace lilies prefer bright, indirect light. Direct sunlight can scorch the leaves, while too little light can cause the plant to stop flowering.",
+      "Watering Schedule": "The plant likes to be kept evenly moist, but not waterlogged. Water when the top inch of soil feels dry to the touch.",
+      "Humidity Needs": "Peace lilies thrive in high humidity environments, ideally between 60-80%. They can benefit from regular misting or being placed on a tray of pebbles and water.",
+      "Temperature Range": "The plant prefers temperatures between 65-80\u00b0F (18-27\u00b0C). Avoid exposing it to temperatures below 55\u00b0F (13\u00b0C) or above 90\u00b0F (32\u00b0C).",
+      "Fertilizing Schedule": "Feed the plant once a month during the growing season with a balanced, water-soluble fertilizer.",
+      "Growing Season": "Peace lilies can be grown year-round indoors.",
+      "Pruning Guidelines": "Remove any yellow or brown leaves to keep the plant looking tidy. Cut back the entire plant by one-third if it becomes too leggy.",
+      "Growing Difficulty Level": "Peace lilies are relatively easy to grow and care for, making them a popular houseplant choice.",
+      "Common Pests and Diseases": "Common pests include spider mites, mealybugs, and scale insects. Diseases such as root rot can occur if the plant is overwatered.",
+      "USDA Hardiness Zones": "10-12"
+    };
+  }
+
+  // Adjustments based on user answers
+  if (answers?.sunlight === 'Low') {
+    commonData["Light Requirements"] = `Since your space has ${answers.sunlight} light, place near a north window. This plant is adaptable to your ${answers.sunlight}-light setting.`;
+  } else if (answers?.sunlight === 'High') {
+    commonData["Light Requirements"] = `Your ${answers.sunlight}-light space is great, but ensure indirect exposure to avoid leaf burn.`;
+  }
+
+  if (answers?.space === 'outdoor') {
+    commonData["Indoor Size Range"] = "N/A (Being grown outdoors)";
+  } else {
+    commonData["Outdoor Size Range"] = "N/A (Being grown indoors)";
+  }
+
+  return commonData;
+};
 
 export default function PlantDetail() {
   const { id } = useParams();
@@ -207,18 +263,21 @@ export default function PlantDetail() {
   const [networkIp, setNetworkIp] = useState(window.location.hostname);
 
   useEffect(() => {
-    const fetchNetworkIp = async () => {
-      try {
-        const response = await fetch(`http://${window.location.hostname}:5000/api/network-info`);
-        const data = await response.json();
-        if (data.ip && data.ip !== 'localhost') {
-          setNetworkIp(data.ip);
+    // Only try to detect network IP if we are on localhost
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      const fetchNetworkIp = async () => {
+        try {
+          const response = await fetch(`http://${window.location.hostname}:5000/api/network-info`);
+          const data = await response.json();
+          if (data.ip && data.ip !== 'localhost') {
+            setNetworkIp(data.ip);
+          }
+        } catch (err) {
+          console.error("Error fetching network IP:", err);
         }
-      } catch (err) {
-        console.error("Error fetching network IP:", err);
-      }
-    };
-    fetchNetworkIp();
+      };
+      fetchNetworkIp();
+    }
   }, []);
 
   const closeModals = () => {
@@ -251,6 +310,30 @@ export default function PlantDetail() {
   const HOST_URL = `${window.location.protocol}//${networkIp}${window.location.port ? ':' + window.location.port : ''}`;
   const billURL = `${HOST_URL}/bill/${paymentSessionId}`;
 
+  const location = useLocation();
+  const fromRecommendation = location.state?.from === 'recommendation';
+  const fromScan = location.state?.from === 'scan';
+  const userAnswers = location.state?.answers || location.state?.identification || null;
+  const showSpecializedGrid = fromRecommendation || fromScan;
+
+  const specializedCareData = plant ? getSpecializedCareData(plant.name, userAnswers) : {};
+
+  // Map for grid icons
+  const gridIconMap = {
+    "Outdoor Size Range": <Maximize size={22} color="#84A98C" />,
+    "Indoor Size Range": <Home size={22} color="#84A98C" />,
+    "Light Requirements": <Sun size={22} color="#84A98C" />,
+    "Watering Schedule": <Droplets size={22} color="#84A98C" />,
+    "Humidity Needs": <Wind size={22} color="#84A98C" />,
+    "Temperature Range": <Thermometer size={22} color="#84A98C" />,
+    "Fertilizing Schedule": <Droplets size={22} color="#84A98C" />,
+    "Growing Season": <Calendar size={22} color="#84A98C" />,
+    "Pruning Guidelines": <Scissors size={22} color="#84A98C" />,
+    "Growing Difficulty Level": <Trophy size={22} color="#84A98C" />,
+    "Common Pests and Diseases": <Bug size={22} color="#84A98C" />,
+    "USDA Hardiness Zones": <Globe size={22} color="#84A98C" />
+  };
+
   return (
     <>
       <div className="animate-fade-in plant-detail-container">
@@ -267,8 +350,8 @@ export default function PlantDetail() {
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-          <button className="back-btn" onClick={() => isOwned ? navigate('/dashboard') : navigate('/marketplace')} style={{ marginBottom: 0 }}>
-            <ArrowLeft size={20} /> {isOwned ? 'Back to Dashboard' : 'Back to Marketplace'}
+          <button className="back-btn" onClick={() => isOwned ? navigate('/dashboard') : (fromRecommendation ? navigate('/recommendation') : (fromScan ? navigate('/scan') : navigate('/marketplace')))} style={{ marginBottom: 0 }}>
+            <ArrowLeft size={20} /> {isOwned ? 'Back to Dashboard' : (fromRecommendation ? 'Back to Recommendations' : (fromScan ? 'Back to Scanner' : 'Back to Marketplace'))}
           </button>
         </div>
 
@@ -332,8 +415,44 @@ export default function PlantDetail() {
             </div>
           )}
 
-          {/* Specialized Care Tips Section */}
-          {isOwned && (
+          {/* Specialized Care Grid matching Image */}
+          {showSpecializedGrid && (
+            <div className="specialized-care-grid-section" style={{ marginTop: '2.5rem' }}>
+              <h2 style={{ fontSize: '1.6rem', fontWeight: '800', marginBottom: '2rem', color: '#1a1a1a' }}>Plant Care Instructions</h2>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '1.5rem' }}>
+                {Object.entries(specializedCareData).map(([title, content], idx) => (
+                  <div key={idx} className="care-box-new" style={{ 
+                    background: '#F0F7F2', 
+                    borderRadius: '1.25rem', 
+                    padding: '1.5rem',
+                    display: 'flex',
+                    gap: '1.25rem',
+                    alignItems: 'flex-start'
+                  }}>
+                    <div style={{ 
+                      background: 'white', 
+                      padding: '0.75rem', 
+                      borderRadius: '0.75rem', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
+                    }}>
+                      {gridIconMap[title] || <Leaf size={22} color="#84A98C" />}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem', fontWeight: '700', color: '#1a1a1a' }}>{title}</h4>
+                      <p style={{ margin: 0, fontSize: '0.95rem', color: '#4a4a4a', lineHeight: '1.5' }}>{content}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Existing Owned/Unlocked Section (kept but hidden if showSpecializedGrid is true to avoid redundancy) */}
+          {isOwned && !showSpecializedGrid && (
             <div className="detail-section" style={{ marginTop: '2rem', padding: '2rem', background: '#f8fbf9', borderRadius: '1.5rem', border: '1px solid #e0eadd' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                 <h3 style={{ fontSize: '1.35rem', fontWeight: '800', color: '#1a1a1a', margin: 0, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>

@@ -231,18 +231,21 @@ export default function Marketplace() {
   const [networkIp, setNetworkIp] = useState(window.location.hostname);
 
   useEffect(() => {
-    const fetchNetworkIp = async () => {
-      try {
-        const response = await fetch(`http://${window.location.hostname}:5000/api/network-info`);
-        const data = await response.json();
-        if (data.ip && data.ip !== 'localhost') {
-          setNetworkIp(data.ip);
+    // Only try to detect network IP if we are on localhost
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      const fetchNetworkIp = async () => {
+        try {
+          const response = await fetch(`http://${window.location.hostname}:5000/api/network-info`);
+          const data = await response.json();
+          if (data.ip && data.ip !== 'localhost') {
+            setNetworkIp(data.ip);
+          }
+        } catch (err) {
+          console.error("Error fetching network IP:", err);
         }
-      } catch (err) {
-        console.error("Error fetching network IP:", err);
-      }
-    };
-    fetchNetworkIp();
+      };
+      fetchNetworkIp();
+    }
   }, []);
 
   const goToDetail = (id) => {
