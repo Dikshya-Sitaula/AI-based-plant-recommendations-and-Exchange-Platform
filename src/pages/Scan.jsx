@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { 
-  Camera, MapPin, Search, Leaf, ArrowRight, Home, Loader2, CheckCircle, 
+  Camera, MapPin, Search, Leaf, ArrowLeft, ArrowRight, Home, Loader2, CheckCircle, 
   ShoppingCart, RefreshCw, X, Info, Droplets, Sun, Sprout, 
   Maximize, Calendar, Scissors, Bug, Trophy, Globe, Thermometer, Wind,
-  Sparkles, Minus, Plus
+  Sparkles, Minus, Plus, Trash2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import careTipsData from './careTips.json';
@@ -26,7 +26,7 @@ const getSpecializedCareData = (plantName, answers) => {
     "USDA Hardiness Zones": "9-11"
   };
 
-  if (plantName.toLowerCase().includes('peace lily')) {
+  if (plantName && plantName.toLowerCase().includes('peace lily')) {
     return {
       "Outdoor Size Range": "N/A",
       "Indoor Size Range": "12-36 inches (30-91 cm)",
@@ -81,6 +81,17 @@ export default function Scan() {
   const [networkIp, setNetworkIp] = useState(window.location.hostname);
   const [quantity, setQuantity] = useState(1);
   const [showQuantitySelector, setShowQuantitySelector] = useState(false);
+  const [showCart, setShowCart] = useState(false);
+
+  const handleRemoveFromCart = (id) => {
+    setCart(cart.filter(item => item.id !== id));
+  };
+
+  const parsePrice = (priceStr) => {
+    if (!priceStr) return 0;
+    const numeric = priceStr.toString().replace(/[^0-9]/g, '');
+    return parseInt(numeric) || 0;
+  };
 
   useEffect(() => {
     // Only try to detect network IP if we are on localhost
@@ -198,7 +209,7 @@ export default function Scan() {
       setCart([...cart, { ...plant, quantity }]);
     }
     setShowQuantitySelector(false);
-    alert(`Added ${quantity} ${plant.name}(s) to your cart.`);
+    setShowCart(true); // Show cart immediately after adding icon
   };
 
   const handleLocalPlantClick = (id) => {
@@ -218,9 +229,9 @@ export default function Scan() {
 
   return (
     <div className="animate-fade-in scan-container">
-      {/* Floating Cart Icon */}
+      {/* Fixed Floating Cart Icon */}
       <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 1000 }}>
-        <div className="header-cart-icon" onClick={() => navigate('/marketplace')} style={{ cursor: 'pointer', padding: '12px', background: 'white', borderRadius: '50%', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', color: 'var(--primary)', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="header-cart-icon" onClick={() => setShowCart(true)} style={{ cursor: 'pointer', padding: '12px', background: 'white', borderRadius: '50%', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', color: 'var(--primary)', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <ShoppingCart size={24} />
           {cart.length > 0 && (
             <span style={{ position: 'absolute', top: '-2px', right: '-2px', background: '#ff4b4b', color: 'white', fontSize: '0.7rem', fontWeight: 'bold', width: '20px', height: '20px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid white' }}>
@@ -285,14 +296,7 @@ export default function Scan() {
             >
               <ArrowLeft size={20} /> Back to Scanner
             </button>
-            <div className="cart-header-icon" onClick={() => navigate('/marketplace')} style={{ cursor: 'pointer', position: 'relative' }}>
-              <ShoppingCart size={24} color="var(--primary)" />
-              {cart.length > 0 && (
-                <span style={{ position: 'absolute', top: '-8px', right: '-8px', background: '#ff4b4b', color: 'white', fontSize: '0.7rem', width: '18px', height: '18px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {cart.reduce((sum, item) => sum + (item.quantity || 0), 0)}
-                </span>
-              )}
-            </div>
+            {/* Duplicate cart icon removed here */}
           </div>
 
           <div className="plant-detail-card" style={{ padding: '0', border: 'none', boxShadow: 'none' }}>
@@ -399,6 +403,50 @@ export default function Scan() {
               <button type="button" onClick={() => setQuantity(Math.min(10, quantity + 1))} style={{ width: '52px', height: '52px', borderRadius: '14px', border: '1px solid #ddd', background: '#f9f9f9', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Plus size={24} /></button>
             </div>
             <button type="button" onClick={handleAddToCart} style={{ width: '100%', padding: '1.1rem', borderRadius: '9999px', background: 'var(--gradient-primary)', color: 'white', fontWeight: '700', fontSize: '1.1rem', border: 'none', boxShadow: '0 4px 12px rgba(46, 96, 58, 0.2)', cursor: 'pointer' }}>Add to Cart</button>
+          </div>
+        </div>
+      )}
+      {/* Cart Modal */}
+      {showCart && (
+        <div className="modal-overlay" style={{ zIndex: 10000, display: 'flex' }} onClick={() => setShowCart(false)}>
+          <div className="glass-panel modal-content animate-scale-up" style={{ zIndex: 10001, background: 'white', color: 'black', opacity: 1, transform: 'none', maxWidth: '460px', width: '95%', padding: '2rem', borderRadius: '2rem' }} onClick={(e) => e.stopPropagation()}>
+            <button className="close-modal" type="button" style={{ position: 'absolute', top: '15px', right: '15px', background: '#f5f5f5', borderRadius: '50%', padding: '5px', border: 'none', cursor: 'pointer' }} onClick={() => setShowCart(false)}><X size={28} /></button>
+            <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+              <h3 style={{ fontSize: '1.75rem', fontWeight: '800' }}>Your Cart</h3>
+              <p style={{ color: '#666' }}>{cart.length === 0 ? 'Your cart is empty' : `Items: ${cart.reduce((sum, item) => sum + (item.quantity || 0), 0)}`}</p>
+            </div>
+            {cart.length > 0 ? (
+              <>
+                <div className="cart-items-list" style={{ maxHeight: '350px', overflowY: 'auto', textAlign: 'left', paddingRight: '5px' }}>
+                  {cart.map((item, index) => (
+                    <div key={item.id || `cart-${index}`} style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', padding: '15px 0', borderBottom: '1px solid #eee' }}>
+                      <img src={item.image?.startsWith('http') ? item.image.replace('localhost', networkIp) : `http://${networkIp}:5000${item.image}`} alt={item.name} style={{ width: '70px', height: '70px', borderRadius: '14px', objectFit: 'cover' }} onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1545239351-ef35f43d514b?q=80&w=400'; }} />
+                      <div style={{ flex: 1 }}>
+                        <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '600' }}>{item.name}</h4>
+                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: '5px' }}>
+                          <span style={{ color: 'var(--primary)', fontWeight: '800', fontSize: '1rem' }}>{item.price}</span>
+                          <span style={{ background: '#f0f4f1', color: '#555', padding: '2px 8px', borderRadius: '6px', fontSize: '0.85rem', fontWeight: '700' }}>x {item.quantity}</span>
+                        </div>
+                      </div>
+                      <button onClick={() => handleRemoveFromCart(item.id)} style={{ color: '#ff4b4b', padding: '10px', background: '#fff0f0', borderRadius: '12px', border: 'none', cursor: 'pointer' }}><Trash2 size={20} /></button>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ marginTop: '25px', padding: '20px', background: '#f9fbf9', borderRadius: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #eee' }}>
+                  <span style={{ fontWeight: '600', color: '#555' }}>Total Amount</span>
+                  <span style={{ fontSize: '1.5rem', fontWeight: '900', color: 'var(--primary)' }}>Rs. {cart.reduce((sum, item) => sum + (parsePrice(item.price) * item.quantity), 0)}</span>
+                </div>
+                <div className="modal-actions" style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <button type="button" onClick={() => navigate('/marketplace')} style={{ width: '100%', padding: '1.25rem', borderRadius: '9999px', background: '#3D704D', color: 'white', border: 'none', fontWeight: '700', fontSize: '1.1rem', cursor: 'pointer' }}>Proceed to Checkout</button>
+                  <button type="button" onClick={() => setShowCart(false)} style={{ color: '#888', fontWeight: '500', cursor: 'pointer', textAlign: 'center', padding: '5px' }}>Back to Shopping</button>
+                </div>
+              </>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '50px 0' }}>
+                <div style={{ background: '#f5f7f5', width: '100px', height: '100px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 25px' }}><ShoppingCart size={45} style={{ opacity: 0.3, color: 'var(--primary)' }} /></div>
+                <button type="button" onClick={() => setShowCart(false)} style={{ width: '100%', padding: '1.1rem', borderRadius: '9999px', background: 'var(--gradient-primary)', color: 'white', border: 'none', fontWeight: '700', cursor: 'pointer' }}>Browse Marketplace</button>
+              </div>
+            )}
           </div>
         </div>
       )}
