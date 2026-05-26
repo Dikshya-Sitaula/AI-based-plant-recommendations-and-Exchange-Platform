@@ -80,12 +80,19 @@ export default function RecommendationForm({
           const data = await response.json();
           
           const address = data.address;
-          const place = address.suburb || address.neighbourhood || address.city_district || address.village || address.town;
-          const city = address.city || address.county || "";
+          // Look for the most precise parts of the address first
+          const neighborhood = address.suburb || address.neighbourhood || address.residential || address.village || address.town;
+          const district = address.city_district || address.county || "";
+          const city = address.city || address.state || "";
           
-          const preciseLocation = place && city && place !== city 
-            ? `${place}, ${city}` 
-            : (place || city || "Kathmandu");
+          let preciseLocation = "";
+          if (neighborhood) {
+            preciseLocation = city ? `${neighborhood}, ${city}` : neighborhood;
+          } else if (district) {
+            preciseLocation = city ? `${district}, ${city}` : district;
+          } else {
+            preciseLocation = city || "Kathmandu";
+          }
             
           setLocation(preciseLocation);
         } catch (error) {
