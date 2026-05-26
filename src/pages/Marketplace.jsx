@@ -228,13 +228,30 @@ export default function Marketplace() {
     setPaymentSessionId(null);
   };
 
+  const [networkIp, setNetworkIp] = useState(window.location.hostname);
+
+  useEffect(() => {
+    const fetchNetworkIp = async () => {
+      try {
+        const response = await fetch(`http://${window.location.hostname}:5000/api/network-info`);
+        const data = await response.json();
+        if (data.ip && data.ip !== 'localhost') {
+          setNetworkIp(data.ip);
+        }
+      } catch (err) {
+        console.error("Error fetching network IP:", err);
+      }
+    };
+    fetchNetworkIp();
+  }, []);
+
   const goToDetail = (id) => {
     navigate(`/marketplace/${id}`);
   };
 
   // Determine host for mobile access
   const API_BASE = `http://${window.location.hostname}:5000`;
-  const HOST_URL = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
+  const HOST_URL = `${window.location.protocol}//${networkIp}${window.location.port ? ':' + window.location.port : ''}`;
   const billURL = `${HOST_URL}/bill/${paymentSessionId}`;
 
   const cartCount = cart.reduce((sum, item) => sum + (item.quantity || 0), 0);

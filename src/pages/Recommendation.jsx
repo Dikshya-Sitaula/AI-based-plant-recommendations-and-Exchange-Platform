@@ -95,6 +95,23 @@ export default function Recommendation() {
     }
   };
 
+  const [networkIp, setNetworkIp] = useState(window.location.hostname);
+
+  useEffect(() => {
+    const fetchNetworkIp = async () => {
+      try {
+        const response = await fetch(`http://${window.location.hostname}:5000/api/network-info`);
+        const data = await response.json();
+        if (data.ip && data.ip !== 'localhost') {
+          setNetworkIp(data.ip);
+        }
+      } catch (err) {
+        console.error("Error fetching network IP:", err);
+      }
+    };
+    fetchNetworkIp();
+  }, []);
+
   const handlePlantClick = (plant) => {
     setSelectedPlant(plant);
     setQuantity(1);
@@ -165,7 +182,7 @@ export default function Recommendation() {
   const totalAmount = cart.reduce((sum, item) => sum + (parsePrice(item.price) * item.quantity), 0);
 
   // Determine host for mobile access
-  const HOST_URL = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
+  const HOST_URL = `${window.location.protocol}//${networkIp}${window.location.port ? ':' + window.location.port : ''}`;
   const billURL = `${HOST_URL}/bill/${paymentSessionId}`;
 
   return (

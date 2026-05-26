@@ -204,6 +204,23 @@ export default function PlantDetail() {
     }
   };
 
+  const [networkIp, setNetworkIp] = useState(window.location.hostname);
+
+  useEffect(() => {
+    const fetchNetworkIp = async () => {
+      try {
+        const response = await fetch(`http://${window.location.hostname}:5000/api/network-info`);
+        const data = await response.json();
+        if (data.ip && data.ip !== 'localhost') {
+          setNetworkIp(data.ip);
+        }
+      } catch (err) {
+        console.error("Error fetching network IP:", err);
+      }
+    };
+    fetchNetworkIp();
+  }, []);
+
   const closeModals = () => {
     setShowQuantitySelector(false);
     setShowQRPrompt(false);
@@ -230,9 +247,8 @@ export default function PlantDetail() {
   const isOwned = plant.buyer_id === parseInt(currentUserId);
   const careTips = CARE_TIPS[plant.name] || CARE_TIPS[plant.name.split(' (')[0]];
   
-  // Determine host for mobile access
   const API_BASE = `http://${window.location.hostname}:5000`;
-  const HOST_URL = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
+  const HOST_URL = `${window.location.protocol}//${networkIp}${window.location.port ? ':' + window.location.port : ''}`;
   const billURL = `${HOST_URL}/bill/${paymentSessionId}`;
 
   return (

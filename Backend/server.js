@@ -608,6 +608,20 @@ const plantDetailsMap = require('./plantDetails');
      // Basic Route
      app.get('/', (req, res) => {      res.send('Leaf-Life API is running...');
     });
+
+    app.get('/api/network-info', (req, res) => {
+      const interfaces = require('os').networkInterfaces();
+      let ip = 'localhost';
+      for (const name of Object.keys(interfaces)) {
+        for (const iface of interfaces[name]) {
+          if (iface.family === 'IPv4' && !iface.internal) {
+            ip = iface.address;
+            break;
+          }
+        }
+      }
+      res.json({ ip });
+    });
    
     app.listen(PORT, '0.0.0.0', () => {
       console.log(`\n🚀 Leaf-Life API is running!`);
