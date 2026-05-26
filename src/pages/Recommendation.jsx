@@ -229,6 +229,50 @@ export default function Recommendation() {
               <p className="rec-subtitle">Based on your specific environment and local climate.</p>
             </header>
 
+            {summaryData && (
+              <div className="summary-banner" style={{ 
+                background: 'white', 
+                padding: '1.25rem', 
+                borderRadius: '1.25rem', 
+                marginBottom: '2rem', 
+                boxShadow: 'var(--shadow-sm)',
+                border: '1px solid #eef2ef',
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '1rem',
+                justifyContent: 'space-around',
+                alignItems: 'center'
+              }}>
+                <div style={{ textAlign: 'center', minWidth: '100px' }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#888', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Location</div>
+                  <div style={{ color: 'var(--primary)', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                    <MapPin size={14} /> {summaryData.location}
+                  </div>
+                </div>
+                <div style={{ width: '1px', height: '30px', background: '#eee' }} />
+                <div style={{ textAlign: 'center', minWidth: '80px' }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#888', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Avg. Temp</div>
+                  <div style={{ fontWeight: '700' }}>{summaryData.averageTemp}</div>
+                </div>
+                <div style={{ width: '1px', height: '30px', background: '#eee' }} />
+                <div style={{ textAlign: 'center', minWidth: '80px' }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#888', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Setting</div>
+                  <div style={{ fontWeight: '700', textTransform: 'capitalize' }}>{summaryData.space}</div>
+                </div>
+                <div style={{ width: '1px', height: '30px', background: '#eee' }} />
+                <div style={{ textAlign: 'center', minWidth: '80px' }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#888', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Light</div>
+                  <div style={{ fontWeight: '700' }}>{summaryData.sunlight}</div>
+                </div>
+                
+                {summaryData.note && (
+                  <div style={{ width: '100%', marginTop: '0.75rem', padding: '0.5rem', background: '#f0f7f2', borderRadius: '0.5rem', fontSize: '0.8rem', color: '#46603a', textAlign: 'center', fontWeight: '600' }}>
+                    ✨ {summaryData.note}
+                  </div>
+                )}
+              </div>
+            )}
+
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <h3 style={{ fontSize: '1.25rem', fontWeight: '700' }}>Recommended for You</h3>
               <button className="btn-secondary" onClick={() => setShowResults(false)} style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', height: 'auto' }}>
