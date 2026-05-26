@@ -93,7 +93,7 @@ export default function AuthModal({ open, onClose, onSuccess }) {
     setSubmitting(true);
     try {
       const endpoint = mode === 'signIn' ? '/api/auth/login' : '/api/auth/signup';
-      const response = await fetch(`http://localhost:5000${endpoint}`, {
+      const response = await fetch(`http://${window.location.hostname}:5000${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

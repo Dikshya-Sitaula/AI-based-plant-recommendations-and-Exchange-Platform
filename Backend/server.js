@@ -609,6 +609,9 @@ const plantDetailsMap = require('./plantDetails');
      app.get('/', (req, res) => {      res.send('Leaf-Life API is running...');
     });
    
-    app.listen(PORT, () => {
-      console.log(`Server is running on http://localhost:${PORT}`);
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`\n🚀 Leaf-Life API is running!`);
+      console.log(`🔗 Local:   http://localhost:${PORT}`);
+      console.log(`🌐 Network: http://${require('os').networkInterfaces()['Wi-Fi']?.[1]?.address || 'your-ip-address'}:${PORT}`);
+      console.log(`\n💡 Mobile Hint: Ensure Windows Firewall allows traffic on Port ${PORT}`);
     });
