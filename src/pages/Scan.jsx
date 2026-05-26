@@ -1,8 +1,64 @@
 import { useState, useRef, useEffect } from 'react';
-import { Camera, MapPin, Search, Leaf, ArrowRight, Home, Loader2, CheckCircle, ShoppingCart, RefreshCw, X, Info, Droplets, Sun, Sprout } from 'lucide-react';
+import { 
+  Camera, MapPin, Search, Leaf, ArrowRight, Home, Loader2, CheckCircle, 
+  ShoppingCart, RefreshCw, X, Info, Droplets, Sun, Sprout, 
+  Maximize, Calendar, Scissors, Bug, Trophy, Globe, Thermometer, Wind,
+  Sparkles, Minus, Plus
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import careTipsData from './careTips.json';
 import './Scan.css';
+
+// Specialized Care Data Generator (duplicated for direct use in results)
+const getSpecializedCareData = (plantName, answers) => {
+  const commonData = {
+    "Outdoor Size Range": "6-12 feet (1.8-3.6 m)",
+    "Indoor Size Range": "12-36 inches (30-91 cm)",
+    "Light Requirements": "Prefers bright, indirect light. Protect from harsh afternoon sun.",
+    "Watering Schedule": "Water when the top inch of soil feels dry. Usually every 7-10 days.",
+    "Humidity Needs": "Thrives in 50-70% humidity. Mist leaves weekly.",
+    "Temperature Range": "Ideal between 65-80\u00b0F (18-27\u00b0C).",
+    "Fertilizing Schedule": "Feed once a month during growing season with balanced fertilizer.",
+    "Growing Season": "Active growth in Spring and Summer.",
+    "Pruning Guidelines": "Remove yellow or brown leaves regularly to promote new growth.",
+    "Growing Difficulty Level": "Beginner friendly. Relatively easy to maintain.",
+    "Common Pests and Diseases": "Watch for spider mites and mealybugs. Avoid overwatering.",
+    "USDA Hardiness Zones": "9-11"
+  };
+
+  if (plantName.toLowerCase().includes('peace lily')) {
+    return {
+      "Outdoor Size Range": "N/A",
+      "Indoor Size Range": "12-36 inches (30-91 cm)",
+      "Light Requirements": "Peace lilies prefer bright, indirect light. Direct sunlight can scorch the leaves, while too little light can cause the plant to stop flowering.",
+      "Watering Schedule": "The plant likes to be kept evenly moist, but not waterlogged. Water when the top inch of soil feels dry to the touch.",
+      "Humidity Needs": "Peace lilies thrive in high humidity environments, ideally between 60-80%. They can benefit from regular misting or being placed on a tray of pebbles and water.",
+      "Temperature Range": "The plant prefers temperatures between 65-80\u00b0F (18-27\u00b0C). Avoid exposing it to temperatures below 55\u00b0F (13\u00b0C) or above 90\u00b0F (32\u00b0C).",
+      "Fertilizing Schedule": "Feed the plant once a month during the growing season with a balanced, water-soluble fertilizer.",
+      "Growing Season": "Peace lilies can be grown year-round indoors.",
+      "Pruning Guidelines": "Remove any yellow or brown leaves to keep the plant looking tidy. Cut back the entire plant by one-third if it becomes too leggy.",
+      "Growing Difficulty Level": "Peace lilies are relatively easy to grow and care for, making them a popular houseplant choice.",
+      "Common Pests and Diseases": "Common pests include spider mites, mealybugs, and scale insects. Diseases such as root rot can occur if the plant is overwatered.",
+      "USDA Hardiness Zones": "10-12"
+    };
+  }
+  return commonData;
+};
+
+const gridIconMap = {
+  "Outdoor Size Range": <Maximize size={20} color="#84A98C" />,
+  "Indoor Size Range": <Home size={20} color="#84A98C" />,
+  "Light Requirements": <Sun size={20} color="#84A98C" />,
+  "Watering Schedule": <Droplets size={20} color="#84A98C" />,
+  "Humidity Needs": <Wind size={20} color="#84A98C" />,
+  "Temperature Range": <Thermometer size={20} color="#84A98C" />,
+  "Fertilizing Schedule": <Droplets size={20} color="#84A98C" />,
+  "Growing Season": <Calendar size={20} color="#84A98C" />,
+  "Pruning Guidelines": <Scissors size={20} color="#84A98C" />,
+  "Growing Difficulty Level": <Trophy size={20} color="#84A98C" />,
+  "Common Pests and Diseases": <Bug size={20} color="#84A98C" />,
+  "USDA Hardiness Zones": <Globe size={20} color="#84A98C" />
+};
 
 export default function Scan() {
   const [step, setStep] = useState('scan'); // 'scan', 'results'
@@ -22,8 +78,27 @@ export default function Scan() {
     }
   });
 
+  const [networkIp, setNetworkIp] = useState(window.location.hostname);
   const [quantity, setQuantity] = useState(1);
   const [showQuantitySelector, setShowQuantitySelector] = useState(false);
+
+  useEffect(() => {
+    // Only try to detect network IP if we are on localhost
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      const fetchNetworkIp = async () => {
+        try {
+          const response = await fetch(`http://${window.location.hostname}:5000/api/network-info`);
+          const data = await response.json();
+          if (data.ip && data.ip !== 'localhost') {
+            setNetworkIp(data.ip);
+          }
+        } catch (err) {
+          console.error("Error fetching network IP:", err);
+        }
+      };
+      fetchNetworkIp();
+    }
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('cart', JSON.stringify(cart));
@@ -32,7 +107,7 @@ export default function Scan() {
   const startCamera = async () => {
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } 
+        video: { facingMode: 'environment' } 
       });
       setStream(mediaStream);
       if (videoRef.current) {
@@ -50,7 +125,6 @@ export default function Scan() {
     }
   };
 
-  // Auto-start camera when on scan step
   useEffect(() => {
     if (step === 'scan') {
       startCamera();
@@ -64,22 +138,30 @@ export default function Scan() {
     if (!videoRef.current || !canvasRef.current) return;
     
     setIsScanning(true);
-    
-    // Capture frame from video
     const canvas = canvasRef.current;
     const video = videoRef.current;
+    
+    if (video.videoWidth === 0 || video.videoHeight === 0) {
+      alert("Camera feed not ready yet. Please try again in a moment.");
+      setIsScanning(false);
+      return;
+    }
+
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     const ctx = canvas.getContext('2d');
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     
-    // Convert canvas to blob
     canvas.toBlob(async (blob) => {
+      if (!blob) {
+        setIsScanning(false);
+        return;
+      }
       const formData = new FormData();
       formData.append('image', blob, 'capture.jpg');
 
       try {
-        const response = await fetch(`http://${window.location.hostname}:5000/api/identify`, {
+        const response = await fetch(`http://${networkIp}:5000/api/identify`, {
           method: 'POST',
           body: formData
         });
@@ -91,7 +173,7 @@ export default function Scan() {
         setStep('results');
       } catch (err) {
         console.error("Identify error:", err);
-        alert("Sorry, we couldn't identify this plant. Please try a clearer shot of a leaf.");
+        alert("Identification failed. Please check your connection or try another photo.");
       } finally {
         setIsScanning(false);
       }
@@ -102,10 +184,13 @@ export default function Scan() {
     if (!identification?.localPlant) return;
     
     const plant = identification.localPlant;
-    const existingItem = cart.find(item => item.id === plant.id);
+    // ensure ID is numeric or string consistently
+    const plantId = plant.id;
+    
+    const existingItem = cart.find(item => item.id == plantId);
     if (existingItem) {
       setCart(cart.map(item => 
-        item.id === plant.id 
+        item.id == plantId 
           ? { ...item, quantity: item.quantity + quantity } 
           : item
       ));
@@ -113,7 +198,7 @@ export default function Scan() {
       setCart([...cart, { ...plant, quantity }]);
     }
     setShowQuantitySelector(false);
-    alert("Added to cart!");
+    alert(`Added ${quantity} ${plant.name}(s) to your cart.`);
   };
 
   const handleLocalPlantClick = (id) => {
@@ -129,28 +214,13 @@ export default function Scan() {
     });
   };
 
-  const getCareTips = (plantName) => {
-    if (!plantName) return {
-      watering: "General watering (once a week).",
-      sunlight: "General indirect light.",
-      soil: "Standard well-draining potting mix.",
-      tips: "Keep away from extreme temperatures."
-    };
-
-    const cleanName = plantName.split('(')[0].trim();
-    return careTipsData[cleanName] || {
-      watering: "General watering (once a week).",
-      sunlight: "General indirect light.",
-      soil: "Standard well-draining potting mix.",
-      tips: "Keep away from extreme temperatures."
-    };
-  };
+  const specializedCareData = identification ? getSpecializedCareData(identification.commonName || identification.scientificName, null) : {};
 
   return (
     <div className="animate-fade-in scan-container">
       {/* Floating Cart Icon */}
       <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 1000 }}>
-        <div className="header-cart-icon" onClick={() => navigate('/marketplace')} style={{ cursor: 'pointer', padding: '10px', background: 'white', borderRadius: '50%', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', color: 'var(--primary)', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="header-cart-icon" onClick={() => navigate('/marketplace')} style={{ cursor: 'pointer', padding: '12px', background: 'white', borderRadius: '50%', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', color: 'var(--primary)', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <ShoppingCart size={24} />
           {cart.length > 0 && (
             <span style={{ position: 'absolute', top: '-2px', right: '-2px', background: '#ff4b4b', color: 'white', fontSize: '0.7rem', fontWeight: 'bold', width: '20px', height: '20px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid white' }}>
@@ -184,32 +254,20 @@ export default function Scan() {
               <div className="corner top-right"></div>
               <div className="corner bottom-left"></div>
               <div className="corner bottom-right"></div>
-              
-              <div className="scan-hint">
-                <Info size={14} /> Center a leaf in the frame for best results
-              </div>
+              <div className="scan-hint"><Info size={14} /> Center a leaf for best results</div>
             </div>
             
             {isScanning && (
               <div className="scanning-overlay">
                 <div className="scan-line"></div>
-                <div className="scan-status">
-                  <RefreshCw className="animate-spin" size={20} />
-                  <span>Analyzing Species...</span>
-                </div>
+                <div className="scan-status"><RefreshCw className="animate-spin" size={20} /><span>Analyzing Species...</span></div>
               </div>
             )}
           </div>
           
           <div className="scan-controls">
-            <button 
-              className="btn-capture-main"
-              onClick={handleIdentify}
-              disabled={isScanning || !stream}
-            >
-              <div className="inner-circle">
-                <Camera size={32} />
-              </div>
+            <button className="btn-capture" onClick={handleIdentify} disabled={isScanning || !stream}>
+              <div className="inner-circle"><Camera size={32} /></div>
             </button>
             <p className="capture-label">Tap to Identify</p>
           </div>
@@ -217,113 +275,112 @@ export default function Scan() {
       )}
 
       {step === 'results' && identification && (
-        <div className="results-view animate-slide-up" style={{ paddingBottom: '4rem' }}>
-          <div className="result-header-modern">
-            <div className="res-back-btn" onClick={() => setStep('scan')}>
-              <X size={24} />
-            </div>
-            <div className="confidence-badge">
-              {Math.round(identification.score * 100)}% Match Confidence
+        <div className="results-view-full animate-fade-in" style={{ padding: '1rem', background: '#fff', minHeight: '100vh' }}>
+          {/* Header Navigation */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <button 
+              className="back-btn" 
+              onClick={() => setStep('scan')} 
+              style={{ background: 'none', border: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', color: '#666', fontWeight: '600' }}
+            >
+              <ArrowLeft size={20} /> Back to Scanner
+            </button>
+            <div className="cart-header-icon" onClick={() => navigate('/marketplace')} style={{ cursor: 'pointer', position: 'relative' }}>
+              <ShoppingCart size={24} color="var(--primary)" />
+              {cart.length > 0 && (
+                <span style={{ position: 'absolute', top: '-8px', right: '-8px', background: '#ff4b4b', color: 'white', fontSize: '0.7rem', width: '18px', height: '18px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {cart.reduce((sum, item) => sum + (item.quantity || 0), 0)}
+                </span>
+              )}
             </div>
           </div>
 
-          <div className="identified-hero">
-            <div className="res-plant-icon">🌿</div>
-            <h1 className="res-scientific">{identification.scientificName}</h1>
-            <h2 className="res-common">{identification.commonName || 'Rare Species'}</h2>
-          </div>
+          <div className="plant-detail-card" style={{ padding: '0', border: 'none', boxShadow: 'none' }}>
+            {/* Title Section */}
+            <div style={{ marginBottom: '1.5rem' }}>
+              <h1 style={{ fontSize: '2.2rem', fontWeight: '800', margin: '0' }}>{identification.localPlant?.name || identification.commonName}</h1>
+              <p style={{ color: '#666', fontStyle: 'italic', fontSize: '1.1rem', marginTop: '0.25rem' }}>({identification.scientificName})</p>
+            </div>
 
-          {identification.localPlant ? (
-            <div className="local-match-card animate-scale-up">
-              <div className="match-tag">✨ MATCH FOUND IN NURSERY</div>
-              <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-                <img 
-                  src={`http://${window.location.hostname}:5000${identification.localPlant.image}`} 
-                  alt={identification.localPlant.name}
-                  onClick={() => handleLocalPlantClick(identification.localPlant.id)}
-                  style={{ width: '90px', height: '90px', borderRadius: '1rem', objectFit: 'cover', cursor: 'pointer' }}
-                />
-                <div style={{ flex: 1 }}>
-                  <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: '700', cursor: 'pointer' }} onClick={() => handleLocalPlantClick(identification.localPlant.id)}>{identification.localPlant.name}</h3>
-                  <p style={{ color: 'var(--primary)', fontWeight: '800', fontSize: '1.25rem', margin: '4px 0' }}>{identification.localPlant.price}</p>
-                  
-                  <div style={{ display: 'flex', gap: '0.75rem', marginTop: '5px' }}>
-                    <button 
-                      onClick={() => setShowQuantitySelector(true)} 
-                      className="btn-primary" 
-                      style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', width: 'auto' }}
-                    >
-                      <ShoppingCart size={14} /> Add to Cart
-                    </button>
-                    <button 
-                      onClick={() => handleLocalPlantClick(identification.localPlant.id)} 
-                      className="btn-secondary" 
-                      style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', width: 'auto' }}
-                    >
-                      Care Tips
-                    </button>
-                  </div>
-                </div>
+            {/* Main Image Card */}
+            <div className="carousel-container" style={{ aspectRatio: '16/10', borderRadius: '1.5rem', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.1)', position: 'relative', marginBottom: '1.5rem' }}>
+              <img 
+                src={identification.localPlant?.image ? `http://${networkIp}:5000${identification.localPlant.image}` : 'https://images.unsplash.com/photo-1545239351-ef35f43d514b?q=80&w=800'} 
+                alt={identification.commonName} 
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+              <div style={{ position: 'absolute', top: '1rem', left: '1rem', background: 'var(--primary)', color: 'white', padding: '0.4rem 1rem', borderRadius: '2rem', fontSize: '0.75rem', fontWeight: '700' }}>
+                {identification.localPlant ? 'MATCH FOUND' : 'IDENTIFIED'}
               </div>
             </div>
-          ) : (
-            <div className="no-local-match">
-              <p>This specific variety isn't in our local nursery yet, but we've generated a care guide for you!</p>
+
+            {/* Names Section */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '2rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ color: '#2D6A4F', fontWeight: '800', fontSize: '0.85rem' }}>SCIENTIFIC NAME:</span>
+                <span style={{ color: '#444', fontStyle: 'italic', fontSize: '0.95rem' }}>{identification.scientificName}</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ color: '#2D6A4F', fontWeight: '800', fontSize: '0.85rem' }}>NEPALI NAME:</span>
+                <span style={{ color: '#444', fontWeight: '600', fontSize: '0.95rem' }}>{identification.localPlant?.nepali_name || 'N/A'}</span>
+              </div>
+            </div>
+
+            {/* About Section */}
+            <div style={{ marginBottom: '2rem' }}>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                <Leaf size={18} color="var(--primary)" /> About This Plant
+              </h3>
+              <p style={{ color: '#4a4a4a', lineHeight: '1.7', fontSize: '1rem' }}>
+                {identification.localPlant?.description || `The ${identification.commonName} (${identification.scientificName}) is a beautiful species identified with ${Math.round(identification.score * 100)}% confidence. It is known for its unique foliage and air-purifying qualities.`}
+              </p>
+            </div>
+
+            {/* Price & Location Boxes */}
+            {identification.localPlant && (
+              <div className="metadata-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '2.5rem' }}>
+                <div style={{ background: '#f7f9f7', padding: '1.25rem', borderRadius: '1rem', border: '1px solid #eee' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#888', textTransform: 'uppercase' }}>Price</span>
+                  <p style={{ margin: '0.25rem 0 0 0', fontSize: '1.4rem', fontWeight: '800', color: 'var(--primary)' }}>{identification.localPlant.price}</p>
+                </div>
+                <div style={{ background: '#f7f9f7', padding: '1.25rem', borderRadius: '1rem', border: '1px solid #eee' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#888', textTransform: 'uppercase' }}>Nursery / Location</span>
+                  <p style={{ margin: '0.25rem 0 0 0', fontSize: '1.1rem', fontWeight: '700', color: '#444' }}>{identification.localPlant.location || 'Local Nursery'}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Care Grid */}
+            <div className="specialized-care-grid-section" style={{ marginBottom: '8rem' }}>
+              <h2 style={{ fontSize: '1.4rem', fontWeight: '800', marginBottom: '1.5rem' }}>Plant Care Instructions</h2>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
+                {Object.entries(specializedCareData).map(([title, content], idx) => (
+                  <div key={idx} style={{ background: '#F0F7F2', borderRadius: '1.25rem', padding: '1.25rem', display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                    <div style={{ background: 'white', padding: '0.6rem', borderRadius: '0.75rem', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' }}>
+                      {gridIconMap[title]}
+                    </div>
+                    <div>
+                      <h4 style={{ margin: '0 0 0.4rem 0', fontSize: '1rem', fontWeight: '700' }}>{title}</h4>
+                      <p style={{ margin: 0, fontSize: '0.85rem', color: '#4a4a4a', lineHeight: '1.4' }}>{content}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Fixed Bottom Action */}
+          {identification.localPlant && (
+            <div style={{ position: 'fixed', bottom: '0', left: '0', right: '0', padding: '1.5rem', background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(10px)', borderTop: '1px solid #eee', zIndex: 100 }}>
+              <button 
+                onClick={() => setShowQuantitySelector(true)}
+                className="add-to-cart-big-new"
+                style={{ width: '100%', maxWidth: '600px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', background: '#3D704D', color: 'white', padding: '1.25rem', borderRadius: '1rem', fontSize: '1.2rem', fontWeight: '700', border: 'none', cursor: 'pointer' }}
+              >
+                <ShoppingCart size={24} /> Add to Cart
+              </button>
             </div>
           )}
-
-          {/* Care Guide Section */}
-          <div className="specialized-care-section">
-            <h3 className="section-title-res">
-              <Sprout size={20} color="var(--primary)" /> Personalized Care Guide
-            </h3>
-            
-            <div className="care-grid-res">
-              <div className="care-item-res">
-                <div className="care-icon-wrap" style={{ background: '#eef2ff' }}><Droplets size={20} color="#3b82f6" /></div>
-                <div>
-                  <label>Watering</label>
-                  <p>{getCareTips(identification.commonName || identification.scientificName).watering}</p>
-                </div>
-              </div>
-              <div className="care-item-res">
-                <div className="care-icon-wrap" style={{ background: '#fff7ed' }}><Sun size={20} color="#f59e0b" /></div>
-                <div>
-                  <label>Sunlight</label>
-                  <p>{getCareTips(identification.commonName || identification.scientificName).sunlight}</p>
-                </div>
-              </div>
-              <div className="care-item-res">
-                <div className="care-icon-wrap" style={{ background: '#f0fdf4' }}><Sprout size={20} color="#10b981" /></div>
-                <div>
-                  <label>Soil</label>
-                  <p>{getCareTips(identification.commonName || identification.scientificName).soil}</p>
-                </div>
-              </div>
-              <div className="care-item-res">
-                <div className="care-icon-wrap" style={{ background: '#f5f3ff' }}><Info size={20} color="#8b5cf6" /></div>
-                <div>
-                  <label>Expert Tip</label>
-                  <p>{getCareTips(identification.commonName || identification.scientificName).tips}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div style={{ padding: '0 1.5rem', marginTop: '2rem' }}>
-            <h4 style={{ fontSize: '0.9rem', fontWeight: '700', color: '#888', marginBottom: '1rem' }}>OTHER POSSIBLE MATCHES</h4>
-            <div className="other-matches">
-              {identification.allMatches && identification.allMatches.slice(1).map((match, i) => (
-                <div key={i} className="other-match-pill">
-                  {match.name} <span>{Math.round(match.score * 100)}%</span>
-                </div>
-              ))}
-            </div>
-            
-            <button className="btn-secondary w-full" style={{ marginTop: '2rem' }} onClick={() => setStep('scan')}>
-              <RefreshCw size={18} /> Scan Another Plant
-            </button>
-          </div>
         </div>
       )}
 
