@@ -11,6 +11,8 @@ export default function Scan() {
   const [identification, setIdentification] = useState(null);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+  const navigate = useNavigate();
+  
   const [cart, setCart] = useState(() => {
     try {
       const savedCart = localStorage.getItem('cart');
@@ -26,53 +28,6 @@ export default function Scan() {
   useEffect(() => {
     localStorage.setItem('cart', JSON.stringify(cart));
   }, [cart]);
-
-  const handleAddToCart = () => {
-    if (!identification?.localPlant) return;
-    
-    const plant = identification.localPlant;
-    const existingItem = cart.find(item => item.id === plant.id);
-    if (existingItem) {
-      setCart(cart.map(item => 
-        item.id === plant.id 
-          ? { ...item, quantity: item.quantity + quantity } 
-          : item
-      ));
-    } else {
-      setCart([...cart, { ...plant, quantity }]);
-    }
-    setShowQuantitySelector(false);
-    alert("Added to cart!");
-  };
-
-  const handleLocalPlantClick = (id) => {
-    navigate(`/marketplace/${id}`, { 
-      state: { 
-        from: 'scan',
-        identification: {
-          commonName: identification.commonName,
-          scientificName: identification.scientificName,
-          score: identification.score
-        }
-      } 
-    });
-  };
-
-  return (
-    <div className="animate-fade-in scan-container">
-      {/* Floating Cart Icon */}
-      <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 1000 }}>
-        <div className="header-cart-icon" onClick={() => navigate('/marketplace')} style={{ cursor: 'pointer', padding: '10px', background: 'white', borderRadius: '50%', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', color: 'var(--primary)', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <ShoppingCart size={24} />
-          {cart.length > 0 && (
-            <span style={{ position: 'absolute', top: '-2px', right: '-2px', background: '#ff4b4b', color: 'white', fontSize: '0.7rem', fontWeight: 'bold', width: '20px', height: '20px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid white' }}>
-              {cart.reduce((sum, item) => sum + (item.quantity || 0), 0)}
-            </span>
-          )}
-        </div>
-      </div>
-
-      <canvas ref={canvasRef} style={{ display: 'none' }} />
 
   const startCamera = async () => {
     try {
@@ -94,6 +49,16 @@ export default function Scan() {
       setStream(null);
     }
   };
+
+  // Auto-start camera when on scan step
+  useEffect(() => {
+    if (step === 'scan') {
+      startCamera();
+    } else {
+      stopCamera();
+    }
+    return () => stopCamera();
+  }, [step]);
 
   const handleIdentify = async () => {
     if (!videoRef.current || !canvasRef.current) return;
@@ -133,6 +98,37 @@ export default function Scan() {
     }, 'image/jpeg', 0.8);
   };
 
+  const handleAddToCart = () => {
+    if (!identification?.localPlant) return;
+    
+    const plant = identification.localPlant;
+    const existingItem = cart.find(item => item.id === plant.id);
+    if (existingItem) {
+      setCart(cart.map(item => 
+        item.id === plant.id 
+          ? { ...item, quantity: item.quantity + quantity } 
+          : item
+      ));
+    } else {
+      setCart([...cart, { ...plant, quantity }]);
+    }
+    setShowQuantitySelector(false);
+    alert("Added to cart!");
+  };
+
+  const handleLocalPlantClick = (id) => {
+    navigate(`/marketplace/${id}`, { 
+      state: { 
+        from: 'scan',
+        identification: {
+          commonName: identification.commonName,
+          scientificName: identification.scientificName,
+          score: identification.score
+        }
+      } 
+    });
+  };
+
   const getCareTips = (plantName) => {
     if (!plantName) return {
       watering: "General watering (once a week).",
@@ -152,6 +148,18 @@ export default function Scan() {
 
   return (
     <div className="animate-fade-in scan-container">
+      {/* Floating Cart Icon */}
+      <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 1000 }}>
+        <div className="header-cart-icon" onClick={() => navigate('/marketplace')} style={{ cursor: 'pointer', padding: '10px', background: 'white', borderRadius: '50%', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', color: 'var(--primary)', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <ShoppingCart size={24} />
+          {cart.length > 0 && (
+            <span style={{ position: 'absolute', top: '-2px', right: '-2px', background: '#ff4b4b', color: 'white', fontSize: '0.7rem', fontWeight: 'bold', width: '20px', height: '20px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid white' }}>
+              {cart.reduce((sum, item) => sum + (item.quantity || 0), 0)}
+            </span>
+          )}
+        </div>
+      </div>
+
       <canvas ref={canvasRef} style={{ display: 'none' }} />
 
       {step === 'scan' && (
@@ -305,7 +313,7 @@ export default function Scan() {
           <div style={{ padding: '0 1.5rem', marginTop: '2rem' }}>
             <h4 style={{ fontSize: '0.9rem', fontWeight: '700', color: '#888', marginBottom: '1rem' }}>OTHER POSSIBLE MATCHES</h4>
             <div className="other-matches">
-              {identification.allMatches.slice(1).map((match, i) => (
+              {identification.allMatches && identification.allMatches.slice(1).map((match, i) => (
                 <div key={i} className="other-match-pill">
                   {match.name} <span>{Math.round(match.score * 100)}%</span>
                 </div>
