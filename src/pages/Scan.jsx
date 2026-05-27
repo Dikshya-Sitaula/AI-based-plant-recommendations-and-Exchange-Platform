@@ -312,6 +312,7 @@ export default function Scan() {
                 src={identification.localPlant?.image ? `http://${networkIp}:5000${identification.localPlant.image}` : 'https://images.unsplash.com/photo-1545239351-ef35f43d514b?q=80&w=800'} 
                 alt={identification.commonName} 
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1545239351-ef35f43d514b?q=80&w=800'; }}
               />
               <div style={{ position: 'absolute', top: '1rem', left: '1rem', background: 'var(--primary)', color: 'white', padding: '0.4rem 1rem', borderRadius: '2rem', fontSize: '0.75rem', fontWeight: '700' }}>
                 {identification.localPlant ? 'MATCH FOUND' : 'IDENTIFIED'}
