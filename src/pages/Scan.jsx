@@ -251,11 +251,10 @@ export default function Scan() {
     image: capturedImage || 'https://images.unsplash.com/photo-1453912176461-1ffc0dadd8db?q=80&w=800'
   } : null);
 
-  // Determine the primary image to show
-  const resultImage = capturedImage || 
-    (identification?.localPlant?.image ? 
-      (identification.localPlant.image.startsWith('http') ? identification.localPlant.image : `http://${networkIp}:5000${identification.localPlant.image}`) : 
-      'https://images.unsplash.com/photo-1416879598555-259160a2bece?q=80&w=800');
+  // Determine the primary image to show (Prioritize system image over captured photo)
+  const resultImage = identification?.localPlant?.image ? 
+    (identification.localPlant.image.startsWith('http') ? identification.localPlant.image : `http://${networkIp}:5000${identification.localPlant.image}`) : 
+    (capturedImage || 'https://images.unsplash.com/photo-1416879598555-259160a2bece?q=80&w=800');
 
   const specializedCareData = identification ? getSpecializedCareData(identification.commonName || identification.scientificName, null) : {};
 
