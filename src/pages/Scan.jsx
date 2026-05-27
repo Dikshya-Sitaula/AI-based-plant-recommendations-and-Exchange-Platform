@@ -178,14 +178,17 @@ export default function Scan() {
           body: formData
         });
         
-        if (!response.ok) throw new Error('Identification failed');
-        
         const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.error || 'Identification failed');
+        }
+        
         setIdentification(data);
         setStep('results');
       } catch (err) {
         console.error("Identify error:", err);
-        alert("Identification failed. Please check your connection or try another photo.");
+        alert(err.message || "Identification failed. Please check your connection or try another photo.");
       } finally {
         setIsScanning(false);
       }

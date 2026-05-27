@@ -563,9 +563,15 @@ const plantDetailsMap = require('./plantDetails');
          });
 
          if (!response.ok) {
+           const errStatus = response.status;
            const errText = await response.text();
-           console.error(`[IDENTIFY] Pl@ntNet API error (${response.status}):`, errText);
-           return res.status(response.status).json({ error: 'Identification service failed' });
+           console.error(`[IDENTIFY] Pl@ntNet API error (${errStatus}):`, errText);
+           
+           if (errStatus === 404) return res.status(404).json({ error: 'Species not found in AI database.' });
+           if (errStatus === 401) return res.status(401).json({ error: 'Invalid API Key. Please check Backend configuration.' });
+           if (errStatus === 429) return res.status(429).json({ error: 'AI limit reached. Please try again later.' });
+           
+           return res.status(response.status).json({ error: `AI Identification failed (${errStatus})` });
          }
 
          const data = await response.json();
