@@ -66,6 +66,7 @@ export default function Scan() {
   const [stream, setStream] = useState(null);
   const [isScanning, setIsScanning] = useState(false);
   const [identification, setIdentification] = useState(null);
+  const [capturedImage, setCapturedImage] = useState(null);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const navigate = useNavigate();
@@ -140,10 +141,17 @@ export default function Scan() {
   useEffect(() => {
     if (step === 'scan') {
       startCamera();
+      // Revoke the previous object URL to free up memory
+      if (capturedImage) {
+        URL.revokeObjectURL(capturedImage);
+        setCapturedImage(null);
+      }
     } else {
       stopCamera();
     }
-    return () => stopCamera();
+    return () => {
+      stopCamera();
+    };
   }, [step]);
 
   const handleIdentify = async () => {
@@ -169,6 +177,11 @@ export default function Scan() {
         setIsScanning(false);
         return;
       }
+
+      // Create a local URL for the captured image to show in results
+      const imageUrl = URL.createObjectURL(blob);
+      setCapturedImage(imageUrl);
+
       const formData = new FormData();
       formData.append('image', blob, 'capture.jpg');
 
@@ -245,10 +258,11 @@ export default function Scan() {
     description: matchedDetail?.description || `A beautiful ${identification.commonName || 'plant'} identified with ${Math.round(identification.score * 100)}% confidence. It brings nature into your space.`,
     price: 'Rs. 450',
     location: 'Partner Nursery',
-    image: matchedId ? `/uploads/plant-${matchedId}.jpg` : 'https://images.unsplash.com/photo-1453912176461-1ffc0dadd8db?q=80&w=800'
+    image: capturedImage || (matchedId ? `/uploads/plant-${matchedId}.jpg` : 'https://images.unsplash.com/photo-1453912176461-1ffc0dadd8db?q=80&w=800')
   } : null);
 
-  const specializedCareData = identification ? getSpecializedCareData(identification.commonName || identification.scientificName, null) : {};
+  // If localPlant exists, we might still want to show the captured image if the catalog image fails
+  const resultImage = capturedImage || (identification?.localPlant?.image ? (identification.localPlant.image.startsWith('http') ? identification.localPlant.image : `http://${networkIp}:5000${identification.localPlant.image}`) : 'https://images.unsplash.com/photo-1416879598555-259160a2bece?q=80&w=800');
 
   return (
     <div className="animate-fade-in scan-container">
@@ -331,7 +345,7 @@ export default function Scan() {
             {/* Main Image Card */}
             <div className="carousel-container" style={{ aspectRatio: '16/10', borderRadius: '1.5rem', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.1)', position: 'relative', marginBottom: '1.5rem' }}>
               <img 
-                src={displayPlant?.image?.startsWith('http') ? displayPlant.image : `http://${networkIp}:5000${displayPlant?.image}`}
+                src={resultImage}
                 alt={identification.commonName} 
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1416879598555-259160a2bece?q=80&w=800'; }}
