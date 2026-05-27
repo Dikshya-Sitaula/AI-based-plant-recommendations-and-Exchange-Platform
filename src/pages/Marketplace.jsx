@@ -89,7 +89,12 @@ export default function Marketplace() {
       try {
         const response = await fetch(`http://${window.location.hostname}:5000/api/plants`);
         const data = await response.json();
-        setPlants(data);
+        // Transform image paths to include backend URL
+        const transformedData = data.map(plant => ({
+          ...plant,
+          image: plant.image ? `http://${window.location.hostname}:5000${plant.image}` : plant.image
+        }));
+        setPlants(transformedData);
       } catch (err) {
         console.error("Error fetching plants:", err);
       } finally {
