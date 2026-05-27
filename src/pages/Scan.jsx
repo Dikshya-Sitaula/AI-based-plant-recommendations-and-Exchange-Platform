@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import careTipsData from './careTips.json';
+import PLANT_DETAILS from './plantData';
 import './Scan.css';
 
 // Specialized Care Data Generator (duplicated for direct use in results)
@@ -225,6 +226,25 @@ export default function Scan() {
     });
   };
 
+  const matchedDetailEntry = identification ? Object.entries(PLANT_DETAILS).find(
+    ([id, p]) => p.name.toLowerCase() === (identification.commonName || '').toLowerCase() || 
+         p.scientificName.toLowerCase() === (identification.scientificName || '').toLowerCase() ||
+         (identification.commonName && identification.commonName.toLowerCase().includes(p.name.toLowerCase()))
+  ) : null;
+  const matchedDetail = matchedDetailEntry ? matchedDetailEntry[1] : null;
+  const matchedId = matchedDetailEntry ? matchedDetailEntry[0] : null;
+
+  const displayPlant = identification?.localPlant || (identification ? {
+    id: matchedId || `unknown-${Date.now()}`,
+    name: identification.commonName && identification.commonName.length > 0 ? identification.commonName : 'Unknown Plant',
+    scientific_name: identification.scientificName,
+    nepali_name: matchedDetail?.nepaliName || 'N/A',
+    description: matchedDetail?.description || `A beautiful ${identification.commonName || 'plant'} identified with ${Math.round(identification.score * 100)}% confidence. It brings nature into your space.`,
+    price: 'Rs. 450',
+    location: 'Partner Nursery',
+    image: matchedId ? `/uploads/plant-${matchedId}.jpg` : 'https://images.unsplash.com/photo-1453912176461-1ffc0dadd8db?q=80&w=800'
+  } : null);
+
   const specializedCareData = identification ? getSpecializedCareData(identification.commonName || identification.scientificName, null) : {};
 
   return (
@@ -296,23 +316,22 @@ export default function Scan() {
             >
               <ArrowLeft size={20} /> Back to Scanner
             </button>
-            {/* Duplicate cart icon removed here */}
           </div>
 
           <div className="plant-detail-card" style={{ padding: '0', border: 'none', boxShadow: 'none' }}>
             {/* Title Section */}
             <div style={{ marginBottom: '1.5rem' }}>
-              <h1 style={{ fontSize: '2.2rem', fontWeight: '800', margin: '0' }}>{identification.localPlant?.name || identification.commonName}</h1>
+              <h1 style={{ fontSize: '2.2rem', fontWeight: '800', margin: '0' }}>{displayPlant?.name || identification.commonName}</h1>
               <p style={{ color: '#666', fontStyle: 'italic', fontSize: '1.1rem', marginTop: '0.25rem' }}>({identification.scientificName})</p>
             </div>
 
             {/* Main Image Card */}
             <div className="carousel-container" style={{ aspectRatio: '16/10', borderRadius: '1.5rem', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.1)', position: 'relative', marginBottom: '1.5rem' }}>
               <img 
-                src={identification.localPlant?.image ? `http://${networkIp}:5000${identification.localPlant.image}` : 'https://images.unsplash.com/photo-1545239351-ef35f43d514b?q=80&w=800'} 
+                src={displayPlant?.image?.startsWith('http') ? displayPlant.image : `http://${networkIp}:5000${displayPlant?.image}`}
                 alt={identification.commonName} 
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1545239351-ef35f43d514b?q=80&w=800'; }}
+                onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1416879598555-259160a2bece?q=80&w=800'; }}
               />
               <div style={{ position: 'absolute', top: '1rem', left: '1rem', background: 'var(--primary)', color: 'white', padding: '0.4rem 1rem', borderRadius: '2rem', fontSize: '0.75rem', fontWeight: '700' }}>
                 {identification.localPlant ? 'MATCH FOUND' : 'IDENTIFIED'}
@@ -327,7 +346,7 @@ export default function Scan() {
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ color: '#2D6A4F', fontWeight: '800', fontSize: '0.85rem' }}>NEPALI NAME:</span>
-                <span style={{ color: '#444', fontWeight: '600', fontSize: '0.95rem' }}>{identification.localPlant?.nepali_name || 'N/A'}</span>
+                <span style={{ color: '#444', fontWeight: '600', fontSize: '0.95rem' }}>{displayPlant?.nepali_name || 'N/A'}</span>
               </div>
             </div>
 
@@ -337,20 +356,20 @@ export default function Scan() {
                 <Leaf size={18} color="var(--primary)" /> About This Plant
               </h3>
               <p style={{ color: '#4a4a4a', lineHeight: '1.7', fontSize: '1rem' }}>
-                {identification.localPlant?.description || `The ${identification.commonName} (${identification.scientificName}) is a beautiful species identified with ${Math.round(identification.score * 100)}% confidence. It is known for its unique foliage and air-purifying qualities.`}
+                {displayPlant?.description}
               </p>
             </div>
 
             {/* Price & Location Boxes */}
-            {identification.localPlant && (
+            {displayPlant && (
               <div className="metadata-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '2.5rem' }}>
                 <div style={{ background: '#f7f9f7', padding: '1.25rem', borderRadius: '1rem', border: '1px solid #eee' }}>
                   <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#888', textTransform: 'uppercase' }}>Price</span>
-                  <p style={{ margin: '0.25rem 0 0 0', fontSize: '1.4rem', fontWeight: '800', color: 'var(--primary)' }}>{identification.localPlant.price}</p>
+                  <p style={{ margin: '0.25rem 0 0 0', fontSize: '1.4rem', fontWeight: '800', color: 'var(--primary)' }}>{displayPlant.price}</p>
                 </div>
                 <div style={{ background: '#f7f9f7', padding: '1.25rem', borderRadius: '1rem', border: '1px solid #eee' }}>
                   <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#888', textTransform: 'uppercase' }}>Nursery / Location</span>
-                  <p style={{ margin: '0.25rem 0 0 0', fontSize: '1.1rem', fontWeight: '700', color: '#444' }}>{identification.localPlant.location || 'Local Nursery'}</p>
+                  <p style={{ margin: '0.25rem 0 0 0', fontSize: '1.1rem', fontWeight: '700', color: '#444' }}>{displayPlant.location}</p>
                 </div>
               </div>
             )}
@@ -375,7 +394,7 @@ export default function Scan() {
           </div>
 
           {/* Fixed Bottom Action */}
-          {identification.localPlant && (
+          {displayPlant && (
             <div style={{ position: 'fixed', bottom: '0', left: '0', right: '0', padding: '1.5rem', background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(10px)', borderTop: '1px solid #eee', zIndex: 100 }}>
               <button 
                 onClick={() => setShowQuantitySelector(true)}
@@ -396,14 +415,24 @@ export default function Scan() {
             <button className="close-modal" type="button" style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', background: '#f5f5f5', borderRadius: '50%', padding: '5px', border: 'none', cursor: 'pointer' }} onClick={() => setShowQuantitySelector(false)}><X size={20} /></button>
             <div className="modal-header">
               <h3 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '0.5rem' }}>Select Quantity</h3>
-              <p style={{ color: '#666', fontSize: '1rem' }}>How many <b>{identification?.localPlant?.name}</b>s do you want?</p>
+              <p style={{ color: '#666', fontSize: '1rem' }}>How many <b>{displayPlant?.name}</b>s do you want?</p>
             </div>
             <div className="quantity-controls" style={{ display: 'flex', justifyContent: 'center', gap: '2rem', margin: '2rem 0' }}>
               <button type="button" onClick={() => setQuantity(Math.max(1, quantity - 1))} style={{ width: '52px', height: '52px', borderRadius: '14px', border: '1px solid #ddd', background: '#f9f9f9', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Minus size={24} /></button>
               <span style={{ fontSize: '2.25rem', fontWeight: '800' }}>{quantity}</span>
               <button type="button" onClick={() => setQuantity(Math.min(10, quantity + 1))} style={{ width: '52px', height: '52px', borderRadius: '14px', border: '1px solid #ddd', background: '#f9f9f9', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Plus size={24} /></button>
             </div>
-            <button type="button" onClick={handleAddToCart} style={{ width: '100%', padding: '1.1rem', borderRadius: '9999px', background: 'var(--gradient-primary)', color: 'white', fontWeight: '700', fontSize: '1.1rem', border: 'none', boxShadow: '0 4px 12px rgba(46, 96, 58, 0.2)', cursor: 'pointer' }}>Add to Cart</button>
+            <button type="button" onClick={() => {
+              const plantToCart = displayPlant;
+              const existingItem = cart.find(item => item.id == plantToCart.id);
+              if (existingItem) {
+                setCart(cart.map(item => item.id == plantToCart.id ? { ...item, quantity: item.quantity + quantity } : item));
+              } else {
+                setCart([...cart, { ...plantToCart, quantity }]);
+              }
+              setShowQuantitySelector(false);
+              setShowCart(true);
+            }} style={{ width: '100%', padding: '1.1rem', borderRadius: '9999px', background: 'var(--gradient-primary)', color: 'white', fontWeight: '700', fontSize: '1.1rem', border: 'none', boxShadow: '0 4px 12px rgba(46, 96, 58, 0.2)', cursor: 'pointer' }}>Add to Cart</button>
           </div>
         </div>
       )}
