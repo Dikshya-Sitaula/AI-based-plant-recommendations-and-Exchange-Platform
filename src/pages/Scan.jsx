@@ -239,6 +239,11 @@ export default function Scan() {
 
   const matched = getMatchedDetail();
 
+  // Determine the primary system image URL
+  const resultImage = identification?.localPlant?.image 
+    ? `http://${networkIp}:5000${encodeURI(identification.localPlant.image)}`
+    : `http://${networkIp}:5000/plants/${encodeURI(identification.commonName || 'Unknown')}/1.jpg`;
+
   // Unified display plant object
   const displayPlant = identification?.localPlant || (identification ? {
     id: matched?.id || `id-${Date.now()}`,
@@ -248,13 +253,8 @@ export default function Scan() {
     description: matched?.description || `Identified with ${Math.round(identification.score * 100)}% confidence. It is a beautiful species known for its unique foliage.`,
     price: 'Rs. 450',
     location: 'Partner Nursery',
-    image: capturedImage || 'https://images.unsplash.com/photo-1453912176461-1ffc0dadd8db?q=80&w=800'
+    image: resultImage // Use the absolute system URL
   } : null);
-
-  // Determine the primary image to show (Prioritize system image over captured photo)
-  const resultImage = identification?.localPlant?.image ? 
-    (identification.localPlant.image.startsWith('http') ? identification.localPlant.image : `http://${networkIp}:5000${identification.localPlant.image}`) : 
-    (capturedImage || 'https://images.unsplash.com/photo-1416879598555-259160a2bece?q=80&w=800');
 
   const specializedCareData = identification ? getSpecializedCareData(identification.commonName || identification.scientificName, null) : {};
 
