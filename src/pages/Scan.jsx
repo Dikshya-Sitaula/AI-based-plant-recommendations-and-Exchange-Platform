@@ -239,24 +239,26 @@ export default function Scan() {
 
   const matched = getMatchedDetail();
 
-  // Determine the primary system image URL
+  // Determine the primary system image URL (Strictly system catalog)
   const resultImage = identification?.localPlant?.image 
     ? `http://${networkIp}:5000${encodeURI(identification.localPlant.image)}`
-    : `http://${networkIp}:5000/plants/${encodeURI(identification.commonName || 'Unknown')}/1.jpg`;
+    : (matched?.name 
+        ? `http://${networkIp}:5000/plants/${encodeURI(matched.name)}/1.jpg` 
+        : 'https://images.unsplash.com/photo-1416879598555-259160a2bece?q=80&w=800');
 
-  // Unified display plant object
-  const displayPlant = identification?.localPlant || (identification ? {
-    id: matched?.id || `id-${Date.now()}`,
-    name: identification.commonName || 'Unknown Species',
-    scientific_name: identification.scientificName,
-    nepali_name: matched?.nepaliName || 'N/A',
-    description: matched?.description || `Identified with ${Math.round(identification.score * 100)}% confidence. It is a beautiful species known for its unique foliage.`,
-    price: 'Rs. 450',
-    location: 'Partner Nursery',
-    image: resultImage // Use the absolute system URL
-  } : null);
+  // Unified display plant object (Merges AI ID + DB Record + Botanical Details)
+  const displayPlant = identification ? {
+    id: identification.localPlant?.id || matched?.id || `id-${Date.now()}`,
+    name: identification.localPlant?.name || matched?.name || identification.commonName || 'Unknown Species',
+    scientific_name: identification.scientificName || matched?.scientificName || 'N/A',
+    nepali_name: identification.localPlant?.nepali_name || matched?.nepaliName || 'N/A',
+    description: identification.localPlant?.description || matched?.description || `Identified with ${Math.round(identification.score * 100)}% confidence. This beautiful species is part of the Leaf-Life botanical catalog.`,
+    price: identification.localPlant?.price || 'Rs. 450',
+    location: identification.localPlant?.location || 'Partner Nursery',
+    image: resultImage
+  } : null;
 
-  const specializedCareData = identification ? getSpecializedCareData(identification.commonName || identification.scientificName, null) : {};
+  const specializedCareData = identification ? getSpecializedCareData(displayPlant?.name || identification.commonName || identification.scientificName, null) : {};
 
   // Cart Helper
   const addToCartAction = (plant, qty) => {
