@@ -12,6 +12,10 @@ export default function Layout() {
     if (typeof window === 'undefined') return false;
     return localStorage.getItem('leafLifeAuthenticated') === 'true';
   });
+  const [userName, setUserName] = useState(() => {
+    if (typeof window === 'undefined') return 'Guest';
+    return localStorage.getItem('leafLifeUserName') || 'Guest';
+  });
 
   const openAuthModal = () => setAuthOpen(true);
 
@@ -25,7 +29,9 @@ export default function Layout() {
 
   const handleSwitchAccount = () => {
     localStorage.removeItem('leafLifeAuthenticated');
+    localStorage.removeItem('leafLifeUserName');
     setIsAuthenticated(false);
+    setUserName('Guest');
     openAuthModal();
   };
 
@@ -43,9 +49,12 @@ export default function Layout() {
       <AuthModal
         open={authOpen}
         onClose={() => setAuthOpen(false)}
-        onSuccess={() => {
+        onSuccess={(data) => {
           localStorage.setItem('leafLifeAuthenticated', 'true');
+          const nameToSet = data.fullName || data.email.split('@')[0];
+          localStorage.setItem('leafLifeUserName', nameToSet);
           setIsAuthenticated(true);
+          setUserName(nameToSet);
           setAuthOpen(false);
           navigate('/dashboard');
         }}
@@ -85,9 +94,13 @@ export default function Layout() {
         
         <div className="sidebar-bottom">
           <div className="user-profile">
-            <img src="https://ui-avatars.com/api/?name=Alex&background=E2E8CE&color=2D5A27" alt="Alex" className="user-avatar" />
+            <img 
+              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=E2E8CE&color=2D5A27`} 
+              alt={userName} 
+              className="user-avatar" 
+            />
             <div className="user-info">
-              <span className="user-name">Alex</span>
+              <span className="user-name">{userName}</span>
               <span className="user-role">Plant Parent</span>
             </div>
           </div>

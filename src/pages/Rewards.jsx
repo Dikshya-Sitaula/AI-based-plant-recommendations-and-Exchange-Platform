@@ -26,7 +26,6 @@ import {
   Target,
   Gem,
 } from 'lucide-react';
-import dikshyaAvatar from '../assets/Dikshya Sitaula.jpg';
 import './Rewards.css';
 
 const LEADERBOARD = [
@@ -64,6 +63,9 @@ const REWARDS = [
 const ICON_PROPS = { strokeWidth: 1.75, className: 'rh-icon' };
 
 export default function Rewards() {
+  const fullName = localStorage.getItem('leafLifeUserName') || 'Alex';
+  const firstName = fullName.split(' ')[0];
+
   return (
     <div className="rh-page animate-fade-in">
       {/* Page header */}
@@ -81,9 +83,13 @@ export default function Rewards() {
             <span className="rh-notify-badge">3</span>
           </button>
           <div className="rh-profile">
-            <img src={dikshyaAvatar} alt="Dikshya" className="rh-profile-img" />
+            <img 
+              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=E2E8CE&color=2D5A27`} 
+              alt={firstName} 
+              className="rh-profile-img" 
+            />
             <div className="rh-profile-meta">
-              <span className="rh-profile-name">Dikshya</span>
+              <span className="rh-profile-name">{firstName}</span>
               <span className="rh-profile-badge">
                 <BadgeCheck size={14} strokeWidth={2.25} />
                 Eco Warrior
