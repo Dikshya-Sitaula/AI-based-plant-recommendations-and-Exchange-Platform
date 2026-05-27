@@ -141,8 +141,8 @@ export default function Scan() {
   useEffect(() => {
     if (step === 'scan') {
       startCamera();
-      // Revoke the previous object URL to free up memory
-      if (capturedImage) {
+      // Revoke the previous object URL to free up memory when returning to scan mode
+      if (capturedImage && capturedImage.startsWith('blob:')) {
         URL.revokeObjectURL(capturedImage);
         setCapturedImage(null);
       }
@@ -178,7 +178,7 @@ export default function Scan() {
         return;
       }
 
-      // Create a local URL for the captured image to show in results
+      // Create a local URL for the captured image
       const imageUrl = URL.createObjectURL(blob);
       setCapturedImage(imageUrl);
 
@@ -201,35 +201,15 @@ export default function Scan() {
         setStep('results');
       } catch (err) {
         console.error("Identify error:", err);
-        alert(err.message || "Identification failed. Please check your connection or try another photo.");
+        alert(err.message || "Identification failed. Please try again.");
       } finally {
         setIsScanning(false);
       }
     }, 'image/jpeg', 0.8);
   };
 
-  const handleAddToCart = () => {
-    if (!identification?.localPlant) return;
-    
-    const plant = identification.localPlant;
-    // ensure ID is numeric or string consistently
-    const plantId = plant.id;
-    
-    const existingItem = cart.find(item => item.id == plantId);
-    if (existingItem) {
-      setCart(cart.map(item => 
-        item.id == plantId 
-          ? { ...item, quantity: item.quantity + quantity } 
-          : item
-      ));
-    } else {
-      setCart([...cart, { ...plant, quantity }]);
-    }
-    setShowQuantitySelector(false);
-    setShowCart(true); // Show cart immediately after adding icon
-  };
-
   const handleLocalPlantClick = (id) => {
+    if (!identification) return;
     navigate(`/marketplace/${id}`, { 
       state: { 
         from: 'scan',
@@ -242,27 +222,55 @@ export default function Scan() {
     });
   };
 
-  const matchedDetailEntry = identification ? Object.entries(PLANT_DETAILS).find(
-    ([id, p]) => p.name.toLowerCase() === (identification.commonName || '').toLowerCase() || 
-         p.scientificName.toLowerCase() === (identification.scientificName || '').toLowerCase() ||
-         (identification.commonName && identification.commonName.toLowerCase().includes(p.name.toLowerCase()))
-  ) : null;
-  const matchedDetail = matchedDetailEntry ? matchedDetailEntry[1] : null;
-  const matchedId = matchedDetailEntry ? matchedDetailEntry[0] : null;
+  // Safe matched detail derivation
+  const getMatchedDetail = () => {
+    if (!identification) return null;
+    const common = (identification.commonName || '').toLowerCase();
+    const scientific = (identification.scientificName || '').toLowerCase();
+    
+    const match = Object.entries(PLANT_DETAILS || {}).find(([id, p]) => {
+      const pName = (p.name || '').toLowerCase();
+      const pSci = (p.scientificName || '').toLowerCase();
+      return pName === common || pSci === scientific || (common && common.includes(pName));
+    });
+    
+    return match ? { id: match[0], ...match[1] } : null;
+  };
 
+  const matched = getMatchedDetail();
+
+  // Unified display plant object
   const displayPlant = identification?.localPlant || (identification ? {
-    id: matchedId || `unknown-${Date.now()}`,
-    name: identification.commonName && identification.commonName.length > 0 ? identification.commonName : 'Unknown Plant',
+    id: matched?.id || `id-${Date.now()}`,
+    name: identification.commonName || 'Unknown Species',
     scientific_name: identification.scientificName,
-    nepali_name: matchedDetail?.nepaliName || 'N/A',
-    description: matchedDetail?.description || `A beautiful ${identification.commonName || 'plant'} identified with ${Math.round(identification.score * 100)}% confidence. It brings nature into your space.`,
+    nepali_name: matched?.nepaliName || 'N/A',
+    description: matched?.description || `Identified with ${Math.round(identification.score * 100)}% confidence. It is a beautiful species known for its unique foliage.`,
     price: 'Rs. 450',
     location: 'Partner Nursery',
-    image: capturedImage || (matchedId ? `/uploads/plant-${matchedId}.jpg` : 'https://images.unsplash.com/photo-1453912176461-1ffc0dadd8db?q=80&w=800')
+    image: capturedImage || 'https://images.unsplash.com/photo-1453912176461-1ffc0dadd8db?q=80&w=800'
   } : null);
 
-  // If localPlant exists, we might still want to show the captured image if the catalog image fails
-  const resultImage = capturedImage || (identification?.localPlant?.image ? (identification.localPlant.image.startsWith('http') ? identification.localPlant.image : `http://${networkIp}:5000${identification.localPlant.image}`) : 'https://images.unsplash.com/photo-1416879598555-259160a2bece?q=80&w=800');
+  // Determine the primary image to show
+  const resultImage = capturedImage || 
+    (identification?.localPlant?.image ? 
+      (identification.localPlant.image.startsWith('http') ? identification.localPlant.image : `http://${networkIp}:5000${identification.localPlant.image}`) : 
+      'https://images.unsplash.com/photo-1416879598555-259160a2bece?q=80&w=800');
+
+  const specializedCareData = identification ? getSpecializedCareData(identification.commonName || identification.scientificName, null) : {};
+
+  // Cart Helper
+  const addToCartAction = (plant, qty) => {
+    if (!plant) return;
+    const existingItem = cart.find(item => item.id == plant.id);
+    if (existingItem) {
+      setCart(cart.map(item => item.id == plant.id ? { ...item, quantity: item.quantity + qty } : item));
+    } else {
+      setCart([...cart, { ...plant, quantity: qty }]);
+    }
+    setShowQuantitySelector(false);
+    setShowCart(true);
+  };
 
   return (
     <div className="animate-fade-in scan-container">
