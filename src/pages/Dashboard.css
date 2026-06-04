@@ -340,6 +340,20 @@
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
+.plant-quantity-badge {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  background: #3D704D;
+  color: white;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  z-index: 10;
+}
+
 .plant-info {
   padding: 1rem;
 }

@@ -40,6 +40,17 @@ export default function Dashboard() {
   const aqiStatus = currentAQI <= 50 ? 'Excellent' : currentAQI <= 80 ? 'Good' : 'Moderate';
   const progressPercent = Math.min(100, (ownedCount / 10) * 100);
 
+  // Group collection by plant name to show quantity badges
+  const groupedCollection = collection.reduce((acc, plant) => {
+    const existing = acc.find(item => item.name === plant.name);
+    if (existing) {
+      existing.quantity += 1;
+    } else {
+      acc.push({ ...plant, quantity: 1 });
+    }
+    return acc;
+  }, []);
+
   return (
     <div className="dashboard-content animate-fade-in">
       {/* Header */}
@@ -108,13 +119,13 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="stat-card-body">
-            {collection.length > 0 ? (
+            {groupedCollection.length > 0 ? (
               <ul className="task-list">
-                {collection.slice(0, 2).map(plant => (
+                {groupedCollection.slice(0, 2).map(plant => (
                   <li key={plant.id} className="task-item">
                     <div className="task-checkbox"></div>
                     <div className="task-info">
-                      <span className="task-name">{plant.name}</span>
+                      <span className="task-name">{plant.name} {plant.quantity > 1 && `(x${plant.quantity})`}</span>
                       <span className="task-action">Check soil moisture</span>
                     </div>
                   </li>
@@ -160,7 +171,7 @@ export default function Dashboard() {
         </div>
 
         <div className="collection-grid">
-          {collection.map(plant => (
+          {groupedCollection.map(plant => (
             <div key={plant.id} className="plant-card" onClick={() => navigate(`/marketplace/${plant.id}`)} style={{ cursor: 'pointer' }}>
               <div className="plant-image-container">
                 <img 
@@ -168,6 +179,11 @@ export default function Dashboard() {
                   alt={plant.name} 
                   className="plant-image" 
                 />
+                {plant.quantity > 1 && (
+                  <div className="plant-quantity-badge">
+                    x{plant.quantity}
+                  </div>
+                )}
                 <div className="plant-location-badge">
                   <MapPin size={12} />
                   {plant.location || 'Home'}
@@ -175,7 +191,7 @@ export default function Dashboard() {
               </div>
               <div className="plant-info">
                 <h3 className="plant-name">{plant.name}</h3>
-                <p className="plant-status">Healthy • Growing</p>
+                <p className="plant-status">Healthy • {plant.quantity > 1 ? `${plant.quantity} plants` : '1 plant'}</p>
               </div>
             </div>
           ))}
