@@ -337,30 +337,29 @@ const plantDetailsMap = require('./plantDetails');
          const plant = rows[0];
          if (!plant) return res.status(404).json({ error: 'Plant not found' });
          
-         await db.execute('UPDATE plants SET is_sold = 1, buyer_id = ? WHERE id = ?', [userId, id]);
-
-          if (quantity > 1) {
-            const insertQuery = 'INSERT INTO plants (name, type, price, location, image, space_tag, sunlight_need, min_temp, max_temp, purification_score, rule, scientific_name, nepali_name, description, is_sold, buyer_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)';
-            for (let i = 1; i < quantity; i++) {
-              await db.execute(insertQuery, [
-                plant.name, 
-                plant.type, 
-                plant.price, 
-                plant.location, 
-                plant.image, 
-                plant.space_tag, 
-                plant.sunlight_need, 
-                plant.min_temp, 
-                plant.max_temp, 
-                plant.purification_score,
-                plant.rule || '',
-                plant.scientific_name || '',
-                plant.nepali_name || '',
-                plant.description || '',
-                userId
-              ]);
-            }
-          }
+         // Logic Change: Never mark the original marketplace listing as sold.
+         // Instead, always create new record(s) for the buyer.
+         const insertQuery = 'INSERT INTO plants (name, type, price, location, image, space_tag, sunlight_need, min_temp, max_temp, purification_score, rule, scientific_name, nepali_name, description, is_sold, buyer_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)';
+         
+         for (let i = 0; i < quantity; i++) {
+           await db.execute(insertQuery, [
+             plant.name, 
+             plant.type, 
+             plant.price, 
+             plant.location, 
+             plant.image, 
+             plant.space_tag, 
+             plant.sunlight_need, 
+             plant.min_temp, 
+             plant.max_temp, 
+             plant.purification_score,
+             plant.rule || '',
+             plant.scientific_name || '',
+             plant.nepali_name || '',
+             plant.description || '',
+             userId
+           ]);
+         }
 
          res.json({ message: `Success` });
        } catch (error) {
@@ -464,26 +463,23 @@ const plantDetailsMap = require('./plantDetails');
              }
 
              if (plantTemplate) {
-                // We found the exact available plant, mark it as sold
-                await db.execute('UPDATE plants SET is_sold = 1, buyer_id = ? WHERE id = ?', [userId, rawId]);
-                console.log(`[PAYMENT] Sold existing plant ID ${rawId} to User ${userId}`);
+                // Logic Change: Never mark the original marketplace listing as sold.
+                // Instead, always create new record(s) for the buyer using the template.
+                console.log(`[PAYMENT] Using existing plant ID ${rawId} as template for User ${userId}`);
                 
-                // If more than 1 was bought, create duplicates
-                if (quantity > 1) {
-                  const insertQuery = `INSERT INTO plants 
-                    (name, type, price, location, image, space_tag, sunlight_need, min_temp, max_temp, purification_score, rule, scientific_name, nepali_name, description, is_sold, buyer_id) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)`;
-                  
-                  for (let i = 1; i < quantity; i++) {
-                    await db.execute(insertQuery, [
-                      plantTemplate.name, plantTemplate.type, plantTemplate.price, plantTemplate.location, plantTemplate.image, 
-                      plantTemplate.space_tag, plantTemplate.sunlight_need, plantTemplate.min_temp, plantTemplate.max_temp, 
-                      plantTemplate.purification_score, plantTemplate.rule || '', plantTemplate.scientific_name || '', 
-                      plantTemplate.nepali_name || '', plantTemplate.description || '', userId
-                    ]);
-                  }
-                  console.log(`[PAYMENT] Created ${quantity - 1} additional records for User ${userId}`);
+                const insertQuery = `INSERT INTO plants 
+                  (name, type, price, location, image, space_tag, sunlight_need, min_temp, max_temp, purification_score, rule, scientific_name, nepali_name, description, is_sold, buyer_id) 
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)`;
+                
+                for (let i = 0; i < quantity; i++) {
+                  await db.execute(insertQuery, [
+                    plantTemplate.name, plantTemplate.type, plantTemplate.price, plantTemplate.location, plantTemplate.image, 
+                    plantTemplate.space_tag, plantTemplate.sunlight_need, plantTemplate.min_temp, plantTemplate.max_temp, 
+                    plantTemplate.purification_score, plantTemplate.rule || '', plantTemplate.scientific_name || '', 
+                    plantTemplate.nepali_name || '', plantTemplate.description || '', userId
+                  ]);
                 }
+                console.log(`[PAYMENT] Created ${quantity} record(s) for User ${userId} based on template ID ${rawId}`);
              } else {
                 // Exact plant not available or ID is a scan identifier
                 console.log(`[PAYMENT] No unsold plant with ID ${rawId}. Finding template by name: "${item.name}"`);
