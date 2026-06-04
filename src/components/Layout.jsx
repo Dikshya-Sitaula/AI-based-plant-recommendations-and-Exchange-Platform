@@ -16,6 +16,10 @@ export default function Layout() {
     if (typeof window === 'undefined') return 'Guest';
     return localStorage.getItem('leafLifeUserName') || 'Guest';
   });
+  const [userId, setUserId] = useState(() => {
+    if (typeof window === 'undefined') return 1;
+    return localStorage.getItem('leafLifeUserId') || 1;
+  });
 
   const openAuthModal = () => setAuthOpen(true);
 
@@ -30,8 +34,10 @@ export default function Layout() {
   const handleSwitchAccount = () => {
     localStorage.removeItem('leafLifeAuthenticated');
     localStorage.removeItem('leafLifeUserName');
+    localStorage.removeItem('leafLifeUserId');
     setIsAuthenticated(false);
     setUserName('Guest');
+    setUserId(1);
     openAuthModal();
   };
 
@@ -51,10 +57,15 @@ export default function Layout() {
         onClose={() => setAuthOpen(false)}
         onSuccess={(data) => {
           localStorage.setItem('leafLifeAuthenticated', 'true');
+          const finalId = data.userId || 1;
+          localStorage.setItem('leafLifeUserId', finalId);
           const nameToSet = data.fullName || data.email.split('@')[0];
           localStorage.setItem('leafLifeUserName', nameToSet);
+          
           setIsAuthenticated(true);
           setUserName(nameToSet);
+          setUserId(finalId);
+          
           setAuthOpen(false);
           navigate('/dashboard');
         }}

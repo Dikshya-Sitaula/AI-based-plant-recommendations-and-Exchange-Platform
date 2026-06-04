@@ -91,25 +91,26 @@ const plantDetailsMap = require('./plantDetails');
           )`);
 
           // Alter table dynamically to add new columns if they do not exist
-          try {
-            await db.execute('ALTER TABLE plants ADD COLUMN scientific_name VARCHAR(255)');
-          } catch (err) {
-            // Column already exists
-          }
-          try {
-            await db.execute('ALTER TABLE plants ADD COLUMN nepali_name VARCHAR(255)');
-          } catch (err) {
-            // Column already exists
-          }
-          try {
-            await db.execute('ALTER TABLE plants ADD COLUMN description TEXT');
-          } catch (err) {
-            // Column already exists
-          }
-          try {
-            await db.execute('ALTER TABLE plants ADD COLUMN tips_unlocked TINYINT(1) DEFAULT 0');
-          } catch (err) {
-            // Column already exists
+          const columnsToFix = [
+            { name: 'scientific_name', type: 'VARCHAR(255)' },
+            { name: 'nepali_name', type: 'VARCHAR(255)' },
+            { name: 'description', type: 'TEXT' },
+            { name: 'tips_unlocked', type: 'TINYINT(1) DEFAULT 0' },
+            { name: 'rule', type: 'VARCHAR(255)' },
+            { name: 'purification_score', type: 'INT DEFAULT 5' },
+            { name: 'min_temp', type: 'INT DEFAULT 10' },
+            { name: 'max_temp', type: 'INT DEFAULT 35' },
+            { name: 'sunlight_need', type: 'VARCHAR(50)' },
+            { name: 'space_tag', type: 'VARCHAR(255)' }
+          ];
+
+          for (const col of columnsToFix) {
+            try {
+              await db.execute(`ALTER TABLE plants ADD COLUMN ${col.name} ${col.type}`);
+              console.log(`✅ Added missing column: ${col.name}`);
+            } catch (err) {
+              // Column likely already exists
+            }
           }
 
           // Seed initial data if table is empty
@@ -412,7 +413,7 @@ const plantDetailsMap = require('./plantDetails');
      app.post('/api/payment/complete/:sessionId', async (req, res) => {
        try {
          const { sessionId } = req.params;
-         console.log(`[PAYMENT] Completing session: ${sessionId}`);
+         console.log(`[PAYMENT] Attempting to complete session: ${sessionId}`);
          
          // 1. Fetch session details
          const [sessionRows] = await db.execute('SELECT * FROM payment_sessions WHERE id = ?', [sessionId]);
@@ -432,18 +433,17 @@ const plantDetailsMap = require('./plantDetails');
          const userId = session.user_id || 1;
          console.log(`[PAYMENT] Processing ${cartItems.length} items for User ID: ${userId}`);
 
+         const errors = [];
+
          // 2. Process each item in the cart
          for (const item of cartItems) {
            try {
-             const plantId = item.id;
-             if (!plantId) {
-               console.warn(`[PAYMENT] Missing plant ID for item ${item.name}. Skipping.`);
-               continue;
-             }
+             const rawId = item.id ? item.id.toString() : '';
+             console.log(`[PAYMENT] Processing item: ${item.name} (ID: ${rawId}, Qty: ${item.quantity})`);
 
              // Special case for "Specialized Care Tips" unlock
-             if (item.id.toString().startsWith('UNLOCK-TIPS-')) {
-                const actualPlantId = item.id.replace('UNLOCK-TIPS-', '');
+             if (rawId.startsWith('UNLOCK-TIPS-')) {
+                const actualPlantId = rawId.replace('UNLOCK-TIPS-', '');
                 await db.execute('UPDATE plants SET tips_unlocked = 1 WHERE id = ?', [actualPlantId]);
                 console.log(`[PAYMENT] Unlocked specialized tips for plant ID: ${actualPlantId}`);
                 continue;
@@ -451,51 +451,85 @@ const plantDetailsMap = require('./plantDetails');
 
              const quantity = item.quantity || 1;
 
-             // Fetch original plant details
-             const [plantRows] = await db.execute('SELECT * FROM plants WHERE id = ?', [plantId]);
-             const plant = plantRows[0];
+             // Logic: 
+             // 1. If it's a numeric ID, try to find the EXACT unsold plant.
+             // 2. If it's a MATCHED- or SCAN-TEMP- or not found, create new record(s).
 
-             if (plant) {
-               // Only update if not already sold (or if sold to this user previously - retry case)
-               const [updateResult] = await db.execute(
-                 'UPDATE plants SET is_sold = 1, buyer_id = ? WHERE id = ? AND (is_sold = 0 OR buyer_id = ?)', 
-                 [userId, plantId, userId]
-               );
-               
-               console.log(`[PAYMENT] Processed plant ${plantId} (${plant.name}). Result: ${updateResult.affectedRows} row(s) updated.`);
+             let plantTemplate = null;
+             const isNumericId = /^\d+$/.test(rawId);
 
-               // If multiple quantities were bought, create extra rows
-               if (quantity > 1) {
-                 const insertQuery = `INSERT INTO plants 
-                   (name, type, price, location, image, space_tag, sunlight_need, min_temp, max_temp, purification_score, rule, scientific_name, nepali_name, description, is_sold, buyer_id) 
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)`;
-                 
-                 for (let i = 1; i < quantity; i++) {
-                   await db.execute(insertQuery, [
-                     plant.name, plant.type, plant.price, plant.location, plant.image, 
-                     plant.space_tag, plant.sunlight_need, plant.min_temp, plant.max_temp, 
-                     plant.purification_score, plant.rule || '', plant.scientific_name || '', 
-                     plant.nepali_name || '', plant.description || '', userId
-                   ]);
-                 }
-                 console.log(`[PAYMENT] Inserted ${quantity - 1} duplicate rows for ${plant.name}`);
-               }
+             if (isNumericId) {
+                const [availableRows] = await db.execute('SELECT * FROM plants WHERE id = ? AND is_sold = 0', [rawId]);
+                plantTemplate = availableRows[0];
+             }
+
+             if (plantTemplate) {
+                // We found the exact available plant, mark it as sold
+                await db.execute('UPDATE plants SET is_sold = 1, buyer_id = ? WHERE id = ?', [userId, rawId]);
+                console.log(`[PAYMENT] Sold existing plant ID ${rawId} to User ${userId}`);
+                
+                // If more than 1 was bought, create duplicates
+                if (quantity > 1) {
+                  const insertQuery = `INSERT INTO plants 
+                    (name, type, price, location, image, space_tag, sunlight_need, min_temp, max_temp, purification_score, rule, scientific_name, nepali_name, description, is_sold, buyer_id) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)`;
+                  
+                  for (let i = 1; i < quantity; i++) {
+                    await db.execute(insertQuery, [
+                      plantTemplate.name, plantTemplate.type, plantTemplate.price, plantTemplate.location, plantTemplate.image, 
+                      plantTemplate.space_tag, plantTemplate.sunlight_need, plantTemplate.min_temp, plantTemplate.max_temp, 
+                      plantTemplate.purification_score, plantTemplate.rule || '', plantTemplate.scientific_name || '', 
+                      plantTemplate.nepali_name || '', plantTemplate.description || '', userId
+                    ]);
+                  }
+                  console.log(`[PAYMENT] Created ${quantity - 1} additional records for User ${userId}`);
+                }
              } else {
-               console.warn(`[PAYMENT] Plant ID ${plantId} not found in DB. Skipping.`);
+                // Exact plant not available or ID is a scan identifier
+                console.log(`[PAYMENT] No unsold plant with ID ${rawId}. Finding template by name: "${item.name}"`);
+                
+                const [templateRows] = await db.execute('SELECT * FROM plants WHERE LOWER(name) = ? LIMIT 1', [item.name.toLowerCase()]);
+                const fallbackTemplate = templateRows[0];
+
+                const insertQuery = `INSERT INTO plants 
+                  (name, type, price, location, image, space_tag, sunlight_need, min_temp, max_temp, purification_score, rule, scientific_name, nepali_name, description, is_sold, buyer_id) 
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)`;
+
+                for (let i = 0; i < quantity; i++) {
+                  await db.execute(insertQuery, [
+                    item.name || fallbackTemplate?.name || 'Unknown Plant',
+                    item.type || fallbackTemplate?.type || 'buy',
+                    item.price || fallbackTemplate?.price || 'Rs. 450',
+                    item.location || fallbackTemplate?.location || 'Partner Nursery',
+                    item.image || fallbackTemplate?.image || '/plants/default.jpg',
+                    item.space_tag || fallbackTemplate?.space_tag || 'indoor',
+                    item.sunlight_need || fallbackTemplate?.sunlight_need || '2',
+                    item.min_temp || fallbackTemplate?.min_temp || 15,
+                    item.max_temp || fallbackTemplate?.max_temp || 30,
+                    item.purification_score || fallbackTemplate?.purification_score || 5,
+                    item.rule || fallbackTemplate?.rule || '',
+                    item.scientific_name || fallbackTemplate?.scientific_name || '',
+                    item.nepali_name || fallbackTemplate?.nepali_name || '',
+                    item.description || fallbackTemplate?.description || '',
+                    userId
+                  ]);
+                }
+                console.log(`[PAYMENT] Created ${quantity} new plant record(s) for User ${userId} (Name: ${item.name})`);
              }
            } catch (itemError) {
-             console.error(`[PAYMENT] Item processing error:`, itemError.message);
+             console.error(`[PAYMENT] Item processing error for ${item.name}:`, itemError.message);
+             errors.push(`${item.name}: ${itemError.message}`);
            }
          }
 
          // 3. Update session status
          await db.execute('UPDATE payment_sessions SET status = ? WHERE id = ?', ['completed', sessionId]);
-         console.log(`[PAYMENT] Session ${sessionId} marked as completed.`);
-         
-         res.json({ success: true });
-       } catch (error) {
+         console.log(`[PAYMENT] Session ${sessionId} marked as completed for User ${userId}`);
+
+         res.json({ success: errors.length === 0, processedItems: cartItems.length, errors: errors.length > 0 ? errors : undefined });
+         } catch (error) {
          console.error('[PAYMENT] Critical error completing payment:', error);
-         res.status(500).json({ error: 'Failed to complete payment' });
+         res.status(500).json({ error: 'Failed to complete payment', details: error.message });
        }
      });
 
@@ -513,10 +547,12 @@ const plantDetailsMap = require('./plantDetails');
      app.get('/api/user/:userId/collection', async (req, res) => {
        try {
          const { userId } = req.params;
+         console.log(`[DASHBOARD] Fetching collection for User ID: ${userId}`);
          const [plants] = await db.execute('SELECT * FROM plants WHERE buyer_id = ?', [userId]);
+         console.log(`[DASHBOARD] Found ${plants.length} plants for User ID: ${userId}`);
          res.json(plants);
        } catch (error) {
-         console.error('Error fetching collection:', error);
+         console.error('[DASHBOARD] Error fetching collection:', error);
          res.status(500).json({ error: 'Failed to fetch collection' });
        }
      });
@@ -524,15 +560,18 @@ const plantDetailsMap = require('./plantDetails');
      app.get('/api/user/:userId/stats', async (req, res) => {
        try {
          const { userId } = req.params;
+         console.log(`[DASHBOARD] Fetching stats for User ID: ${userId}`);
          const [rows] = await db.execute('SELECT COUNT(*) as ownedCount FROM plants WHERE buyer_id = ?', [userId]);
          const [co2Rows] = await db.execute('SELECT SUM(purification_score) as totalCO2 FROM plants WHERE buyer_id = ?', [userId]);
          
-         res.json({
+         const stats = {
            ownedCount: rows[0].ownedCount || 0,
-           totalCO2: (co2Rows[0].totalCO2 * 0.1).toFixed(1) || "0.0" // Simple formula: score * 0.1kg
-         });
+           totalCO2: (co2Rows[0].totalCO2 * 0.1).toFixed(1) || "0.0"
+         };
+         console.log(`[DASHBOARD] Stats for User ${userId}:`, stats);
+         res.json(stats);
        } catch (error) {
-         console.error('Error fetching stats:', error);
+         console.error('[DASHBOARD] Error fetching stats:', error);
          res.status(500).json({ error: 'Failed to fetch stats' });
        }
      });

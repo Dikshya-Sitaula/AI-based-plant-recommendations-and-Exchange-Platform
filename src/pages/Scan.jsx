@@ -3,7 +3,7 @@ import {
   Camera, MapPin, Search, Leaf, ArrowLeft, ArrowRight, Home, Loader2, CheckCircle, 
   ShoppingCart, RefreshCw, X, Info, Droplets, Sun, Sprout, 
   Maximize, Calendar, Scissors, Bug, Trophy, Globe, Thermometer, Wind,
-  Sparkles, Minus, Plus, Trash2
+  Sparkles, Minus, Plus, Trash2, QrCode
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import careTipsData from './careTips.json';
@@ -85,6 +85,13 @@ export default function Scan() {
   const [showQuantitySelector, setShowQuantitySelector] = useState(false);
   const [showCart, setShowCart] = useState(false);
 
+  // Payment Flow State
+  const [showQRPrompt, setShowQRPrompt] = useState(false);
+  const [paymentSessionId, setPaymentSessionId] = useState(null);
+  const [paymentStatus, setPaymentStatus] = useState('pending');
+  const [success, setSuccess] = useState(false);
+  const userId = localStorage.getItem('leafLifeUserId') || 1;
+
   const handleRemoveFromCart = (id) => {
     setCart(cart.filter(item => item.id !== id));
   };
@@ -112,6 +119,73 @@ export default function Scan() {
       fetchNetworkIp();
     }
   }, []);
+
+  // Polling for payment status
+  useEffect(() => {
+    let interval;
+    if (showQRPrompt && paymentSessionId && paymentStatus === 'pending') {
+      interval = setInterval(async () => {
+        try {
+          const response = await fetch(`http://${networkIp}:5000/api/payment/status/${paymentSessionId}`);
+          const data = await response.json();
+          if (data.status === 'completed') {
+            setPaymentStatus('completed');
+            clearInterval(interval);
+            handleFinalizePurchase();
+          } else if (data.status === 'expired') {
+            clearInterval(interval);
+            setShowQRPrompt(false);
+            alert("Payment session expired. Please try again.");
+          }
+        } catch (err) {
+          console.error("Polling error:", err);
+        }
+      }, 2000);
+    }
+    return () => clearInterval(interval);
+  }, [showQRPrompt, paymentSessionId, paymentStatus, networkIp]);
+
+  const handleProceedToPayment = async () => {
+    const userAuthenticated = localStorage.getItem('leafLifeAuthenticated') === 'true';
+    if (!userAuthenticated) {
+      alert('Please log in to purchase.');
+      return;
+    }
+    
+    // Get fresh userId from localStorage
+    const currentUserId = localStorage.getItem('leafLifeUserId') || 1;
+    const amount = cart.reduce((sum, item) => sum + (parsePrice(item.price) * (item.quantity || 1)), 0);
+
+    try {
+      const response = await fetch(`http://${networkIp}:5000/api/payment/initiate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cartItems: cart, userId: currentUserId, amount })
+      });
+      const data = await response.json();
+
+      setPaymentSessionId(data.sessionId);
+      setPaymentStatus('pending');
+      setShowCart(false);
+      setShowQRPrompt(true);
+    } catch (err) {
+      alert("Failed to initiate payment.");
+    }
+  };
+
+  const handleFinalizePurchase = () => {
+    setCart([]);
+    localStorage.removeItem('cart');
+    setSuccess(true);
+    setShowQRPrompt(false);
+  };
+
+  const closeModals = () => {
+    setShowQuantitySelector(false);
+    setShowQRPrompt(false);
+    setSuccess(false);
+    setPaymentSessionId(null);
+  };
 
   useEffect(() => {
     localStorage.setItem('cart', JSON.stringify(cart));
@@ -199,6 +273,7 @@ export default function Scan() {
         
         setIdentification(data);
         setStep('results');
+        setQuantity(1); // Reset quantity for new identification
       } catch (err) {
         console.error("Identify error:", err);
         alert(err.message || "Identification failed. Please try again.");
@@ -248,7 +323,7 @@ export default function Scan() {
 
   // Unified display plant object (Merges AI ID + DB Record + Botanical Details)
   const displayPlant = identification ? {
-    id: identification.localPlant?.id || matched?.id || `id-${Date.now()}`,
+    id: identification.localPlant?.id || (matched?.id ? `MATCHED-${matched.id}` : `SCAN-TEMP-${Date.now()}`),
     name: identification.localPlant?.name || matched?.name || identification.commonName || 'Unknown Species',
     scientific_name: identification.scientificName || matched?.scientificName || 'N/A',
     nepali_name: identification.localPlant?.nepali_name || matched?.nepaliName || 'N/A',
@@ -493,8 +568,8 @@ export default function Scan() {
                   <span style={{ fontSize: '1.5rem', fontWeight: '900', color: 'var(--primary)' }}>Rs. {cart.reduce((sum, item) => sum + (parsePrice(item.price) * item.quantity), 0)}</span>
                 </div>
                 <div className="modal-actions" style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <button type="button" onClick={() => navigate('/marketplace')} style={{ width: '100%', padding: '1.25rem', borderRadius: '9999px', background: '#3D704D', color: 'white', border: 'none', fontWeight: '700', fontSize: '1.1rem', cursor: 'pointer' }}>Proceed to Checkout</button>
-                  <button type="button" onClick={() => setShowCart(false)} style={{ color: '#888', fontWeight: '500', cursor: 'pointer', textAlign: 'center', padding: '5px' }}>Back to Shopping</button>
+                  <button type="button" onClick={handleProceedToPayment} style={{ width: '100%', padding: '1.25rem', borderRadius: '9999px', background: '#3D704D', color: 'white', border: 'none', fontWeight: '700', fontSize: '1.1rem', cursor: 'pointer' }}>Proceed to Checkout</button>
+                  <button type="button" onClick={() => setShowCart(false)} style={{ color: '#888', fontWeight: '500', cursor: 'pointer', textAlign: 'center', padding: '5px', background: 'none', border: 'none' }}>Back to Shopping</button>
                 </div>
               </>
             ) : (
@@ -503,6 +578,43 @@ export default function Scan() {
                 <button type="button" onClick={() => setShowCart(false)} style={{ width: '100%', padding: '1.1rem', borderRadius: '9999px', background: 'var(--gradient-primary)', color: 'white', border: 'none', fontWeight: '700', cursor: 'pointer' }}>Browse Marketplace</button>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {showQRPrompt && (
+        <div className="modal-overlay" style={{ zIndex: 10000, display: 'flex' }} onClick={closeModals}>
+          <div className="glass-panel modal-content text-center animate-scale-up" style={{ zIndex: 10001, background: 'white', color: 'black', opacity: 1, transform: 'none', padding: '2rem', borderRadius: '2rem', maxWidth: '420px', width: '95%' }} onClick={(e) => e.stopPropagation()}>
+            <button className="close-modal" type="button" onClick={closeModals} style={{ position: 'absolute', top: '15px', right: '15px', color: 'black', background: '#f5f5f5', borderRadius: '50%', padding: '5px', border: 'none' }}><X size={20} /></button>
+            <div className="modal-header">
+              <div className="qr-icon" style={{ marginBottom: '1rem', color: 'var(--primary)', display: 'flex', justifyContent: 'center' }}><QrCode size={48} /></div>
+              <h3>Scan to Pay</h3>
+              <p style={{ fontSize: '0.875rem', color: '#666' }}>Scan this with your mobile to see the bill and pay.</p>
+              <p style={{ fontWeight: '700', color: 'var(--primary)', fontSize: '1.25rem', marginTop: '0.5rem' }}>
+                Total: Rs. {cart.reduce((sum, item) => sum + (parsePrice(item.price) * item.quantity), 0)}
+              </p>
+            </div>
+            <div style={{ backgroundColor: 'white', padding: '1rem', borderRadius: '1rem', display: 'inline-block', margin: '1.5rem 0', border: '1px solid #eee' }}>
+              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`${window.location.protocol}//${networkIp}${window.location.port ? ':' + window.location.port : ''}/bill/${paymentSessionId}`)}`} alt="Payment QR Code" style={{ width: '200px', height: '200px' }} />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', padding: '1rem', backgroundColor: '#f5f5f5', borderRadius: '1rem' }}>
+              <Loader2 className="animate-spin" size={20} color="var(--primary)" />
+              <span style={{ fontSize: '0.875rem', fontWeight: '600' }}>Waiting for mobile scan...</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {success && (
+        <div className="modal-overlay" style={{ zIndex: 10000, display: 'flex' }} onClick={closeModals}>
+          <div className="glass-panel modal-content text-center animate-scale-up" style={{ zIndex: 10001, background: 'white', padding: '2rem', borderRadius: '1.5rem', maxWidth: '420px', width: '95%' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ width: '80px', height: '80px', background: '#eef2ef', color: 'var(--primary)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}><CheckCircle size={48} /></div>
+            <h3>Purchase Successful!</h3>
+            <p>Your order has been placed successfully.</p>
+            <div className="modal-actions" style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <button type="button" onClick={() => navigate('/dashboard')} className="btn-primary w-full" style={{ padding: '1rem', borderRadius: '9999px', background: 'var(--gradient-primary)', color: 'white', border: 'none', fontWeight: '700', cursor: 'pointer' }}>Go to Dashboard</button>
+              <button type="button" onClick={closeModals} className="btn-text w-full" style={{ color: '#888', fontWeight: '500', cursor: 'pointer', background: 'none', border: 'none' }}>Continue Browsing</button>
+            </div>
           </div>
         </div>
       )}

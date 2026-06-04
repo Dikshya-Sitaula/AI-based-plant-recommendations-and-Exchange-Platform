@@ -37,7 +37,7 @@ router.post('/signup', async (req, res) => {
       [fullName, email, password]
     );
 
-    res.status(201).json({ message: 'User created successfully', fullName });
+    res.status(201).json({ message: 'User created successfully', fullName, userId: result.insertId });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Database error' });
