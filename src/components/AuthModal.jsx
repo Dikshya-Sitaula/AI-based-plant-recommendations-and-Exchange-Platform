@@ -15,6 +15,7 @@ export default function AuthModal({ open, onClose, onSuccess }) {
   const titleId = useId();
   const dialogRef = useRef(null);
   const firstFieldRef = useRef(null);
+  const emailRef = useRef(null);
 
   const [mode, setMode] = useState('signIn'); // 'signIn' | 'create'
   const [fullName, setFullName] = useState('');
@@ -34,13 +35,7 @@ export default function AuthModal({ open, onClose, onSuccess }) {
     special: /[!@#$%^&*(),.?":{}|<>]/.test(password),
   };
 
-  const canSubmit = useMemo(() => {
-    const hasEmail = email.trim().length > 0;
-    const isPasswordValid = passwordCriteria.length && passwordCriteria.alphanumeric && passwordCriteria.special;
-    
-    if (mode === 'signIn') return hasEmail && password.length > 0;
-    return fullName.trim() !== '' && hasEmail && isPasswordValid && confirmPassword === password;
-  }, [email, password, confirmPassword, mode, passwordCriteria, fullName]);
+
 
   useEffect(() => {
     if (!open) return undefined;
@@ -71,14 +66,20 @@ export default function AuthModal({ open, onClose, onSuccess }) {
     const emailTrimmed = email.trim();
 
     if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(emailTrimmed) || emailTrimmed.includes('@.')) {
-      setError('invalid username');
-      firstFieldRef.current?.focus();
+      setError('Invalid username');
+      emailRef.current?.focus();
+      return;
+    }
+
+    if (mode === 'signIn' && !password) {
+      setError('Password is required.');
       return;
     }
 
     if (mode === 'create') {
       if (!fullName.trim()) {
         setError('Full Name is required.');
+        firstFieldRef.current?.focus();
         return;
       }
       if (!passwordCriteria.length || !passwordCriteria.special || !passwordCriteria.alphanumeric) {
@@ -86,7 +87,7 @@ export default function AuthModal({ open, onClose, onSuccess }) {
         return;
       }
       if (password !== confirmPassword) {
-        setError('invalid password');
+        setError('Invalid password');
         return;
       }
     }
@@ -173,7 +174,7 @@ export default function AuthModal({ open, onClose, onSuccess }) {
             </button>
           </div>
 
-          <form className="am-form" onSubmit={handleSubmit}>
+          <form className="am-form" onSubmit={handleSubmit} noValidate>
             {mode === 'create' && (
               <div className="am-field">
                 <label className="am-label" htmlFor="am-fullname">Full Name</label>
@@ -198,7 +199,10 @@ export default function AuthModal({ open, onClose, onSuccess }) {
                 <span className="am-icon" aria-hidden="true"><Mail size={18} /></span>
                 <input
                   id="am-email"
-                  ref={mode === 'signIn' ? firstFieldRef : null}
+                  ref={(el) => {
+                    emailRef.current = el;
+                    if (mode === 'signIn') firstFieldRef.current = el;
+                  }}
                   className="am-input"
                   type="email"
                   autoComplete="email"
@@ -296,7 +300,7 @@ export default function AuthModal({ open, onClose, onSuccess }) {
               </div>
             )}
 
-            <button className="am-submit" type="submit" disabled={!canSubmit || submitting}>
+            <button className="am-submit" type="submit" disabled={submitting}>
               {submitting ? 'Please wait…' : submitLabel}
             </button>
           </form>
