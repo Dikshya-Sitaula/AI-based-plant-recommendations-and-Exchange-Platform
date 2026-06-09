@@ -71,7 +71,7 @@ export default function AuthModal({ open, onClose, onSuccess }) {
     const emailTrimmed = email.trim();
 
     if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(emailTrimmed) || emailTrimmed.includes('@.')) {
-      setError('invalid email');
+      setError('invalid username');
       firstFieldRef.current?.focus();
       return;
     }

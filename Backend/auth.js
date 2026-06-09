@@ -20,7 +20,7 @@ router.post('/signup', async (req, res) => {
   const { fullName, email, password, confirmPassword } = req.body;
 
   if (!fullName || fullName.trim() === '') return res.status(400).json({ message: 'Full Name is required.' });
-  if (!isEmailValid(email)) return res.status(400).json({ message: 'Please enter a valid email.' });
+  if (!isEmailValid(email)) return res.status(400).json({ message: 'invalid username' });
   if (password !== confirmPassword) return res.status(400).json({ message: 'invalid password' });
   if (!validatePassword(password)) return res.status(400).json({ message: 'Password does not meet criteria.' });
 
