@@ -34,7 +34,7 @@ export default function AuthModal({ open, onClose, onSuccess }) {
   };
 
   const canSubmit = useMemo(() => {
-    const isEmailValid = /\S+@\S+\.\S+/.test(email.trim());
+    const isEmailValid = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email.trim()) && !email.includes('@.');
     const isPasswordValid = passwordCriteria.length && passwordCriteria.alphanumeric && passwordCriteria.special;
     
     if (mode === 'signIn') return isEmailValid && password.length > 0;
@@ -69,7 +69,7 @@ export default function AuthModal({ open, onClose, onSuccess }) {
 
     const emailTrimmed = email.trim();
 
-    if (!/\S+@\S+\.\S+/.test(emailTrimmed)) {
+    if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(emailTrimmed) || emailTrimmed.includes('@.')) {
       setError('Please enter a valid email address.');
       firstFieldRef.current?.focus();
       return;

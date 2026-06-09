@@ -100,7 +100,7 @@ export default function Contact() {
     setFilledFields(prev => ({ ...prev, [key]: value.trim() !== '' }));
     if (errors[key]) setErrors(prev => ({ ...prev, [key]: false }));
     if (key === 'name') setValidName(value.trim().length > 1);
-    if (key === 'email') setValidEmail(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim()));
+    if (key === 'email') setValidEmail(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value.trim()) && !value.includes('@.'));
     if (key === 'message') setCharCount(value.length);
   };
 
@@ -129,7 +129,7 @@ export default function Contact() {
   }, [openFaq]);
 
   const handleSubmit = () => {
-    const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim());
+    const isEmailValid = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(formData.email.trim()) && !formData.email.includes('@.');
     const newErrors = {
       name: formData.name.trim().length === 0,
       email: !isEmailValid,
