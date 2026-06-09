@@ -1,5 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import {
+  AlertCircle,
   Eye,
   EyeOff,
   Leaf,
@@ -70,7 +71,7 @@ export default function AuthModal({ open, onClose, onSuccess }) {
     const emailTrimmed = email.trim();
 
     if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(emailTrimmed) || emailTrimmed.includes('@.')) {
-      setError('Please enter a valid email address.');
+      setError('invalid email');
       firstFieldRef.current?.focus();
       return;
     }
@@ -288,7 +289,12 @@ export default function AuthModal({ open, onClose, onSuccess }) {
               </div>
             </div>
 
-            {error && <div className="am-error" role="alert">{error}</div>}
+            {error && (
+              <div className="am-error" role="alert" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <AlertCircle size={18} />
+                <span>{error}</span>
+              </div>
+            )}
 
             <button className="am-submit" type="submit" disabled={!canSubmit || submitting}>
               {submitting ? 'Please wait…' : submitLabel}
