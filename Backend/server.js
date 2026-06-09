@@ -39,10 +39,22 @@ const plantDetailsMap = require('./plantDetails');
              id INT AUTO_INCREMENT PRIMARY KEY,
              full_name VARCHAR(255) NOT NULL,
              email VARCHAR(255) NOT NULL UNIQUE,
-             password VARCHAR(255) NOT NULL,
+             password VARCHAR(255),
+             google_id VARCHAR(255) UNIQUE,
+             apple_id VARCHAR(255) UNIQUE,
              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
            )
          `);
+
+         // Migration: Add columns to existing table if they don't exist
+         try {
+           await db.execute('ALTER TABLE users MODIFY password VARCHAR(255) NULL');
+           await db.execute('ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(255) UNIQUE AFTER password');
+           await db.execute('ALTER TABLE users ADD COLUMN IF NOT EXISTS apple_id VARCHAR(255) UNIQUE AFTER google_id');
+         } catch (migrateErr) {
+           // IF NOT EXISTS is only MySQL 8.0.19+, handling for older versions
+           console.log('Migration note:', migrateErr.message);
+         }
 
          // Create payment_sessions table
          await db.execute(`

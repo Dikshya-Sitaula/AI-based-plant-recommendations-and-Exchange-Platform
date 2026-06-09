@@ -1,4 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useGoogleLogin } from '@react-oauth/google';
 import {
   AlertCircle,
   Eye,
@@ -28,14 +29,103 @@ export default function AuthModal({ open, onClose, onSuccess }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  // Password criteria logic
+  // Google Login Flow
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setSubmitting(true);
+      try {
+        const resInfo = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+        });
+        const googleUser = await resInfo.json();
+
+        const response = await fetch(`http://${window.location.hostname}:5000/api/auth/google`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            email: googleUser.email,
+            fullName: googleUser.name,
+            googleId: googleUser.sub
+          }),
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message);
+        onSuccess?.({ email: data.email, rememberMe, mode, fullName: data.fullName, userId: data.userId });
+      } catch (err) {
+        setError(err.message || 'Google login failed.');
+      } finally {
+        setSubmitting(false);
+      }
+    },
+    onError: () => setError('Google login failed.'),
+  });
+
+  // Apple SDK Initialization
+  useEffect(() => {
+    if (!open) return;
+    
+    if (!document.getElementById('apple-auth-js')) {
+      const script = document.createElement('script');
+      script.id = 'apple-auth-js';
+      script.src = 'https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/auth/en_US/appleid.auth.js';
+      script.async = true;
+      document.body.appendChild(script);
+    }
+
+    const initApple = () => {
+      if (window.AppleID) {
+        window.AppleID.auth.init({
+          clientId: import.meta.env.VITE_APPLE_CLIENT_ID,
+          scope: 'name email',
+          redirectURI: window.location.origin,
+          usePopup: true
+        });
+      }
+    };
+
+    if (window.AppleID) initApple();
+    else document.getElementById('apple-auth-js')?.addEventListener('load', initApple);
+  }, [open]);
+
+  const handleAppleLogin = async () => {
+    try {
+      const response = await window.AppleID.auth.signIn();
+      const { identityToken, user } = response;
+      
+      setSubmitting(true);
+      const res = await fetch(`http://${window.location.hostname}:5000/api/auth/apple`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          identityToken, 
+          fullName: user ? `${user.name.firstName} ${user.name.lastName}` : 'Apple User' 
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+      onSuccess?.({ email: data.email, rememberMe, mode, fullName: data.fullName, userId: data.userId });
+    } catch (err) {
+      if (err.error !== 'popup_closed_by_user') {
+        setError('Apple login failed.');
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const passwordCriteria = {
     length: password.length >= 6,
     alphanumeric: /[a-zA-Z]/.test(password) && /[0-9]/.test(password),
     special: /[!@#$%^&*(),.?":{}|<>]/.test(password),
   };
 
-
+  const canSubmit = useMemo(() => {
+    const hasEmail = email.trim().length > 0;
+    const isPasswordValid = passwordCriteria.length && passwordCriteria.alphanumeric && passwordCriteria.special;
+    
+    if (mode === 'signIn') return hasEmail && password.length > 0;
+    return fullName.trim() !== '' && hasEmail && isPasswordValid && confirmPassword === password;
+  }, [email, password, confirmPassword, mode, passwordCriteria, fullName]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -316,7 +406,7 @@ export default function AuthModal({ open, onClose, onSuccess }) {
               type="button"
               className="am-social-icon-btn am-social-icon-btn-google"
               aria-label="Continue with Google"
-              onClick={() => setError('Google sign-in isn’t wired yet.')}
+              onClick={() => googleLogin()}
             >
               <GoogleMark className="am-social-svg" aria-hidden="true" />
             </button>
@@ -324,7 +414,7 @@ export default function AuthModal({ open, onClose, onSuccess }) {
               type="button"
               className="am-social-icon-btn am-social-icon-btn-apple"
               aria-label="Continue with Apple"
-              onClick={() => setError('Apple sign-in isn’t wired yet.')}
+              onClick={handleAppleLogin}
             >
               <AppleMark className="am-social-svg am-social-svg-apple" />
             </button>
@@ -362,7 +452,6 @@ export default function AuthModal({ open, onClose, onSuccess }) {
   );
 }
 
-/** Official multicolor Google “G” mark (brand colors). */
 function GoogleMark({ className }) {
   return (
     <svg className={className} viewBox="0 0 24 24" width="28" height="28" focusable="false">
@@ -386,7 +475,6 @@ function GoogleMark({ className }) {
   );
 }
 
-/** Apple logo mark (monochrome silhouette, 24×24). */
 function AppleMark({ className }) {
   return (
     <svg
@@ -404,4 +492,3 @@ function AppleMark({ className }) {
     </svg>
   );
 }
-

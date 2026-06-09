@@ -12,6 +12,7 @@
     "dev-all": "concurrently \"npm run dev\" \"npm run dev-backend\""
   },
   "dependencies": {
+    "@react-oauth/google": "^0.13.5",
     "lucide-react": "^1.11.0",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
