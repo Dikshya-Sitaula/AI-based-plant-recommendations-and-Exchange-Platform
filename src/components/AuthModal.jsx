@@ -34,11 +34,11 @@ export default function AuthModal({ open, onClose, onSuccess }) {
   };
 
   const canSubmit = useMemo(() => {
-    const isEmailValid = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email.trim()) && !email.includes('@.');
+    const hasEmail = email.trim().length > 0;
     const isPasswordValid = passwordCriteria.length && passwordCriteria.alphanumeric && passwordCriteria.special;
     
-    if (mode === 'signIn') return isEmailValid && password.length > 0;
-    return fullName.trim() !== '' && isEmailValid && isPasswordValid && confirmPassword === password;
+    if (mode === 'signIn') return hasEmail && password.length > 0;
+    return fullName.trim() !== '' && hasEmail && isPasswordValid && confirmPassword === password;
   }, [email, password, confirmPassword, mode, passwordCriteria, fullName]);
 
   useEffect(() => {
