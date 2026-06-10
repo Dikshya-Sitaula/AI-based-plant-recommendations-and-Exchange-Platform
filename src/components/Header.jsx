@@ -172,3 +172,4 @@ export default function Header({ isAuthenticated, onOpenAuth, onSwitchAccount, o
     </header>
   );
 }
+ 
