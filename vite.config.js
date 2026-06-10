@@ -7,5 +7,6 @@ export default defineConfig({
   server: {
     host: true,
     port: 5173,
+    allowedHosts:[ "f6ee7fbec7693d.lhr.life" ]
   }
 })

@@ -20,6 +20,9 @@
     linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.7));
   border: 1px solid rgba(226, 232, 206, 0.8);
   box-shadow: 0 50px 120px rgba(0, 0, 0, 0.28);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .am-decor {
@@ -86,6 +89,7 @@
   text-align: center;
   position: relative;
   z-index: 1;
+  flex-shrink: 0;
 }
 
 .am-brand {
@@ -143,6 +147,8 @@
   box-shadow: 0 20px 60px rgba(45, 90, 39, 0.08);
   position: relative;
   z-index: 1;
+  overflow-y: auto;
+  max-height: calc(90vh - 200px);
 }
 
 .am-toggle {

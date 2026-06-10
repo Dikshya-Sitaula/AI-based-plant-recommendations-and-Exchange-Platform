@@ -392,12 +392,109 @@ const plantDetailsMap = require('./plantDetails');
        try {
          const [rows] = await db.execute('SELECT * FROM payment_sessions WHERE id = ?', [req.params.sessionId]);
          const session = rows[0];
+         if (!session) {
+           return res.status(404).send('<h1>Bill not found</h1>');
+         }
          if (session) {
            session.cart_items = JSON.parse(session.cart_items);
          }
-         res.json(session);
+         
+         // Generate HTML bill page for mobile viewing
+         const cartItemsHTML = session.cart_items.map(item => `
+           <tr>
+             <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.name}</td>
+             <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">x${item.quantity}</td>
+             <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">Rs. ${item.price * item.quantity}</td>
+           </tr>
+         `).join('');
+
+         const billHTML = `
+           <!DOCTYPE html>
+           <html>
+           <head>
+             <meta charset="UTF-8">
+             <meta name="viewport" content="width=device-width, initial-scale=1.0">
+             <title>Leaf & Life - Bill</title>
+             <style>
+               body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+               .container { max-width: 500px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+               .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #2D5A27; padding-bottom: 20px; }
+               .logo { font-size: 24px; color: #2D5A27; font-weight: bold; }
+               .tagline { font-size: 12px; color: #666; margin-top: 5px; }
+               .bill-info { margin-bottom: 20px; font-size: 13px; }
+               .bill-info-row { display: flex; justify-content: space-between; padding: 8px 0; }
+               .label { color: #666; font-weight: 500; }
+               .value { color: #333; }
+               table { width: 100%; margin: 20px 0; }
+               th { background: #f9f9f9; padding: 10px; text-align: left; border-bottom: 2px solid #ddd; }
+               tr { border-bottom: 1px solid #eee; }
+               td { padding: 10px; }
+               .total-section { background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0; }
+               .total-row { display: flex; justify-content: space-between; padding: 8px 0; font-weight: bold; }
+               .total-amount { font-size: 20px; color: #2D5A27; }
+               .status { text-align: center; padding: 15px; background: #e8f5e9; color: #2D5A27; border-radius: 8px; margin-top: 20px; font-weight: bold; }
+               .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #999; }
+             </style>
+           </head>
+           <body>
+             <div class="container">
+               <div class="header">
+                 <div class="logo">🌿 Leaf & Life</div>
+                 <div class="tagline">Your Plants Missed You</div>
+               </div>
+               
+               <div class="bill-info">
+                 <div class="bill-info-row">
+                   <span class="label">Bill ID:</span>
+                   <span class="value">${session.id}</span>
+                 </div>
+                 <div class="bill-info-row">
+                   <span class="label">Status:</span>
+                   <span class="value" style="color: ${session.status === 'completed' ? '#4caf50' : '#ff9800'}; font-weight: bold;">${session.status.toUpperCase()}</span>
+                 </div>
+                 <div class="bill-info-row">
+                   <span class="label">Date:</span>
+                   <span class="value">${new Date(session.created_at).toLocaleString()}</span>
+                 </div>
+               </div>
+
+               <h3 style="margin: 20px 0 10px 0; color: #2D5A27;">Order Items</h3>
+               <table>
+                 <thead>
+                   <tr>
+                     <th>Plant Name</th>
+                     <th style="text-align: center;">Qty</th>
+                     <th style="text-align: right;">Amount</th>
+                   </tr>
+                 </thead>
+                 <tbody>
+                   ${cartItemsHTML}
+                 </tbody>
+               </table>
+
+               <div class="total-section">
+                 <div class="total-row">
+                   <span>Total Amount:</span>
+                   <span class="total-amount">Rs. ${session.total_amount}</span>
+                 </div>
+               </div>
+
+               ${session.status === 'completed' ? '<div class="status">✓ Payment Completed Successfully</div>' : '<div class="status">⏳ Awaiting Payment Completion</div>'}
+
+               <div class="footer">
+                 <p>Thank you for your purchase!</p>
+                 <p>For support, contact: support@leafandlife.com</p>
+               </div>
+             </div>
+           </body>
+           </html>
+         `;
+         
+         res.setHeader('Content-Type', 'text/html; charset=utf-8');
+         res.send(billHTML);
        } catch (error) {
-         res.status(500).json({ error: 'Failed to fetch bill' });
+         console.error(error);
+         res.status(500).send('<h1>Error fetching bill</h1>');
        }
      });
 

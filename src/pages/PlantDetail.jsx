@@ -308,7 +308,7 @@ export default function PlantDetail() {
   
   const API_BASE = `http://${networkIp}:5000`;
   const HOST_URL = `${window.location.protocol}//${networkIp}${window.location.port ? ':' + window.location.port : ''}`;
-  const billURL = `${HOST_URL}/bill/${paymentSessionId}`;
+  const billURL = `${API_BASE}/api/payment/bill/${paymentSessionId}`;
 
   const location = useLocation();
   const fromRecommendation = location.state?.from === 'recommendation';
