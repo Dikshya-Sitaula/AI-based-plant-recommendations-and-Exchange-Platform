@@ -507,3 +507,4 @@ export default function Recommendation() {
     </div>
   );
 }
+  

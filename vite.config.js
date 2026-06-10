@@ -10,3 +10,4 @@ export default defineConfig({
     allowedHosts:[ "f6ee7fbec7693d.lhr.life" ]
   }
 })
+  
