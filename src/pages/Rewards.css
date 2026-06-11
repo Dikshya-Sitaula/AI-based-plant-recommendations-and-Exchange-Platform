@@ -240,3 +240,122 @@
   color: #648064;
   font-weight: 600;
 }
+/* ─── Prize banner ─── */
+.rh-prize-banner {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 1.5rem;
+  align-items: center;
+  background: linear-gradient(135deg, #1c3b1a 0%, #2d5a27 55%, #528d4a 100%);
+  border-radius: 1.25rem;
+  padding: 1.75rem 1.75rem 1.75rem 2rem;
+  margin-bottom: 2rem;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 12px 40px rgba(28, 59, 26, 0.22);
+}
+
+.rh-prize-banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle at 20% 80%, rgba(168, 230, 207, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 90% 20%, rgba(255, 255, 255, 0.06) 0%, transparent 40%);
+  pointer-events: none;
+}
+
+.rh-prize-copy {
+  position: relative;
+  z-index: 1;
+  color: #fff;
+}
+
+.rh-prize-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--rh-gold);
+  margin-bottom: 0.65rem;
+}
+
+.rh-crown {
+  color: var(--rh-gold);
+  filter: drop-shadow(0 0 6px rgba(212, 160, 23, 0.5));
+}
+
+.rh-prize-title {
+  font-size: 1.7rem;
+  font-weight: 900;
+  color: #bdf7a7;
+  
+  margin: 0 0 0.5rem;
+  letter-spacing: -0.02em;
+}
+
+.rh-prize-desc {
+  font-size: 0.88rem;
+  opacity: 0.88;
+  line-height: 1.55;
+  margin: 0 0 1.1rem;
+  max-width: 380px;
+}
+
+.rh-prize-meta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.rh-prize-timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.85rem;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.rh-prize-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.55rem 1.1rem;
+  background: linear-gradient(135deg, #e8c547, var(--rh-gold));
+  color: #1a2f1a;
+  border: none;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(212, 160, 23, 0.35);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.rh-prize-cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 22px rgba(212, 160, 23, 0.45);
+}
+
+.rh-prize-visual {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.rh-prize-img {
+  width: 100%;
+  max-width: 220px;
+  height: auto;
+  border-radius: 1rem;
+  object-fit: cover;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+}
