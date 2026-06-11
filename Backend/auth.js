@@ -1,3 +1,7 @@
+/**
+ * Authentication module
+ * Handles user registration and login functionalities.
+ */
 const express = require('express');
 const router = express.Router();
 const db = require('./db');
