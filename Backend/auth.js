@@ -59,7 +59,7 @@ router.post('/login', async (req, res) => {
     const [rows] = await db.execute('SELECT * FROM users WHERE email = ? LIMIT 1', [email]);
     const user = rows[0];
 
-    if (!user) return res.status(401).json({ message: 'invalid username' });
+    if (!user) return res.status(401).json({ message: 'Invalid username' });
     if (user.password !== password) return res.status(401).json({ message: 'Invalid password' });
 
     // SUCCESS: Record the login event in 'login_history'
