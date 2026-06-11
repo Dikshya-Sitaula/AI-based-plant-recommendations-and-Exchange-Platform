@@ -24,3 +24,117 @@
   margin: 0 auto;
   padding-bottom: 2rem;
 }
+
+/* ─── Header ─── */
+.rh-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 1.75rem;
+  flex-wrap: wrap;
+}
+
+.rh-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--rh-text);
+  margin: 0 0 0.35rem;
+  letter-spacing: -0.02em;
+}
+
+.rh-title-icon {
+  color: var(--rh-primary);
+}
+
+.rh-subtitle {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--rh-muted);
+  font-weight: 500;
+}
+
+.rh-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.rh-notify-btn {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--rh-border);
+  background: var(--rh-card);
+  color: #063a06;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.rh-notify-btn:hover {
+  box-shadow: 0 4px 14px rgba(45, 90, 39, 0.1);
+  transform: translateY(-1px);
+}
+
+.rh-notify-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 0.65rem;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--rh-card);
+}
+
+.rh-profile {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.35rem 0.85rem 0.35rem 0.35rem;
+  background: var(--rh-card);
+  border: 1px solid var(--rh-border);
+  border-radius: 999px;
+}
+
+.rh-profile-img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--rh-border);
+}
+
+.rh-profile-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.rh-profile-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #045e04;
+}
+
+.rh-profile-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--rh-primary);
+}
+
