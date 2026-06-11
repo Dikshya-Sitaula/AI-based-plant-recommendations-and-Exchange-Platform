@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { CheckCircle, XCircle, ShoppingBag, CreditCard, Loader2, ArrowLeft } from 'lucide-react';
+import { CheckCircle, XCircle, ShoppingBag, CreditCard, Loader2 } from 'lucide-react';
+import './MobileBill.css';
 
 export default function MobileBill() {
   const { sessionId } = useParams();
@@ -51,81 +52,83 @@ export default function MobileBill() {
   };
 
   if (loading) return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f8fbf9', padding: '2rem' }}>
+    <div className="bill-state-container">
       <Loader2 className="animate-spin" size={40} color="var(--primary)" />
-      <p style={{ marginTop: '1rem', fontWeight: '600', color: '#666' }}>Loading your bill...</p>
+      <p className="bill-state-desc" style={{ textAlign: 'center' }}>Loading your bill...</p>
     </div>
   );
 
   if (status === 'error' || !session) return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#fff', padding: '2rem', textAlign: 'center' }}>
+    <div className="bill-state-container">
       <XCircle size={64} color="#ff4b4b" />
-      <h2 style={{ marginTop: '1.5rem', fontWeight: '800' }}>Bill Not Found</h2>
-      <p style={{ color: '#666', marginTop: '0.5rem' }}>This payment session may have expired or is invalid.</p>
-      <button onClick={() => navigate('/')} className="btn-primary" style={{ marginTop: '2rem', width: '100%' }}>Return Home</button>
+      <h2 className="bill-state-title">Bill Not Found</h2>
+      <p className="bill-state-desc">This payment session may have expired or is invalid.</p>
+      <div className="bill-state-actions">
+        <button onClick={() => navigate('/')} className="btn-primary" style={{ width: '100%' }}>Return Home</button>
+      </div>
     </div>
   );
 
   if (status === 'completed') return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#fff', padding: '2rem', textAlign: 'center' }}>
-      <div style={{ width: '100px', height: '100px', background: '#eef2ef', color: '#2e603a', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '2rem' }}>
+    <div className="bill-state-container">
+      <div className="bill-success-icon-wrap">
         <CheckCircle size={64} />
       </div>
-      <h1 style={{ fontSize: '2rem', fontWeight: '900', color: '#1a1a1a' }}>Payment Successful!</h1>
-      <p style={{ color: '#666', fontSize: '1.1rem', marginTop: '1rem', lineHeight: '1.6' }}>
+      <h1 className="bill-state-title">Payment Successful!</h1>
+      <p className="bill-state-desc">
         Your transaction for <b>Rs. {session.total_amount}</b> has been processed via eSewa.
       </p>
-      <div style={{ marginTop: '3rem', width: '100%' }}>
-        <button onClick={() => navigate('/dashboard')} className="btn-primary" style={{ width: '100%', padding: '1.25rem', fontSize: '1.1rem', borderRadius: '9999px' }}>Go to Dashboard</button>
-        <p style={{ marginTop: '1.5rem', fontSize: '0.9rem', color: '#999' }}>You can close this window now.</p>
+      <div className="bill-state-actions">
+        <button onClick={() => navigate('/dashboard')} className="btn-primary" style={{ width: '100%' }}>Go to Dashboard</button>
+        <p className="bill-footer-note">You can close this window now.</p>
       </div>
     </div>
   );
 
   return (
-    <div style={{ background: '#f0f4f1', minHeight: '100vh', padding: '1rem' }}>
-      <div style={{ maxWidth: '500px', margin: '0 auto', background: 'white', borderRadius: '2rem', overflow: 'hidden', boxShadow: '0 10px 25px rgba(0,0,0,0.05)' }}>
+    <div className="mobile-bill-container">
+      <div className="bill-card animate-fade-in">
         {/* Header */}
-        <div style={{ background: 'var(--gradient-primary)', padding: '2.5rem 1.5rem', textAlign: 'center', color: 'white' }}>
-          <ShoppingBag size={40} style={{ marginBottom: '1rem', opacity: 0.9 }} />
-          <h2 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0 }}>Payment Summary</h2>
-          <p style={{ opacity: 0.8, fontSize: '0.9rem', marginTop: '0.5rem' }}>Order #{session.id.split('-')[1]}</p>
+        <div className="bill-header">
+          <ShoppingBag size={48} className="bill-header-icon" />
+          <h2>Payment Summary</h2>
+          <p>Order #{session.id.split('-')[1]}</p>
         </div>
 
         {/* Bill Items */}
-        <div style={{ padding: '2rem 1.5rem' }}>
-          <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '1.5rem', color: '#444' }}>Items in your cart</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <div className="bill-body">
+          <h3>Items in your cart</h3>
+          <div className="bill-items-list">
             {session.cart_items.map((item, idx) => (
-              <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div key={idx} className="bill-item">
                 <img 
                   src={item.image.startsWith('http') ? item.image.replace('localhost', window.location.hostname) : `http://${window.location.hostname}:5000${item.image}`} 
                   alt={item.name} 
-                  style={{ width: '60px', height: '60px', borderRadius: '12px', objectFit: 'cover' }}
+                  className="bill-item-img"
                 />
-                <div style={{ flex: 1 }}>
-                  <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: '600' }}>{item.name}</h4>
-                  <p style={{ margin: 0, fontSize: '0.85rem', color: '#888' }}>Quantity: {item.quantity}</p>
+                <div className="bill-item-info">
+                  <h4>{item.name}</h4>
+                  <p>Quantity: {item.quantity}</p>
                 </div>
-                <div style={{ fontWeight: '700', color: '#1a1a1a' }}>
+                <div className="bill-item-price">
                   {item.price}
                 </div>
               </div>
             ))}
           </div>
 
-          <div style={{ borderTop: '2px dashed #eee', margin: '2rem 0', paddingTop: '1.5rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-              <span style={{ color: '#888', fontWeight: '500' }}>Subtotal</span>
-              <span style={{ fontWeight: '600' }}>Rs. {session.total_amount}</span>
+          <div className="bill-summary">
+            <div className="bill-summary-row">
+              <span>Subtotal</span>
+              <span>Rs. {session.total_amount}</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <span style={{ color: '#888', fontWeight: '500' }}>Service Fee</span>
-              <span style={{ fontWeight: '600', color: '#2e603a' }}>FREE</span>
+            <div className="bill-summary-row">
+              <span>Service Fee</span>
+              <span style={{ color: 'var(--primary)' }}>FREE</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fbf9', padding: '1.25rem', borderRadius: '1rem' }}>
-              <span style={{ fontWeight: '700', fontSize: '1.1rem' }}>Total Bill</span>
-              <span style={{ fontWeight: '900', fontSize: '1.5rem', color: 'var(--primary)' }}>Rs. {session.total_amount}</span>
+            <div className="bill-total-box">
+              <span className="bill-total-label">Total Bill</span>
+              <span className="bill-total-value">Rs. {session.total_amount}</span>
             </div>
           </div>
 
@@ -133,23 +136,7 @@ export default function MobileBill() {
           <button 
             onClick={handlePayment}
             disabled={processing}
-            style={{ 
-              width: '100%', 
-              padding: '1.25rem', 
-              borderRadius: '9999px', 
-              background: '#41a124', // eSewa Green
-              color: 'white', 
-              border: 'none', 
-              fontWeight: '800', 
-              fontSize: '1.2rem', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              gap: '0.75rem',
-              cursor: 'pointer',
-              boxShadow: '0 6px 20px rgba(65, 161, 36, 0.2)',
-              transition: 'all 0.2s ease'
-            }}
+            className="btn-pay"
           >
             {processing ? (
               <Loader2 className="animate-spin" size={24} />
@@ -161,7 +148,7 @@ export default function MobileBill() {
             )}
           </button>
 
-          <p style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.8rem', color: '#999' }}>
+          <p className="bill-footer-note">
             Secure payment powered by Leaf-Life Bank Gateway.
           </p>
         </div>
