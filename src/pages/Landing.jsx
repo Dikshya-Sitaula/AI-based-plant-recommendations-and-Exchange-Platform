@@ -47,13 +47,6 @@ export default function Landing() {
     navigate('/dashboard');
   };
 
-  const handleSwitchAccount = () => {
-    localStorage.removeItem('leafLifeSubmitted');
-    localStorage.removeItem('leafLifeAuthenticated');
-    localStorage.removeItem('leafLifeUserName');
-    window.location.reload();
-  };
-
   const handleFeatureNav = (path) => {
     if (!isAuthenticated) {
       openModal();

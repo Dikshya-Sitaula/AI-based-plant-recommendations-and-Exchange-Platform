@@ -368,37 +368,6 @@ export default function Contact() {
         </div>
       </section>
 
-      {/* ─── SUPPORT CHANNELS ─── */}
-      <section className="support-section">
-        <div className="c-wrap">
-          <div className="sup-intro">
-            <div className="sr">
-              <div className="s-ey">Channels</div>
-              <h2 className="s-h2">Tailored support for<br /><em>every plant lover.</em></h2>
-            </div>
-          </div>
-          <div className="sup-list">
-            {[
-              { icon: <Sparkles size={24} />, title: 'AI Guidance Assistance', desc: 'Get quick answers on plant scanner diagnosis, space optimization, and customized recommendation logic.' },
-              { icon: <ShoppingBag size={24} />, title: 'Marketplace Assistance', desc: 'Our team assists with listings, connections, and all marketplace-related queries efficiently.' },
-              { icon: <Handshake size={24} />, title: 'Nursery Partnerships', desc: 'Are you a nursery owner looking to go digital? Let\'s help your business grow by reaching more plant enthusiasts through our hyperlocal platform.' },
-              { icon: <Settings size={24} />, title: 'Technical Assistance', desc: 'Experiencing technical issues or account problems? Our dedicated support team will resolve them quickly so your green journey stays smooth.' },
-            ].map((item, i) => (
-              <div className={`sup-item sr d${i + 1}`} key={item.title}>
-                <div className="si-l">
-                  <div className="si-ico">{item.icon}</div>
-                  <div className="si-title">{item.title}</div>
-                </div>
-                <div className="si-r">
-                  <div className="si-desc">{item.desc}</div>
-                  <div className="si-link">Learn more <ArrowRight size={12} /></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ─── FAQ ─── */}
       <section className="faq-section">
         <div className="faq-mesh" /><div className="faq-dots-bg" />
