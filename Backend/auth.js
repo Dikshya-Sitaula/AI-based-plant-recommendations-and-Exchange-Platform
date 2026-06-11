@@ -12,6 +12,7 @@ const isEmailValid = (email) => {
   return emailRegex.test(email);
 };
 
+// Helper: Validate password strength (min length, letters, numbers, special characters)
 const validatePassword = (password) => {
   const minLength = 6;
   const hasLetter = /[a-zA-Z]/.test(password);
