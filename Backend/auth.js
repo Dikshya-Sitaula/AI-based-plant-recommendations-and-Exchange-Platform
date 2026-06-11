@@ -80,4 +80,5 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// Export the authentication router
 module.exports = router;
