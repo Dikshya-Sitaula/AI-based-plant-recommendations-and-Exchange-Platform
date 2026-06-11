@@ -45,7 +45,7 @@ router.post('/signup', async (req, res) => {
 
     res.status(201).json({ message: 'User created successfully', fullName });
   } catch (err) {
-    console.error(err);
+    console.error('Signup Error:', err);
     res.status(500).json({ message: 'Database error' });
   }
 });
