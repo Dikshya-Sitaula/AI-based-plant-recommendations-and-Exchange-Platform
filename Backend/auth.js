@@ -75,7 +75,7 @@ router.post('/login', async (req, res) => {
       userId: user.id 
     });
   } catch (err) {
-    console.error(err);
+    console.error('Login Error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 });
