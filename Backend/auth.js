@@ -34,7 +34,7 @@ router.post('/signup', async (req, res) => {
     const [existing] = await db.execute('SELECT email FROM users WHERE email = ? LIMIT 1', [email]);
     if (existing.length > 0) return res.status(400).json({ message: 'Email already registered' });
 
-    // Insert into the new 'users' table
+    // Create a new user record in the 'users' table
     const [result] = await db.execute('INSERT INTO users (full_name, email, password) VALUES (?, ?, ?)', [fullName, email, password]);
     
     // Also record the signup event in 'login_history'
