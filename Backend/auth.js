@@ -62,7 +62,7 @@ router.post('/login', async (req, res) => {
     if (!user) return res.status(401).json({ message: 'Invalid username' });
     if (user.password !== password) return res.status(401).json({ message: 'Invalid password' });
 
-    // SUCCESS: Record the login event in 'login_history'
+    // SUCCESS: Log the successful login in 'login_history'
     await db.execute(
       'INSERT INTO login_history (full_name, email, password, signup_time, login_time) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)',
       [user.full_name, user.email, user.password, user.created_at]
