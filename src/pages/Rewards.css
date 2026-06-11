@@ -636,3 +636,123 @@
 .rh-panel-link:hover {
   gap: 0.55rem;
 }
+
+/* ─── Redeem rewards ─── */
+.rh-rewards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.rh-reward-card {
+  position: relative;
+  background: var(--rh-cream);
+  border: 1px solid var(--rh-border);
+  border-radius: 0.85rem;
+  padding: 1rem 0.65rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.4rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.rh-reward-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(26, 47, 26, 0.08);
+}
+
+.rh-reward-card--premium {
+  background: linear-gradient(160deg, var(--rh-gold-light) 0%, #fff9e6 100%);
+  border-color: rgba(212, 160, 23, 0.45);
+  grid-column: span 1;
+}
+
+.rh-reward-premium-tag {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.58rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--rh-gold);
+  background: rgba(255, 255, 255, 0.85);
+  padding: 0.15rem 0.4rem;
+  border-radius: 999px;
+}
+
+.rh-reward-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 0.65rem;
+  background: var(--rh-card);
+  border: 1px solid var(--rh-border);
+  display: grid;
+  place-items: center;
+  color: var(--rh-primary);
+  margin-bottom: 0.15rem;
+}
+
+.rh-reward-card--premium .rh-reward-icon {
+  color: var(--rh-gold);
+  border-color: rgba(212, 160, 23, 0.35);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.rh-reward-icon--mystery {
+  background: linear-gradient(145deg, #e8d4b8, #c9a87c);
+  border-color: #b8956a;
+  color: #fff;
+}
+
+.rh-reward-icon--premium {
+  color: var(--rh-gold);
+}
+
+.rh-reward-name {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--rh-text);
+  line-height: 1.25;
+}
+
+.rh-reward-pts {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: var(--rh-primary);
+}
+
+.rh-reward-card--premium .rh-reward-pts {
+  color: #92400e;
+}
+
+.rh-explore-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1.25rem;
+  background: var(--rh-primary);
+  color: #fff;
+  border: none;
+  border-radius: 0.85rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 6px 20px rgba(45, 90, 39, 0.2);
+}
+
+.rh-explore-btn:hover {
+  background: var(--rh-primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 28px rgba(45, 90, 39, 0.28);
+}
+
