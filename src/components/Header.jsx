@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { ChevronDown, X, Menu } from 'lucide-react';
+import { ChevronDown, X, Menu, ShoppingCart, Sparkles, Scan, LayoutDashboard, Users } from 'lucide-react';
 import logo from "../assets/Leaf and Life logo.png";
 import './Header.css';
 
@@ -46,11 +46,11 @@ export default function Header({ isAuthenticated, onOpenAuth, onSwitchAccount, o
   ];
 
   const megaMenuItems = [
-    { label: 'Marketplace', href: '/marketplace', icon: '🛒' },
-    { label: 'Smart Recommendation', href: '/recommendation', icon: '💡' },
-    { label: 'Smart Scan', href: '/scan', icon: '📷' },
-    { label: 'Dashboard', href: '/dashboard', icon: '📊' },
-    { label: 'Community', href: '/rewards', icon: '👥' },
+    { label: 'Marketplace', href: '/marketplace', icon: <ShoppingCart size={24} />, color: 'blue' },
+    { label: 'Recommendation', href: '/recommendation', icon: <Sparkles size={24} />, color: 'purple' },
+    { label: 'Smart Scan', href: '/scan', icon: <Scan size={28} />, color: 'primary' },
+    { label: 'Dashboard', href: '/dashboard', icon: <LayoutDashboard size={24} />, color: 'orange' },
+    { label: 'Community', href: '/rewards', icon: <Users size={24} />, color: 'teal' },
   ];
 
   const isFeaturePage = ['/marketplace', '/scan', '/recommendation', '/rewards', '/dashboard'].some(path => location.pathname.startsWith(path));
@@ -141,7 +141,7 @@ export default function Header({ isAuthenticated, onOpenAuth, onSwitchAccount, o
                   <Link 
                     key={item.href} 
                     to={item.href} 
-                    className="mobile-feature-item"
+                    className={`mobile-feature-item ${item.color}`}
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     <span className="feature-icon">{item.icon}</span>

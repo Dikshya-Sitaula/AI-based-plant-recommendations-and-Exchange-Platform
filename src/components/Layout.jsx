@@ -82,25 +82,25 @@ export default function Layout() {
           </Link>
           
           <nav className="sidebar-nav">
-            <NavLink to="/dashboard" className="sidebar-nav-item">
-              <LayoutDashboard size={20} />
-              <span>Dashboard</span>
+            <NavLink to="/marketplace" className="sidebar-nav-item">
+              <Store size={20} />
+              <span>Marketplace</span>
+            </NavLink>
+            <NavLink to="/recommendation" className="sidebar-nav-item">
+              <MapPin size={20} />
+              <span>Smart Recs</span>
             </NavLink>
             <NavLink to="/scan" className="sidebar-nav-item">
               <Camera size={20} />
               <span>Smart Scan</span>
             </NavLink>
-            <NavLink to="/marketplace" className="sidebar-nav-item">
-              <Store size={20} />
-              <span>Marketplace</span>
+            <NavLink to="/dashboard" className="sidebar-nav-item">
+              <LayoutDashboard size={20} />
+              <span>Dashboard</span>
             </NavLink>
             <NavLink to="/rewards" className="sidebar-nav-item">
               <Trophy size={20} />
               <span>Community</span>
-            </NavLink>
-            <NavLink to="/recommendation" className="sidebar-nav-item">
-              <MapPin size={20} />
-              <span>Smart Recs</span>
             </NavLink>
           </nav>
         </div>
@@ -135,9 +135,13 @@ export default function Layout() {
 
       {/* Bottom Navigation for Mobile */}
       <nav className="bottom-nav">
-        <NavLink to="/dashboard" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
-          <LayoutDashboard size={24} />
-          <span>Dashboard</span>
+        <NavLink to="/marketplace" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+          <Store size={24} />
+          <span>Market</span>
+        </NavLink>
+        <NavLink to="/recommendation" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+          <MapPin size={24} />
+          <span>Recommend</span>
         </NavLink>
         <NavLink to="/scan" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
           <div className="scan-btn">
@@ -145,13 +149,9 @@ export default function Layout() {
           </div>
           <span>Smart Scan</span>
         </NavLink>
-        <NavLink to="/recommendation" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
-          <MapPin size={24} />
-          <span>Recommend</span>
-        </NavLink>
-        <NavLink to="/marketplace" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
-          <Store size={24} />
-          <span>Market</span>
+        <NavLink to="/dashboard" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+          <LayoutDashboard size={24} />
+          <span>Dashboard</span>
         </NavLink>
         <NavLink to="/rewards" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
           <Trophy size={24} />
