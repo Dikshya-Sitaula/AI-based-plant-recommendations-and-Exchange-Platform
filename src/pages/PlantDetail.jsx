@@ -387,6 +387,10 @@ export default function PlantDetail() {
                 <span style={{ fontSize: '1.1rem', color: '#333', fontStyle: 'italic' }}>{detail.scientificName || plant.scientific_name}</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>English Name:</span>
+                <span style={{ fontSize: '1.1rem', color: '#333', fontWeight: '600' }}>{detail.englishName || plant.english_name || plant.name}</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Nepali Name:</span>
                 <span style={{ fontSize: '1.1rem', color: '#333', fontWeight: '600' }}>{detail.nepaliName || plant.nepali_name}</span>
               </div>

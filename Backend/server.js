@@ -111,6 +111,7 @@ const plantDetailsMap = require('./plantDetails');
             rule VARCHAR(255),
             scientific_name VARCHAR(255),
             nepali_name VARCHAR(255),
+            english_name VARCHAR(255),
             description TEXT,
             is_sold TINYINT(1) DEFAULT 0,
             buyer_id INT,
@@ -121,6 +122,7 @@ const plantDetailsMap = require('./plantDetails');
           const columnsToFix = [
             { name: 'scientific_name', type: 'VARCHAR(255)' },
             { name: 'nepali_name', type: 'VARCHAR(255)' },
+            { name: 'english_name', type: 'VARCHAR(255)' },
             { name: 'description', type: 'TEXT' },
             { name: 'tips_unlocked', type: 'TINYINT(1) DEFAULT 0' },
             { name: 'rule', type: 'VARCHAR(255)' },
@@ -144,7 +146,7 @@ const plantDetailsMap = require('./plantDetails');
           const [rows] = await db.execute('SELECT COUNT(*) as count FROM plants');
           if (rows[0].count === 0) {
             console.log('Seeding initial plant data...');
-            const insertQuery = 'INSERT INTO plants (name, type, price, location, image, space_tag, sunlight_need, min_temp, max_temp, purification_score, rule, scientific_name, nepali_name, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+            const insertQuery = 'INSERT INTO plants (name, type, price, location, image, space_tag, sunlight_need, min_temp, max_temp, purification_score, rule, scientific_name, nepali_name, english_name, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
             
             for (const plant of MVP_PLANTS) {
               const detail = plantDetailsMap[plant.name] || {};
@@ -162,6 +164,7 @@ const plantDetailsMap = require('./plantDetails');
                 plant.rule || '',
                 detail.scientificName || '',
                 detail.nepaliName || '',
+                detail.englishName || plant.name,
                 detail.description || ''
               ]);
             }
@@ -172,8 +175,8 @@ const plantDetailsMap = require('./plantDetails');
           console.log('Backfilling plant details into database...');
           for (const [name, detail] of Object.entries(plantDetailsMap)) {
             await db.execute(
-              'UPDATE plants SET scientific_name = ?, nepali_name = ?, description = ? WHERE name = ? AND (scientific_name IS NULL OR nepali_name IS NULL OR description IS NULL OR scientific_name = \'\' OR nepali_name = \'\' OR description = \'\')',
-              [detail.scientificName, detail.nepaliName, detail.description, name]
+              'UPDATE plants SET scientific_name = ?, nepali_name = ?, english_name = ?, description = ? WHERE name = ? AND (scientific_name IS NULL OR nepali_name IS NULL OR english_name IS NULL OR description IS NULL OR scientific_name = \'\' OR nepali_name = \'\' OR english_name = \'\' OR description = \'\')',
+              [detail.scientificName, detail.nepaliName, detail.englishName, detail.description, name]
             );
           }
           console.log('✅ Backfilling completed successfully');

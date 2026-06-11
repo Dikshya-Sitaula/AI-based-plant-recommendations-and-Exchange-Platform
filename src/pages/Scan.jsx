@@ -325,6 +325,7 @@ export default function Scan() {
   const displayPlant = identification ? {
     id: identification.localPlant?.id || (matched?.id ? `MATCHED-${matched.id}` : `SCAN-TEMP-${Date.now()}`),
     name: identification.localPlant?.name || matched?.name || identification.commonName || 'Unknown Species',
+    english_name: identification.localPlant?.english_name || matched?.englishName || identification.commonName || 'N/A',
     scientific_name: identification.scientificName || matched?.scientificName || 'N/A',
     nepali_name: identification.localPlant?.nepali_name || matched?.nepaliName || 'N/A',
     description: identification.localPlant?.description || matched?.description || `Identified with ${Math.round(identification.score * 100)}% confidence. This beautiful species is part of the Leaf-Life botanical catalog.`,
@@ -444,6 +445,10 @@ export default function Scan() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ color: '#2D6A4F', fontWeight: '800', fontSize: '0.85rem' }}>SCIENTIFIC NAME:</span>
                 <span style={{ color: '#444', fontStyle: 'italic', fontSize: '0.95rem' }}>{identification.scientificName}</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ color: '#2D6A4F', fontWeight: '800', fontSize: '0.85rem' }}>ENGLISH NAME:</span>
+                <span style={{ color: '#444', fontWeight: '600', fontSize: '0.95rem' }}>{displayPlant?.english_name || identification.commonName}</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ color: '#2D6A4F', fontWeight: '800', fontSize: '0.85rem' }}>NEPALI NAME:</span>
