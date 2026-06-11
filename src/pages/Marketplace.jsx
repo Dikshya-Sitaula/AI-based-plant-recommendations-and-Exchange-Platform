@@ -3,16 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import { Search, Filter, Heart, MapPin, ShoppingCart, X, Minus, Plus, QrCode, CheckCircle, Loader2, Trash2 } from 'lucide-react';
 import './Marketplace.css';
 
-function PlantCard({ plant, onAddToCart, onClick }) {
+function PlantCard({ plant, onBuyClick, onClick }) {
   const handleAction = (e) => {
     e.stopPropagation();
-    onAddToCart(plant, 1);
+    onBuyClick(e, plant);
   };
 
   return (
     <div className="plant-card" onClick={() => onClick(plant.id)}>
       <div className="plant-image-wrap">
-        <img src={plant.image} alt={plant.name} className="marketplace-img" onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1545239351-ef35f43d514b?q=80&w=400'; }} />
+        <img src={plant.image} alt={plant.name} className="marketplace-img" onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1416879598555-259160a2bece?q=80&w=400'; }} />
         <div className="badge">{plant.type}</div>
         <button className="like-btn" onClick={(e) => e.stopPropagation()}><Heart size={18} /></button>
       </div>
@@ -92,7 +92,7 @@ export default function Marketplace() {
         // Transform image paths to include backend URL
         const transformedData = data.map(plant => ({
           ...plant,
-          image: plant.image ? `http://${window.location.hostname}:5000${plant.image}` : plant.image
+          image: plant.image ? `http://${window.location.hostname}:5000${encodeURI(plant.image)}` : plant.image
         }));
         setPlants(transformedData);
       } catch (err) {
@@ -110,7 +110,7 @@ export default function Marketplace() {
     if (showQRPrompt && paymentSessionId && paymentStatus === 'pending') {
       interval = setInterval(async () => {
         try {
-          const response = await fetch(`http://${window.location.hostname}:5000/api/payment/status/${paymentSessionId}`);
+          const response = await fetch(`http://${networkIp}:5000/api/payment/status/${paymentSessionId}`);
           const data = await response.json();
           if (data.status === 'completed') {
             setPaymentStatus('completed');
@@ -318,7 +318,7 @@ export default function Marketplace() {
             <PlantCard 
               key={plant.id} 
               plant={plant} 
-              onAddToCart={handleAddToCart} 
+              onBuyClick={handleBuyClick} 
               onClick={goToDetail} 
             />
           ))}
@@ -377,6 +377,9 @@ export default function Marketplace() {
                 alt="Payment QR Code" 
                 style={{ width: '200px', height: '200px' }}
               />
+              <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: '#888', wordBreak: 'break-all', maxWidth: '200px' }}>
+                {billURL}
+              </div>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', padding: '1rem', backgroundColor: '#f5f5f5', borderRadius: '1rem' }}>
@@ -422,7 +425,7 @@ export default function Marketplace() {
                         src={item.image.startsWith('http') ? item.image.replace('localhost', window.location.hostname) : `http://${window.location.hostname}:5000${item.image}`} 
                         alt={item.name} 
                         style={{ width: '70px', height: '70px', borderRadius: '14px', objectFit: 'cover' }}
-                        onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1545239351-ef35f43d514b?q=80&w=400'; }}
+                        onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1416879598555-259160a2bece?q=80&w=400'; }}
                       />
                       <div style={{ flex: 1 }}>
                         <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '600' }}>{item.name}</h4>

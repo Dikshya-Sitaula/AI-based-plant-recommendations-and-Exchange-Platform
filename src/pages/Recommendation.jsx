@@ -42,7 +42,7 @@ export default function Recommendation() {
     if (showQRPrompt && paymentSessionId && paymentStatus === 'pending') {
       interval = setInterval(async () => {
         try {
-          const response = await fetch(`http://${window.location.hostname}:5000/api/payment/status/${paymentSessionId}`);
+          const response = await fetch(`http://${networkIp}:5000/api/payment/status/${paymentSessionId}`);
           const data = await response.json();
           if (data.status === 'completed') {
             setPaymentStatus('completed');
@@ -59,7 +59,7 @@ export default function Recommendation() {
       }, 2000);
     }
     return () => clearInterval(interval);
-  }, [showQRPrompt, paymentSessionId, paymentStatus]);
+  }, [showQRPrompt, paymentSessionId, paymentStatus, networkIp]);
 
   const handleRecommendationSubmit = async (e, { location, selectedSpace, lightLevel }) => {
     setLoading(true);
@@ -418,6 +418,9 @@ export default function Recommendation() {
                 alt="Payment QR Code" 
                 style={{ width: '200px', height: '200px' }}
               />
+              <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: '#888', wordBreak: 'break-all', maxWidth: '200px' }}>
+                {billURL}
+              </div>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', padding: '1rem', backgroundColor: '#f5f5f5', borderRadius: '1rem' }}>
@@ -464,7 +467,7 @@ export default function Recommendation() {
                         src={item.image.startsWith('http') ? item.image.replace('localhost', window.location.hostname) : `http://${window.location.hostname}:5000${item.image}`} 
                         alt={item.name} 
                         style={{ width: '70px', height: '70px', borderRadius: '14px', objectFit: 'cover' }}
-                        onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1545239351-ef35f43d514b?q=80&w=400'; }}
+                        onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1416879598555-259160a2bece?q=80&w=400'; }}
                       />
                       <div style={{ flex: 1 }}>
                         <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '600' }}>{item.name}</h4>
@@ -498,7 +501,7 @@ export default function Recommendation() {
                 <div style={{ background: '#f5f7f5', width: '100px', height: '100px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 25px' }}>
                   <ShoppingCart size={45} style={{ opacity: 0.3, color: 'var(--primary)' }} />
                 </div>
-                <button type="button" onClick={() => setShowCart(false)} className="btn-primary" style={{ width: '100%' }}>Explore More Plants</button>
+                <button type="button" onClick={() => { setShowCart(false); navigate('/marketplace'); }} className="btn-primary" style={{ width: '100%' }}>Explore More Plants</button>
               </div>
             )}
           </div>

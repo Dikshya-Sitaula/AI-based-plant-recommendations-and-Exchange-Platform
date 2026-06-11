@@ -67,9 +67,12 @@ export default function Landing() {
   const handleModalSubmit = (data) => {
     localStorage.setItem('leafLifeSubmitted', 'true');
     localStorage.setItem('leafLifeAuthenticated', 'true');
-    if (data.userId) localStorage.setItem('leafLifeUserId', data.userId);
-    const nameToSet = data.fullName || data.email.split('@')[0];
-    localStorage.setItem('leafLifeUserName', nameToSet);
+    if (data) {
+      if (data.userId) localStorage.setItem('leafLifeUserId', data.userId);
+      if (data.email) localStorage.setItem('leafLifeUserEmail', data.email);
+      const nameToSet = data.fullName || (data.email ? data.email.split('@')[0] : 'User');
+      localStorage.setItem('leafLifeUserName', nameToSet);
+    }
     setIsSubmitted(true);
     setActiveNav('features');
     setShowModal(false);

@@ -11,8 +11,8 @@ const appleJwksClient = jwksClient({
 });
 
 const isEmailValid = (email) => {
-  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-  return emailRegex.test(email) && !email.includes('@.');
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9-]{2,}(\.[a-zA-Z0-9-]{2,})+$/;
+  return emailRegex.test(email);
 };
 
 const validatePassword = (password) => {
@@ -187,6 +187,93 @@ router.post('/login', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get Profile Info
+router.get('/profile/:userId', async (req, res) => {
+  try {
+    const [rows] = await db.execute(
+      'SELECT id, full_name, email, phone_number, preferred_location, github_handle, created_at FROM users WHERE id = ?',
+      [req.params.userId]
+    );
+    if (rows.length === 0) return res.status(404).json({ message: 'User not found' });
+    
+    const user = rows[0];
+    // Add computed github_url
+    user.github_url = user.github_handle ? `https://github.com/${user.github_handle}` : null;
+    
+    res.json(user);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Database error' });
+  }
+});
+
+// Update Profile Info
+router.post('/profile/update', async (req, res) => {
+  const { userId, fullName, email, phoneNumber, preferredLocation, githubHandle } = req.body;
+  console.log(`[PROFILE] Update request for User ID: ${userId}`, req.body);
+
+  try {
+    // Check if new email is already taken by another user
+    if (email) {
+      const [existing] = await db.execute('SELECT id FROM users WHERE email = ? AND id != ? LIMIT 1', [email, userId]);
+      if (existing.length > 0) {
+        return res.status(400).json({ message: 'This email is already registered by another account.' });
+      }
+    }
+
+    const [result] = await db.execute(
+      'UPDATE users SET full_name = ?, email = ?, phone_number = ?, preferred_location = ?, github_handle = ? WHERE id = ?',
+      [fullName, email, phoneNumber, preferredLocation, githubHandle, userId]
+    );
+    console.log(`[PROFILE] Update result:`, result);
+    res.json({ message: 'Profile updated successfully' });
+  } catch (err) {
+    console.error(`[PROFILE] Update error for User ${userId}:`, err.message);
+    res.status(500).json({ message: `Failed to update profile: ${err.message}` });
+  }
+});
+
+// Change Password
+router.post('/profile/change-password', async (req, res) => {
+  const { userId, currentPassword, newPassword } = req.body;
+
+  try {
+    const [rows] = await db.execute('SELECT password FROM users WHERE id = ?', [userId]);
+    if (rows.length === 0) return res.status(404).json({ message: 'User not found' });
+    
+    if (rows[0].password && rows[0].password !== currentPassword) {
+      return res.status(400).json({ message: 'Incorrect current password' });
+    }
+
+    if (!validatePassword(newPassword)) {
+      return res.status(400).json({ message: 'New password does not meet criteria.' });
+    }
+
+    await db.execute('UPDATE users SET password = ? WHERE id = ?', [newPassword, userId]);
+    res.json({ message: 'Password changed successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Failed to change password' });
+  }
+});
+
+// Delete Account
+router.post('/profile/delete', async (req, res) => {
+  const { userId } = req.body;
+
+  try {
+    // 1. Delete user from users table
+    await db.execute('DELETE FROM users WHERE id = ?', [userId]);
+    // 2. Optionally delete plants or mark them as orphaned
+    // await db.execute('UPDATE plants SET buyer_id = NULL WHERE buyer_id = ?', [userId]);
+    
+    res.json({ message: 'Account deleted successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Failed to delete account' });
   }
 });
 

@@ -76,8 +76,15 @@ export default function Contact() {
     navigate(path);
   };
 
-  const handleModalSubmit = () => {
+  const handleModalSubmit = (data) => {
     localStorage.setItem('leafLifeSubmitted', 'true');
+    localStorage.setItem('leafLifeAuthenticated', 'true');
+    if (data) {
+      if (data.userId) localStorage.setItem('leafLifeUserId', data.userId);
+      if (data.email) localStorage.setItem('leafLifeUserEmail', data.email);
+      const nameToSet = data.fullName || (data.email ? data.email.split('@')[0] : 'User');
+      localStorage.setItem('leafLifeUserName', nameToSet);
+    }
     setIsSubmitted(true);
     setActiveNav('features');
     setShowModal(false);
@@ -100,7 +107,8 @@ export default function Contact() {
     setFilledFields(prev => ({ ...prev, [key]: value.trim() !== '' }));
     if (errors[key]) setErrors(prev => ({ ...prev, [key]: false }));
     if (key === 'name') setValidName(value.trim().length > 1);
-    if (key === 'email') setValidEmail(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value.trim()) && !value.includes('@.'));
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9-]{2,}(\.[a-zA-Z0-9-]{2,})+$/;
+    if (key === 'email') setValidEmail(emailRegex.test(value.trim()));
     if (key === 'message') setCharCount(value.length);
   };
 
@@ -490,9 +498,15 @@ export default function Contact() {
                 <div className="map-city">Kathmandu, Nepal</div>
                 <div className="map-city-sub">Leaf &amp; Life HQ · Est. 2024</div>
               </div>
-              <button className="map-btn-float">
+              <a 
+                href="https://www.google.com/maps/search/?api=1&query=Maitidevi+Temple+Kathmandu" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="map-btn-float"
+                style={{ textDecoration: 'none' }}
+              >
                 <Map size={14} />View on Maps
-              </button>
+              </a>
             </div>
 
             <div className="sr d1">

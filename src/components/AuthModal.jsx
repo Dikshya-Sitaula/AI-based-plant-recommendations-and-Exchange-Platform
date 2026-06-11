@@ -32,6 +32,10 @@ export default function AuthModal({ open, onClose, onSuccess }) {
   // Google Login Flow
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
+      if (import.meta.env.VITE_GOOGLE_CLIENT_ID === 'placeholder-google-client-id' || !import.meta.env.VITE_GOOGLE_CLIENT_ID) {
+        setError('Google login is not configured yet.');
+        return;
+      }
       setSubmitting(true);
       try {
         const resInfo = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
@@ -64,6 +68,9 @@ export default function AuthModal({ open, onClose, onSuccess }) {
   useEffect(() => {
     if (!open) return;
     
+    const appleId = import.meta.env.VITE_APPLE_CLIENT_ID;
+    if (!appleId || appleId === 'your_apple_client_id_here') return;
+
     if (!document.getElementById('apple-auth-js')) {
       const script = document.createElement('script');
       script.id = 'apple-auth-js';
@@ -75,7 +82,7 @@ export default function AuthModal({ open, onClose, onSuccess }) {
     const initApple = () => {
       if (window.AppleID) {
         window.AppleID.auth.init({
-          clientId: import.meta.env.VITE_APPLE_CLIENT_ID,
+          clientId: appleId,
           scope: 'name email',
           redirectURI: window.location.origin,
           usePopup: true
@@ -88,6 +95,11 @@ export default function AuthModal({ open, onClose, onSuccess }) {
   }, [open]);
 
   const handleAppleLogin = async () => {
+    const appleId = import.meta.env.VITE_APPLE_CLIENT_ID;
+    if (!appleId || appleId === 'your_apple_client_id_here') {
+      setError('Apple login is not configured yet.');
+      return;
+    }
     try {
       const response = await window.AppleID.auth.signIn();
       const { identityToken, user } = response;
@@ -155,7 +167,8 @@ export default function AuthModal({ open, onClose, onSuccess }) {
 
     const emailTrimmed = email.trim();
 
-    if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(emailTrimmed) || emailTrimmed.includes('@.')) {
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9-]{2,}(\.[a-zA-Z0-9-]{2,})+$/;
+    if (!emailRegex.test(emailTrimmed)) {
       setError('Invalid username');
       emailRef.current?.focus();
       return;

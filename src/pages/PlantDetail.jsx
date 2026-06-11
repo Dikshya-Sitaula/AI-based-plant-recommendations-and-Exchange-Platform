@@ -156,7 +156,7 @@ export default function PlantDetail() {
       }, 2000);
     }
     return () => clearInterval(interval);
-  }, [showQRPrompt, paymentSessionId, paymentStatus]);
+  }, [showQRPrompt, paymentSessionId, paymentStatus, networkIp]);
 
   const handleBuyClick = () => {
     setQuantity(1);
@@ -364,10 +364,10 @@ export default function PlantDetail() {
           <div className="carousel-section">
             <div className="carousel-container">
               <img 
-                src={carouselImages[currentSlide]?.startsWith('http') ? carouselImages[currentSlide] : `http://${networkIp}:5000${carouselImages[currentSlide]}`} 
+                src={carouselImages[currentSlide]?.startsWith('http') ? carouselImages[currentSlide] : `http://${networkIp}:5000${encodeURI(carouselImages[currentSlide])}`} 
                 alt={plant.name} 
                 className="carousel-img" 
-                onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1545239351-ef35f43d514b?q=80&w=400'; }} 
+                onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1416879598555-259160a2bece?q=80&w=400'; }} 
               />
               <div className="carousel-badge">{plant.type}</div>
               {carouselImages.length > 1 && (
@@ -550,6 +550,9 @@ export default function PlantDetail() {
             </div>
             <div style={{ backgroundColor: 'white', padding: '1rem', borderRadius: '1rem', display: 'inline-block', margin: '1.5rem 0', border: '1px solid #eee' }}>
               <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(billURL)}`} alt="Payment QR Code" style={{ width: '200px', height: '200px' }} />
+              <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: '#888', wordBreak: 'break-all', maxWidth: '200px' }}>
+                {billURL}
+              </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', padding: '1rem', backgroundColor: '#f5f5f5', borderRadius: '1rem' }}>
               <Loader2 className="animate-spin" size={20} color="var(--primary)" />
@@ -587,7 +590,7 @@ export default function PlantDetail() {
                 <div className="cart-items-list" style={{ maxHeight: '350px', overflowY: 'auto', textAlign: 'left', paddingRight: '5px' }}>
                   {cart.map((item, index) => (
                     <div key={item.id || `cart-${index}`} style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', padding: '15px 0', borderBottom: '1px solid #eee' }}>
-                      <img src={item.image.startsWith('http') ? item.image.replace('localhost', networkIp) : `http://${networkIp}:5000${item.image}`} alt={item.name} style={{ width: '70px', height: '70px', borderRadius: '14px', objectFit: 'cover' }} onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1545239351-ef35f43d514b?q=80&w=400'; }} />
+                      <img src={item.image.startsWith('http') ? item.image.replace('localhost', networkIp) : `http://${networkIp}:5000${item.image}`} alt={item.name} style={{ width: '70px', height: '70px', borderRadius: '14px', objectFit: 'cover' }} onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1416879598555-259160a2bece?q=80&w=400'; }} />
                       <div style={{ flex: 1 }}>
                         <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '600' }}>{item.name}</h4>
                         <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: '5px' }}>

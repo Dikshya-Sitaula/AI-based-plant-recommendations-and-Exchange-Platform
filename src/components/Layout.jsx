@@ -4,10 +4,12 @@ import { Store, Camera, Trophy, LayoutDashboard, MapPin, LogOut, Settings } from
 import './Layout.css';
 import logo from "../assets/Leaf and Life logo.png";
 import AuthModal from './AuthModal';
+import SettingsModal from './SettingsModal';
 
 export default function Layout() {
   const navigate = useNavigate();
   const [authOpen, setAuthOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     if (typeof window === 'undefined') return false;
     return localStorage.getItem('leafLifeAuthenticated') === 'true';
@@ -22,6 +24,13 @@ export default function Layout() {
   });
 
   const openAuthModal = () => setAuthOpen(true);
+  const openSettingsModal = () => {
+    if (!isAuthenticated) {
+      openAuthModal();
+    } else {
+      setSettingsOpen(true);
+    }
+  };
 
   const handleGetStarted = () => {
     if (isAuthenticated) {
@@ -42,13 +51,13 @@ export default function Layout() {
   };
 
   useEffect(() => {
-    if (!authOpen) return undefined;
+    if (!authOpen && !settingsOpen) return undefined;
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = prevOverflow;
     };
-  }, [authOpen]);
+  }, [authOpen, settingsOpen]);
 
   return (
     <div className="app-container dashboard-layout">
@@ -69,6 +78,14 @@ export default function Layout() {
           setAuthOpen(false);
           navigate('/dashboard');
         }}
+      />
+
+      <SettingsModal 
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        userId={userId}
+        currentUserName={userName}
+        onUpdateName={(newName) => setUserName(newName)}
       />
       
       {/* Sidebar Navigation */}
@@ -116,7 +133,7 @@ export default function Layout() {
             </div>
           </div>
           <div className="sidebar-actions">
-            <button className="sidebar-action-btn">
+            <button className="sidebar-action-btn" onClick={openSettingsModal}>
               <Settings size={18} />
             </button>
             <button className="sidebar-action-btn" onClick={handleSwitchAccount}>

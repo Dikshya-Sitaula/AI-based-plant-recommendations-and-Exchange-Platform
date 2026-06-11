@@ -40,6 +40,8 @@ const plantDetailsMap = require('./plantDetails');
              full_name VARCHAR(255) NOT NULL,
              email VARCHAR(255) NOT NULL UNIQUE,
              password VARCHAR(255),
+             phone_number VARCHAR(20),
+             preferred_location VARCHAR(255),
              google_id VARCHAR(255) UNIQUE,
              apple_id VARCHAR(255) UNIQUE,
              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -47,14 +49,27 @@ const plantDetailsMap = require('./plantDetails');
          `);
 
          // Migration: Add columns to existing table if they don't exist
+         const userColumns = [
+           { name: 'google_id', type: 'VARCHAR(255) UNIQUE' },
+           { name: 'apple_id', type: 'VARCHAR(255) UNIQUE' },
+           { name: 'github_id', type: 'VARCHAR(255) UNIQUE' },
+           { name: 'phone_number', type: 'VARCHAR(20)' },
+           { name: 'preferred_location', type: 'VARCHAR(255)' },
+           { name: 'github_handle', type: 'VARCHAR(255)' }
+         ];
+
+         for (const col of userColumns) {
+           try {
+             await db.execute(`ALTER TABLE users ADD COLUMN ${col.name} ${col.type}`);
+             console.log(`✅ Added missing user column: ${col.name}`);
+           } catch (err) {
+             // Column likely already exists or other non-critical error
+           }
+         }
+         
          try {
            await db.execute('ALTER TABLE users MODIFY password VARCHAR(255) NULL');
-           await db.execute('ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(255) UNIQUE AFTER password');
-           await db.execute('ALTER TABLE users ADD COLUMN IF NOT EXISTS apple_id VARCHAR(255) UNIQUE AFTER google_id');
-         } catch (migrateErr) {
-           // IF NOT EXISTS is only MySQL 8.0.19+, handling for older versions
-           console.log('Migration note:', migrateErr.message);
-         }
+         } catch (err) {}
 
          // Create payment_sessions table
          await db.execute(`
@@ -162,6 +177,12 @@ const plantDetailsMap = require('./plantDetails');
             );
           }
           console.log('✅ Backfilling completed successfully');
+          
+          // Comprehensive Fix for Peace Lily image path inconsistency
+          await db.execute(
+            "UPDATE plants SET image = '/plants/PeaceLily/1.jpg' WHERE LOWER(name) = 'peace lily' AND image != '/plants/PeaceLily/1.jpg'"
+          );
+          console.log('✅ Synchronized Peace Lily image paths in database');
           
           console.log('✅ Database tables initialized');
        } catch (err) {
@@ -314,7 +335,11 @@ const plantDetailsMap = require('./plantDetails');
             const folders = fs.readdirSync(plantsDir);
             const matchedFolder = folders.find(f => {
               const cleanFolder = f.split('(')[0].trim().toLowerCase();
-              return cleanFolder === plantName.toLowerCase() || f.toLowerCase() === plantName.toLowerCase();
+              const cleanPlantName = plantName.toLowerCase();
+              // Support both "Peace Lily" matching "Peace Lily" and "Peace Lily" matching "PeaceLily"
+              return cleanFolder === cleanPlantName || 
+                     f.toLowerCase() === cleanPlantName ||
+                     cleanFolder.replace(/\s+/g, '') === cleanPlantName.replace(/\s+/g, '');
             });
 
             if (matchedFolder) {
@@ -673,14 +698,40 @@ const plantDetailsMap = require('./plantDetails');
     app.get('/api/network-info', (req, res) => {
       const interfaces = require('os').networkInterfaces();
       let ip = 'localhost';
+      
+      // Preferred interface patterns
+      const preferred = ['wi-fi', 'ethernet', 'wlan', 'en0', 'eth0'];
+      
+      let found = false;
+      // First pass: try to find a preferred physical adapter
       for (const name of Object.keys(interfaces)) {
-        for (const iface of interfaces[name]) {
-          if (iface.family === 'IPv4' && !iface.internal) {
-            ip = iface.address;
-            break;
+        const lowerName = name.toLowerCase();
+        if (preferred.some(p => lowerName.includes(p)) && !lowerName.includes('virtual') && !lowerName.includes('veth')) {
+          for (const iface of interfaces[name]) {
+            if (iface.family === 'IPv4' && !iface.internal) {
+              ip = iface.address;
+              found = true;
+              break;
+            }
           }
         }
+        if (found) break;
       }
+      
+      // Second pass: if no preferred found, take any non-internal IPv4
+      if (!found) {
+        for (const name of Object.keys(interfaces)) {
+          for (const iface of interfaces[name]) {
+            if (iface.family === 'IPv4' && !iface.internal) {
+              ip = iface.address;
+              found = true;
+              break;
+            }
+          }
+          if (found) break;
+        }
+      }
+      
       res.json({ ip });
     });
    
