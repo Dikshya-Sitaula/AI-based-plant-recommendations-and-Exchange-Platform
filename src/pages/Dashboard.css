@@ -117,3 +117,54 @@
   color: #3d2d2d;
 }
 
+/* AQI Card specifics */
+.aqi-display {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.aqi-number {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.aqi-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #10B981;
+}
+.progress-container {
+  margin-bottom: 1rem;
+}
+
+.progress-bar {
+  height: 8px;
+  background-color: #fafafa;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: #0f9468;
+  border-radius: 9999px;
+}
+
+.progress-text {
+  display: block;
+  font-size: 0.75rem;
+  color: #3d2d2d;
+  margin-top: 0.5rem;
+  font-weight: 500;
+}
+
+.stat-card-footer {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0;
+  margin-top: auto;
+}
