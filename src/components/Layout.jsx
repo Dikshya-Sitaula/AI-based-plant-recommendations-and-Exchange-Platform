@@ -4,6 +4,7 @@ import { Store, Camera, Trophy, LayoutDashboard, MapPin, LogOut, Settings } from
 import './Layout.css';
 import logo from "../assets/Leaf and Life logo.png";
 import AuthModal from './AuthModal';
+import Header from './Header';
 
 export default function Layout() {
   const navigate = useNavigate();
@@ -29,6 +30,7 @@ export default function Layout() {
 
   const handleSwitchAccount = () => {
     localStorage.removeItem('leafLifeAuthenticated');
+    localStorage.removeItem('leafLifeSubmitted');
     localStorage.removeItem('leafLifeUserName');
     setIsAuthenticated(false);
     setUserName('Guest');
@@ -51,6 +53,7 @@ export default function Layout() {
         onClose={() => setAuthOpen(false)}
         onSuccess={(data) => {
           localStorage.setItem('leafLifeAuthenticated', 'true');
+          localStorage.setItem('leafLifeSubmitted', 'true');
           const nameToSet = data.fullName || data.email.split('@')[0];
           localStorage.setItem('leafLifeUserName', nameToSet);
           setIsAuthenticated(true);
@@ -60,7 +63,17 @@ export default function Layout() {
         }}
       />
       
-      {/* Sidebar Navigation */}
+      {/* Mobile Top Header */}
+      <div className="mobile-header-wrapper">
+        <Header 
+          isAuthenticated={isAuthenticated}
+          onOpenAuth={openAuthModal}
+          onSwitchAccount={handleSwitchAccount}
+          onGetStarted={handleGetStarted}
+        />
+      </div>
+
+      {/* Sidebar Navigation (Desktop) */}
       <aside className="sidebar">
         <div className="sidebar-top">
           <Link to="/" className="sidebar-logo">

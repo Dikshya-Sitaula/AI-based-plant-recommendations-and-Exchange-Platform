@@ -24,6 +24,7 @@ import rishuImg from '../assets/Rishu Prajapati.jpeg';
 import aditaImg from '../assets/Adita Rai.jpeg';
 import lizaImg from '../assets/Liza Shrestha.jpeg';
 import AuthModal from '../components/AuthModal';
+import Header from '../components/Header';
 
 // Custom hook for scroll-reveal animation
 function useScrollReveal() {
@@ -90,9 +91,9 @@ function RevealRight({ children, delay = 0 }) {
 export default function AboutUs() {
   const navigate = useNavigate();
   const [authOpen, setAuthOpen] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(() => {
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('leafLifeSubmitted') === 'true';
+      return localStorage.getItem('leafLifeAuthenticated') === 'true';
     }
     return false;
   });
@@ -100,16 +101,24 @@ export default function AboutUs() {
   const openAuthModal = () => { setAuthOpen(true); };
 
   const handleGetStarted = () => {
-    if (isSubmitted) {
+    if (isAuthenticated) {
       navigate('/dashboard');
     } else {
       openAuthModal();
     }
   };
 
+  const handleSwitchAccount = () => {
+    localStorage.removeItem('leafLifeSubmitted');
+    localStorage.removeItem('leafLifeAuthenticated');
+    localStorage.removeItem('leafLifeUserName');
+    window.location.reload();
+  };
+
   const handleModalSubmit = () => {
     localStorage.setItem('leafLifeSubmitted', 'true');
-    setIsSubmitted(true);
+    localStorage.setItem('leafLifeAuthenticated', 'true');
+    setIsAuthenticated(true);
     setAuthOpen(false);
     navigate('/dashboard');
   };
@@ -123,42 +132,12 @@ export default function AboutUs() {
 
   return (
     <div className="lp-root about-root">
-      {/* Navbar — unchanged */}
-      <nav className="lp-nav">
-        <div className="lp-nav-inner">
-          <Link to="/" className="lp-brand" aria-label="Leaf & Life Home">
-            <span className="lp-brand-mark" aria-hidden="true">
-              <img src={logo} alt="" className="lp-brand-img" />
-            </span>
-            <span className="lp-brand-text">Leaf &amp; Life</span>
-          </Link>
-
-          <div className="lp-nav-links">
-            <Link className="lp-nav-link" to="/">Home</Link>
-            <Link className="lp-nav-link" to="/about">About Us</Link>
-            <Link className="lp-nav-link" to="/contact">Contact</Link>
-          </div>
-
-          <div className="lp-nav-actions">
-            {isSubmitted && (
-              <button
-                type="button"
-                className="lp-btn lp-btn-ghost lp-btn-sm"
-                onClick={() => {
-                  localStorage.removeItem('leafLifeSubmitted');
-                  localStorage.removeItem('leafLifeAuthenticated');
-                  window.location.reload();
-                }}
-              >
-                Switch Account
-              </button>
-            )}
-            <button type="button" className="lp-btn lp-btn-primary" onClick={handleGetStarted}>
-              Get Started
-            </button>
-          </div>
-        </div>
-      </nav>
+      <Header 
+        isAuthenticated={isAuthenticated}
+        onOpenAuth={openAuthModal}
+        onSwitchAccount={handleSwitchAccount}
+        onGetStarted={handleGetStarted}
+      />
 
       <AuthModal
         open={authOpen}

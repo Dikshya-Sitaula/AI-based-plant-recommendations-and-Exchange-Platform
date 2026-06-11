@@ -16,9 +16,30 @@ body {
 
 .dashboard-layout {
   display: flex;
+  flex-direction: column;
   background-color: var(--bg-dashboard);
   min-height: 100vh;
   width: 100%;
+}
+
+@media (min-width: 768px) {
+  .dashboard-layout {
+    flex-direction: row;
+  }
+}
+
+.mobile-header-wrapper {
+  display: block;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .mobile-header-wrapper {
+    display: none;
+  }
 }
 
 /* Sidebar Styling */
@@ -161,6 +182,12 @@ body {
   padding: var(--space-md);
   margin-bottom: 80px; /* space for mobile bottom nav */
   width: 100%;
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    padding-top: var(--space-md);
+  }
 }
 
 /* Bottom Nav (Mobile only) */
