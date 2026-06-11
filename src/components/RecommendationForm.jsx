@@ -151,7 +151,7 @@ export default function RecommendationForm({
             <span className="rec-step-label">Where are you located?</span>
           </div>
           <div className="rec-location-row">
-            <div className={`rec-input-wrap ${showError ? 'rec-input-error' : ''}`} style={showError ? { border: '1px solid #ff4d4d', boxShadow: '0 0 0 2px rgba(255, 77, 77, 0.2)' } : {}}>
+            <div className={`rec-input-wrap ${showError ? 'rec-input-error' : ''}`}>
               <MapPin size={16} className="rec-input-icon" />
               <input
                 className="rec-input"
@@ -179,7 +179,7 @@ export default function RecommendationForm({
             </button>
           </div>
           {showError && (
-            <p style={{ color: '#ff4d4d', fontSize: '0.8rem', marginTop: '0.5rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+            <p className="rec-error-msg">
               ⚠️ Please fill this part of the form to continue.
             </p>
           )}
