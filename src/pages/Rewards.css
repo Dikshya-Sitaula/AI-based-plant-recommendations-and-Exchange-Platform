@@ -502,3 +502,137 @@
   font-weight: 600;
   color: var(--rh-muted);
 }
+/* ─── Split: leaderboard + redeem ─── */
+.rh-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.rh-panel {
+  background: var(--rh-card);
+  border: 1px solid var(--rh-border);
+  border-radius: 1.25rem;
+  padding: 1.35rem 1.5rem;
+  box-shadow: 0 2px 10px rgba(26, 47, 26, 0.04);
+}
+
+.rh-panel-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--rh-text);
+  margin: 0 0 1rem;
+}
+
+.rh-leaderboard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.rh-lb-row {
+  display: grid;
+  grid-template-columns: 28px 40px 1fr auto;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.75rem;
+  transition: background 0.15s ease;
+}
+
+.rh-lb-row--you {
+  background: linear-gradient(90deg, rgba(251, 191, 36, 0.18), rgba(251, 191, 36, 0.06));
+  border: 1px solid rgba(212, 160, 23, 0.35);
+}
+
+.rh-lb-row--top:not(.rh-lb-row--you) {
+  background: rgba(245, 245, 220, 0.35);
+}
+
+.rh-lb-rank {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--rh-muted);
+  text-align: center;
+}
+
+.rh-lb-row--you .rh-lb-rank {
+  color: var(--rh-gold);
+}
+
+.rh-lb-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--rh-primary);
+  border: 1.5px solid rgba(226, 232, 206, 0.9);
+}
+
+.rh-lb-avatar--gold {
+  background: linear-gradient(145deg, #fef3c7, #fde68a);
+  color: #92400e;
+  border-color: rgba(212, 160, 23, 0.45);
+}
+
+.rh-lb-avatar--rose {
+  background: #fce7f3;
+  color: #9d174d;
+}
+
+.rh-lb-avatar--green {
+  background: var(--rh-green-bg);
+  color: var(--rh-primary);
+}
+
+.rh-lb-avatar--teal {
+  background: var(--rh-teal-bg);
+  color: #0d9488;
+}
+
+.rh-lb-avatar--sage {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.rh-lb-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--rh-text);
+}
+
+.rh-lb-you {
+  font-style: normal;
+  font-weight: 700;
+  color: var(--rh-gold);
+}
+
+.rh-lb-pts {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--rh-primary);
+}
+
+.rh-panel-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: none;
+  border: none;
+  color: var(--rh-primary);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  transition: gap 0.2s ease;
+}
+
+.rh-panel-link:hover {
+  gap: 0.55rem;
+}
