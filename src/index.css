@@ -53,6 +53,26 @@
   --space-xl: clamp(2.5rem, 2rem + 2.5vw, 4rem);
 }
 
+/* Revert to fixed values for Desktop to maintain original aesthetic */
+@media (min-width: 1024px) {
+  :root {
+    --fs-xs: 0.75rem;
+    --fs-sm: 0.875rem;
+    --fs-base: 1rem;
+    --fs-md: 1.125rem;
+    --fs-lg: 1.25rem;
+    --fs-xl: 1.75rem;
+    --fs-2xl: 2.5rem;
+    --fs-3xl: 3rem;
+
+    --space-xs: 0.5rem;
+    --space-sm: 0.75rem;
+    --space-md: 1rem;
+    --space-lg: 2rem;
+    --space-xl: 2.5rem;
+  }
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
