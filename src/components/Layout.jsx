@@ -67,13 +67,14 @@ export default function Layout() {
       <div className="mobile-header-wrapper">
         <Header 
           isAuthenticated={isAuthenticated}
+          userName={userName}
           onOpenAuth={openAuthModal}
           onSwitchAccount={handleSwitchAccount}
           onGetStarted={handleGetStarted}
         />
       </div>
 
-      {/* Sidebar Navigation (Desktop) */}
+      {/* Sidebar Navigation (Desktop) - Original Order */}
       <aside className="sidebar">
         <div className="sidebar-top">
           <Link to="/" className="sidebar-logo">
@@ -82,25 +83,25 @@ export default function Layout() {
           </Link>
           
           <nav className="sidebar-nav">
-            <NavLink to="/marketplace" className="sidebar-nav-item">
-              <Store size={20} />
-              <span>Marketplace</span>
-            </NavLink>
-            <NavLink to="/recommendation" className="sidebar-nav-item">
-              <MapPin size={20} />
-              <span>Smart Recs</span>
+            <NavLink to="/dashboard" className="sidebar-nav-item">
+              <LayoutDashboard size={20} />
+              <span>Dashboard</span>
             </NavLink>
             <NavLink to="/scan" className="sidebar-nav-item">
               <Camera size={20} />
               <span>Smart Scan</span>
             </NavLink>
-            <NavLink to="/dashboard" className="sidebar-nav-item">
-              <LayoutDashboard size={20} />
-              <span>Dashboard</span>
+            <NavLink to="/marketplace" className="sidebar-nav-item">
+              <Store size={20} />
+              <span>Marketplace</span>
             </NavLink>
             <NavLink to="/rewards" className="sidebar-nav-item">
               <Trophy size={20} />
               <span>Community</span>
+            </NavLink>
+            <NavLink to="/recommendation" className="sidebar-nav-item">
+              <MapPin size={20} />
+              <span>Smart Recs</span>
             </NavLink>
           </nav>
         </div>
@@ -133,7 +134,7 @@ export default function Layout() {
         <Outlet />
       </main>
 
-      {/* Bottom Navigation for Mobile */}
+      {/* Bottom Navigation for Mobile - Centered Smart Scan */}
       <nav className="bottom-nav">
         <NavLink to="/marketplace" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
           <Store size={24} />
@@ -161,4 +162,3 @@ export default function Layout() {
     </div>
   );
 }
-   

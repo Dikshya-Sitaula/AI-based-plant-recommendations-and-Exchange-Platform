@@ -31,12 +31,10 @@ export default function Header({ isAuthenticated, userName, onOpenAuth, onSwitch
 
   const handleBrandDropdownClose = () => {
     setBrandDropdownOpen(false);
-    setMobileMenuOpen(false);
   };
 
   const handleMegaMenuClose = () => {
     setMegaMenuOpen(false);
-    setMobileMenuOpen(false);
   };
 
   const brandMenuItems = [
@@ -46,40 +44,46 @@ export default function Header({ isAuthenticated, userName, onOpenAuth, onSwitch
   ];
 
   const megaMenuItems = [
-    { label: 'Marketplace', href: '/marketplace', icon: <ShoppingCart size={24} />, color: 'blue', desc: 'Hyperlocal plant exchange' },
-    { label: 'Recommendation', href: '/recommendation', icon: <Sparkles size={24} />, color: 'purple', desc: 'Smart space optimization' },
-    { label: 'Smart Scan', href: '/scan', icon: <Camera size={28} />, color: 'primary', desc: 'AI plant identification' },
-    { label: 'Dashboard', href: '/dashboard', icon: <LayoutDashboard size={24} />, color: 'orange', desc: 'Manage your portfolio' },
-    { label: 'Community', href: '/rewards', icon: <Users size={24} />, color: 'teal', desc: 'Eco challenges & rewards' },
+    { label: 'Marketplace', href: '/marketplace', icon: '🛒' },
+    { label: 'Smart Recommendation', href: '/recommendation', icon: '💡' },
+    { label: 'Smart Scan', href: '/scan', icon: '📷' },
+    { label: 'Dashboard', href: '/dashboard', icon: '📊' },
+    { label: 'Community', href: '/rewards', icon: '👥' },
   ];
 
   const isFeaturePage = ['/marketplace', '/scan', '/recommendation', '/rewards', '/dashboard'].some(path => location.pathname.startsWith(path));
 
   return (
     <header className={`app-header ${isFeaturePage ? 'feature-header' : ''}`}>
-      {/* Brand Section - Original Desktop Dropdown */}
-      <div className="header-brand-section">
-        <div className="brand-dropdown-wrapper desktop-only" ref={brandDropdownRef}>
-          <button 
-            className="brand-button" 
+      {/* Brand Section - Desktop (Dropdown) */}
+      <div className="header-brand-section desktop-only">
+        <div className="brand-dropdown-wrapper" ref={brandDropdownRef}>
+          <button
+            className="brand-button"
             onClick={() => setBrandDropdownOpen(!brandDropdownOpen)}
+            aria-expanded={brandDropdownOpen}
           >
             <img src={logo} alt="Leaf and Life" className="header-logo" />
             <span className="brand-name">Leaf & Life</span>
-            <ChevronDown size={18} className={`dropdown-icon ${brandDropdownOpen ? 'open' : ''}`} />
+            <ChevronDown
+              size={18}
+              className={`dropdown-icon ${brandDropdownOpen ? 'open' : ''}`}
+            />
           </button>
 
           {brandDropdownOpen && (
             <div className="brand-dropdown-menu">
               <div className="dropdown-header">
                 <h3>Navigation</h3>
-                <button className="close-btn" onClick={handleBrandDropdownClose}><X size={18} /></button>
+                <button className="close-btn" onClick={handleBrandDropdownClose}>
+                  <X size={18} />
+                </button>
               </div>
               <nav className="dropdown-nav">
                 {brandMenuItems.map((item) => (
-                  <Link 
-                    key={item.href} 
-                    to={item.href} 
+                  <Link
+                    key={item.href}
+                    to={item.href}
                     className="dropdown-item"
                     onClick={handleBrandDropdownClose}
                   >
@@ -90,59 +94,22 @@ export default function Header({ isAuthenticated, userName, onOpenAuth, onSwitch
             </div>
           )}
         </div>
-
-        {/* Brand Section - Simple Link for Mobile */}
-        <Link to="/" className="brand-logo-link mobile-only" onClick={() => setMobileMenuOpen(false)}>
-          <img src={logo} alt="Leaf and Life" className="header-logo" />
-          <span className="brand-name">Leaf & Life</span>
-        </Link>
-        
-        {/* Original Desktop Mega Menu Trigger */}
-        <div className="mega-menu-wrapper desktop-only" ref={megaMenuRef}>
-          <button 
-            className="nav-link-btn" 
-            onClick={() => setMegaMenuOpen(!megaMenuOpen)}
-          >
-            Explore Features
-            <ChevronDown size={16} className={`dropdown-icon ${megaMenuOpen ? 'open' : ''}`} />
-          </button>
-
-          {megaMenuOpen && (
-            <div className="mega-menu">
-              <div className="mega-menu-header">
-                <h2>Platform Features</h2>
-                <button className="close-btn" onClick={handleMegaMenuClose}><X size={20} /></button>
-              </div>
-              <div className="mega-menu-grid">
-                {megaMenuItems.map((item) => (
-                  <Link 
-                    key={item.href} 
-                    to={item.href} 
-                    className={`mega-menu-item-link ${item.color}`}
-                    onClick={handleMegaMenuClose}
-                  >
-                    <div className="mega-icon-box">{item.icon}</div>
-                    <div className="mega-text-box">
-                      <span className="mega-label">{item.label}</span>
-                      <span className="mega-desc">{item.desc}</span>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-              <div className="mega-menu-footer">
-                <p>Helping you grow greener urban spaces.</p>
-                <Link to="/about" className="learn-more" onClick={handleMegaMenuClose}>Learn Our Story →</Link>
-              </div>
-            </div>
-          )}
-        </div>
       </div>
+
+      {/* Brand Section - Mobile (Simple Link) */}
+      <Link to="/" className="brand-logo-link mobile-only" onClick={() => setMobileMenuOpen(false)}>
+        <img src={logo} alt="Leaf and Life" className="header-logo" />
+        <span className="brand-name">Leaf & Life</span>
+      </Link>
+
+      {/* Center Spacer (Desktop Only) */}
+      <div className="header-center desktop-only"></div>
 
       {/* Actions Section */}
       <div className="header-actions">
-        {isAuthenticated && !isFeaturePage && (
-          <button 
-            type="button" 
+        {isAuthenticated && (
+          <button
+            type="button"
             className="btn-secondary desktop-only"
             onClick={onSwitchAccount}
           >
@@ -150,13 +117,67 @@ export default function Header({ isAuthenticated, userName, onOpenAuth, onSwitch
           </button>
         )}
 
-        <button
-          type="button"
-          className="btn-primary desktop-only"
-          onClick={onGetStarted}
-        >
-          {isAuthenticated ? 'Go to Dashboard' : 'Get Started'}
-        </button>
+        {/* Get Started / Mega Menu - Desktop */}
+        <div className="mega-menu-wrapper desktop-only" ref={megaMenuRef}>
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={() => {
+              if (isAuthenticated) {
+                onGetStarted();
+              } else {
+                setMegaMenuOpen(!megaMenuOpen);
+              }
+            }}
+            aria-expanded={megaMenuOpen}
+          >
+            {isAuthenticated ? 'Go to Dashboard' : 'Get Started'}
+            {!isAuthenticated && (
+              <ChevronDown
+                size={18}
+                className={`dropdown-icon ${megaMenuOpen ? 'open' : ''}`}
+              />
+            )}
+          </button>
+
+          {megaMenuOpen && !isAuthenticated && (
+            <div className="mega-menu">
+              <div className="mega-menu-header">
+                <h2>Explore Features</h2>
+                <button className="close-btn" onClick={handleMegaMenuClose}>
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="mega-menu-grid">
+                {megaMenuItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    to={item.href}
+                    className="mega-menu-item"
+                    onClick={handleMegaMenuClose}
+                  >
+                    <div className="mega-menu-icon">{item.icon}</div>
+                    <span className="mega-menu-label">{item.label}</span>
+                  </Link>
+                ))}
+              </div>
+
+              <div className="mega-menu-footer">
+                <p>Sign in to access all features</p>
+                <button
+                  className="btn-primary-small"
+                  onClick={() => {
+                    setMegaMenuOpen(false);
+                    onOpenAuth();
+                  }}
+                >
+                  Sign In Now
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Mobile Menu Toggle */}
         <button 
@@ -205,7 +226,7 @@ export default function Header({ isAuthenticated, userName, onOpenAuth, onSwitch
                   <Link 
                     key={item.href} 
                     to={item.href} 
-                    className={`mobile-feature-item ${item.color}`}
+                    className="mobile-feature-item"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     <span className="feature-icon">{item.icon}</span>
