@@ -815,6 +815,7 @@
   .rh-prize-banner {
     grid-template-columns: 1fr;
     text-align: center;
+    padding: 2.5rem 1.5rem;
   }
 
   .rh-prize-desc {
@@ -824,10 +825,12 @@
 
   .rh-prize-meta {
     justify-content: center;
+    gap: 1.25rem;
   }
 
   .rh-earn-grid {
     grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
   }
 
   .rh-impact-grid {
@@ -840,11 +843,17 @@
 
   .rh-header {
     flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 2rem;
   }
 
   .rh-header-actions {
     width: 100%;
     justify-content: space-between;
+  }
+  
+  .rh-stat-card {
+    padding: 1.25rem;
   }
 }
 
@@ -855,6 +864,34 @@
 
   .rh-earn-grid {
     grid-template-columns: 1fr;
+  }
+
+  .rh-title {
+    font-size: 1.5rem;
+  }
+
+  .rh-prize-title {
+    font-size: 1.35rem;
+  }
+
+  .rh-lb-row {
+    grid-template-columns: 24px 36px 1fr auto;
+    gap: 0.5rem;
+    padding: 0.75rem 0.5rem;
+  }
+
+  .rh-panel {
+    padding: 1.25rem 1rem;
+  }
+  
+  .rh-reward-card {
+    padding: 1rem 0.5rem;
+  }
+
+  .rh-cta-banner {
+    flex-direction: column;
+    text-align: center;
+    padding: 2rem 1.5rem;
   }
 }
   
