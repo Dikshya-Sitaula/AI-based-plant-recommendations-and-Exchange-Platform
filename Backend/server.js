@@ -379,7 +379,7 @@ const plantDetailsMap = require('./plantDetails');
          
          // Logic Change: Never mark the original marketplace listing as sold.
          // Instead, always create new record(s) for the buyer.
-         const insertQuery = 'INSERT INTO plants (name, type, price, location, image, space_tag, sunlight_need, min_temp, max_temp, purification_score, rule, scientific_name, nepali_name, description, is_sold, buyer_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)';
+         const insertQuery = 'INSERT INTO plants (name, type, price, location, image, space_tag, sunlight_need, min_temp, max_temp, purification_score, rule, scientific_name, nepali_name, english_name, description, is_sold, buyer_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)';
          
          for (let i = 0; i < quantity; i++) {
            await db.execute(insertQuery, [
@@ -396,6 +396,7 @@ const plantDetailsMap = require('./plantDetails');
              plant.rule || '',
              plant.scientific_name || '',
              plant.nepali_name || '',
+             plant.english_name || plant.name,
              plant.description || '',
              userId
            ]);
@@ -508,15 +509,15 @@ const plantDetailsMap = require('./plantDetails');
                 console.log(`[PAYMENT] Using existing plant ID ${rawId} as template for User ${userId}`);
                 
                 const insertQuery = `INSERT INTO plants 
-                  (name, type, price, location, image, space_tag, sunlight_need, min_temp, max_temp, purification_score, rule, scientific_name, nepali_name, description, is_sold, buyer_id) 
-                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)`;
+                  (name, type, price, location, image, space_tag, sunlight_need, min_temp, max_temp, purification_score, rule, scientific_name, nepali_name, english_name, description, is_sold, buyer_id) 
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)`;
                 
                 for (let i = 0; i < quantity; i++) {
                   await db.execute(insertQuery, [
                     plantTemplate.name, plantTemplate.type, plantTemplate.price, plantTemplate.location, plantTemplate.image, 
                     plantTemplate.space_tag, plantTemplate.sunlight_need, plantTemplate.min_temp, plantTemplate.max_temp, 
                     plantTemplate.purification_score, plantTemplate.rule || '', plantTemplate.scientific_name || '', 
-                    plantTemplate.nepali_name || '', plantTemplate.description || '', userId
+                    plantTemplate.nepali_name || '', plantTemplate.english_name || plantTemplate.name, plantTemplate.description || '', userId
                   ]);
                 }
                 console.log(`[PAYMENT] Created ${quantity} record(s) for User ${userId} based on template ID ${rawId}`);
@@ -528,8 +529,8 @@ const plantDetailsMap = require('./plantDetails');
                 const fallbackTemplate = templateRows[0];
 
                 const insertQuery = `INSERT INTO plants 
-                  (name, type, price, location, image, space_tag, sunlight_need, min_temp, max_temp, purification_score, rule, scientific_name, nepali_name, description, is_sold, buyer_id) 
-                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)`;
+                  (name, type, price, location, image, space_tag, sunlight_need, min_temp, max_temp, purification_score, rule, scientific_name, nepali_name, english_name, description, is_sold, buyer_id) 
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)`;
 
                 for (let i = 0; i < quantity; i++) {
                   await db.execute(insertQuery, [
@@ -546,6 +547,7 @@ const plantDetailsMap = require('./plantDetails');
                     item.rule || fallbackTemplate?.rule || '',
                     item.scientific_name || fallbackTemplate?.scientific_name || '',
                     item.nepali_name || fallbackTemplate?.nepali_name || '',
+                    item.english_name || fallbackTemplate?.english_name || item.name || 'Unknown Plant',
                     item.description || fallbackTemplate?.description || '',
                     userId
                   ]);
