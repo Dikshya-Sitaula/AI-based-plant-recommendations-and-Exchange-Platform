@@ -95,6 +95,26 @@ export default function PlantDetail() {
 
   const plantId = parseInt(id);
 
+  const [networkIp, setNetworkIp] = useState(window.location.hostname);
+
+  useEffect(() => {
+    // Only try to detect network IP if we are on localhost
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      const fetchNetworkIp = async () => {
+        try {
+          const response = await fetch(`http://${window.location.hostname}:5000/api/network-info`);
+          const data = await response.json();
+          if (data.ip && data.ip !== 'localhost') {
+            setNetworkIp(data.ip);
+          }
+        } catch (err) {
+          console.error("Error fetching network IP:", err);
+        }
+      };
+      fetchNetworkIp();
+    }
+  }, []);
+
   const fetchPlantAndImages = async () => {
     try {
       const response = await fetch(`http://${networkIp}:5000/api/plants`);
@@ -118,6 +138,7 @@ export default function PlantDetail() {
       setLoading(false);
     }
   };
+
 
   useEffect(() => {
     fetchPlantAndImages();
@@ -260,25 +281,7 @@ export default function PlantDetail() {
     }
   };
 
-  const [networkIp, setNetworkIp] = useState(window.location.hostname);
 
-  useEffect(() => {
-    // Only try to detect network IP if we are on localhost
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      const fetchNetworkIp = async () => {
-        try {
-          const response = await fetch(`http://${window.location.hostname}:5000/api/network-info`);
-          const data = await response.json();
-          if (data.ip && data.ip !== 'localhost') {
-            setNetworkIp(data.ip);
-          }
-        } catch (err) {
-          console.error("Error fetching network IP:", err);
-        }
-      };
-      fetchNetworkIp();
-    }
-  }, []);
 
   const closeModals = () => {
     setShowQuantitySelector(false);
@@ -300,11 +303,11 @@ export default function PlantDetail() {
     );
   }
 
-  const detail = PLANT_DETAILS[plant.id] || {};
+  const detail = PLANT_DETAILS[plant?.id] || {};
   const cartCount = cart.reduce((sum, item) => sum + (item.quantity || 0), 0);
   
-  const isOwned = plant.buyer_id === parseInt(currentUserId);
-  const careTips = CARE_TIPS[plant.name] || CARE_TIPS[plant.name.split(' (')[0]];
+  const isOwned = plant?.buyer_id === parseInt(currentUserId);
+  const careTips = plant?.name ? (CARE_TIPS[plant.name] || CARE_TIPS[plant.name.split(' (')[0]]) : {};
   
   const API_BASE = `http://${networkIp}:5000`;
   const HOST_URL = `${window.location.protocol}//${networkIp}${window.location.port ? ':' + window.location.port : ''}`;
@@ -316,7 +319,7 @@ export default function PlantDetail() {
   const userAnswers = location.state?.answers || location.state?.identification || null;
   const showSpecializedGrid = fromRecommendation || fromScan;
 
-  const specializedCareData = plant ? getSpecializedCareData(plant.name, userAnswers) : {};
+  const specializedCareData = plant?.name ? getSpecializedCareData(plant.name, userAnswers) : {};
 
   // Map for grid icons
   const gridIconMap = {
@@ -594,12 +597,12 @@ export default function PlantDetail() {
                 <div className="cart-items-list" style={{ maxHeight: '350px', overflowY: 'auto', textAlign: 'left', paddingRight: '5px' }}>
                   {cart.map((item, index) => (
                     <div key={item.id || `cart-${index}`} style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', padding: '15px 0', borderBottom: '1px solid #eee' }}>
-                      <img src={item.image.startsWith('http') ? item.image.replace('localhost', networkIp) : `http://${networkIp}:5000${item.image}`} alt={item.name} style={{ width: '70px', height: '70px', borderRadius: '14px', objectFit: 'cover' }} onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1416879598555-259160a2bece?q=80&w=400'; }} />
+                      <img src={item.image?.startsWith('http') ? item.image.replace('localhost', networkIp) : `http://${networkIp}:5000${item.image || ''}`} alt={item.name} style={{ width: '70px', height: '70px', borderRadius: '14px', objectFit: 'cover' }} onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1416879598555-259160a2bece?q=80&w=400'; }} />
                       <div style={{ flex: 1 }}>
                         <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '600' }}>{item.name}</h4>
                         <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: '5px' }}>
                           <span style={{ color: 'var(--primary)', fontWeight: '800', fontSize: '1rem' }}>{item.price}</span>
-                          <span style={{ background: '#f0f4f1', color: '#555', padding: '2px 8px', borderRadius: '6px', fontSize: '0.85rem', fontWeight: '700' }}>x {item.quantity}</span>
+                          <span style={{ background: '#f0f4f1', color: '#555', padding: '2px 8px', borderRadius: '6px', fontSize: '0.85rem', fontWeight: '700' }}>x {item.quantity || 1}</span>
                         </div>
                       </div>
                       <button onClick={() => handleRemoveFromCart(item.id)} style={{ color: '#ff4b4b', padding: '10px', background: '#fff0f0', borderRadius: '12px', border: 'none', cursor: 'pointer' }}><Trash2 size={20} /></button>

@@ -51,6 +51,26 @@ export default function Marketplace() {
   });
   const [showCart, setShowCart] = useState(false);
 
+  const [networkIp, setNetworkIp] = useState(window.location.hostname);
+
+  useEffect(() => {
+    // Only try to detect network IP if we are on localhost
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      const fetchNetworkIp = async () => {
+        try {
+          const response = await fetch(`http://${window.location.hostname}:5000/api/network-info`);
+          const data = await response.json();
+          if (data.ip && data.ip !== 'localhost') {
+            setNetworkIp(data.ip);
+          }
+        } catch (err) {
+          console.error("Error fetching network IP:", err);
+        }
+      };
+      fetchNetworkIp();
+    }
+  }, []);
+
   useEffect(() => {
     console.log("Current Cart State:", cart);
   }, [cart]);
@@ -58,6 +78,7 @@ export default function Marketplace() {
   useEffect(() => {
     console.log("showCart state changed to:", showCart);
   }, [showCart]);
+
 
   // Purchase Flow State
   const [selectedPlant, setSelectedPlant] = useState(null);
@@ -89,12 +110,18 @@ export default function Marketplace() {
       try {
         const response = await fetch(`http://${window.location.hostname}:5000/api/plants`);
         const data = await response.json();
-        // Transform image paths to include backend URL
-        const transformedData = data.map(plant => ({
-          ...plant,
-          image: plant.image ? `http://${window.location.hostname}:5000${encodeURI(plant.image)}` : plant.image
-        }));
-        setPlants(transformedData);
+        
+        // Safety check to ensure data is an array before mapping
+        if (Array.isArray(data)) {
+          const transformedData = data.map(plant => ({
+            ...plant,
+            image: plant.image ? `http://${window.location.hostname}:5000${encodeURI(plant.image)}` : plant.image
+          }));
+          setPlants(transformedData);
+        } else {
+          console.error("Received non-array data for plants:", data);
+          setPlants([]);
+        }
       } catch (err) {
         console.error("Error fetching plants:", err);
       } finally {
@@ -103,6 +130,7 @@ export default function Marketplace() {
     };
     fetchPlants();
   }, []);
+
 
   // Polling for payment status
   useEffect(() => {
@@ -127,7 +155,8 @@ export default function Marketplace() {
       }, 2000);
     }
     return () => clearInterval(interval);
-  }, [showQRPrompt, paymentSessionId, paymentStatus]);
+  }, [showQRPrompt, paymentSessionId, paymentStatus, networkIp]);
+
 
   // Escape key listener to close modals
   useEffect(() => {
@@ -233,25 +262,7 @@ export default function Marketplace() {
     setPaymentSessionId(null);
   };
 
-  const [networkIp, setNetworkIp] = useState(window.location.hostname);
 
-  useEffect(() => {
-    // Only try to detect network IP if we are on localhost
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      const fetchNetworkIp = async () => {
-        try {
-          const response = await fetch(`http://${window.location.hostname}:5000/api/network-info`);
-          const data = await response.json();
-          if (data.ip && data.ip !== 'localhost') {
-            setNetworkIp(data.ip);
-          }
-        } catch (err) {
-          console.error("Error fetching network IP:", err);
-        }
-      };
-      fetchNetworkIp();
-    }
-  }, []);
 
   const goToDetail = (id) => {
     navigate(`/marketplace/${id}`);

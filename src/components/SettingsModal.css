@@ -16,49 +16,57 @@
 .settings-modal {
   background: white;
   width: 95%;
-  max-width: 600px;
+  max-width: 800px; /* Wider for more breathing room */
+  height: 720px; /* Taller to avoid cramped scroll */
   max-height: 90vh;
-  border-radius: 2rem;
+  border-radius: 2.5rem;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
-  animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.12);
+  animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+
+
+
 .settings-header {
-  padding: 1.5rem 2rem;
-  border-bottom: 1px solid #eee;
+  padding: 1.75rem 2.5rem;
+  border-bottom: 1px solid #f0f0f0;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #fdfdfd;
+  background: white;
 }
 
 .settings-header h2 {
   margin: 0;
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: #333;
+  font-size: 1.75rem;
+  font-weight: 900;
+  color: #18181b;
+  letter-spacing: -0.05em;
 }
 
 .close-settings {
-  background: #f5f5f5;
+  background: #f4f4f5;
   border: none;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: #71717a;
 }
 
 .close-settings:hover {
-  background: #eee;
+  background: #e4e4e7;
+  color: #18181b;
   transform: rotate(90deg);
 }
+
 
 .settings-body {
   display: flex;
@@ -67,80 +75,92 @@
 }
 
 .settings-sidebar {
-  width: 180px;
-  background: #f9fbf9;
-  border-right: 1px solid #eee;
-  padding: 1.5rem 0.5rem;
+  width: 240px;
+  background: #f8faf8; /* Subtle tint to distinguish from content */
+  border-right: 1px solid #f0f0f0;
+  padding: 3rem 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 1rem;
 }
 
 .settings-nav-item {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  border-radius: 0.75rem;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-radius: 1.25rem;
   background: none;
   border: none;
-  color: #666;
+  color: #71717a;
   font-weight: 600;
+  font-size: 1rem;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   text-align: left;
 }
 
+
 .settings-nav-item:hover {
-  background: #f0f4f0;
+  background: #f1f5f1;
   color: var(--primary);
+  transform: translateX(4px);
 }
 
 .settings-nav-item.active {
   background: var(--primary);
   color: white;
+  box-shadow: 0 8px 20px rgba(46, 96, 58, 0.2);
 }
+
 
 .settings-content {
   flex: 1;
-  padding: 2rem;
+  padding: 3rem; /* More padding for whitespace */
   overflow-y: auto;
 }
 
 .settings-section-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  margin-bottom: 1.5rem;
-  color: #333;
+  font-size: 1.75rem;
+  font-weight: 900;
+  margin-bottom: 0.75rem;
+  color: #18181b;
+  letter-spacing: -0.03em;
 }
 
 .settings-form-group {
-  margin-bottom: 1.25rem;
+  margin-bottom: 2rem; /* More space between groups */
 }
 
 .settings-form-group label {
   display: block;
-  font-size: 0.875rem;
-  font-weight: 700;
-  color: #666;
-  margin-bottom: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #a1a1aa;
+  margin-bottom: 0.75rem;
   text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 .settings-form-group input {
   width: 100%;
-  padding: 0.75rem 1rem;
-  border-radius: 0.75rem;
-  border: 2px solid #eee;
+  padding: 1rem 1.25rem;
+  border-radius: 1.25rem;
+  border: 1.5px solid #e4e4e7;
   font-size: 1rem;
-  transition: all 0.2s;
+  background: #fff;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   outline: none;
+  color: #18181b;
 }
 
+
 .settings-form-group input:focus {
+  background: #fff;
   border-color: var(--primary);
-  box-shadow: 0 0 0 4px rgba(46, 96, 58, 0.1);
+  box-shadow: 0 0 0 4px rgba(46, 96, 58, 0.08);
 }
+
 
 .settings-actions {
   margin-top: 2rem;
@@ -266,7 +286,115 @@ input:checked + .slider:before {
   to { opacity: 1; transform: translateY(0); }
 }
 
+.account-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: #f1f5f9;
+  border-radius: 99px;
+  color: #475569;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border: 1px solid #e2e8f0;
+}
+
+.account-badge span {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.settings-stats-inline {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.stat-inline-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  border-radius: 1.5rem;
+  border: 1px solid #f4f4f5;
+  background: #ffffff;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.stat-inline-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-6px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+}
+
+.stat-inline-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+.stat-inline-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-inline-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #71717a;
+}
+
+.stat-inline-value {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: #18181b;
+}
+
+.settings-form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem; /* Tighter gap for stacked items */
+}
+
+
+.health-badge {
+  padding: 0.5rem 1rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.health-badge.good {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #dcfce7;
+}
+
+.health-badge.low {
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fef3c7;
+}
+
+
+
 @media (max-width: 600px) {
+  .settings-modal {
+    height: 95vh;
+  }
+  .settings-stats-inline {
+    grid-template-columns: 1fr;
+  }
+  .settings-form-grid {
+    grid-template-columns: 1fr;
+  }
   .settings-body {
     flex-direction: column;
   }
@@ -277,12 +405,15 @@ input:checked + .slider:before {
     padding: 0.75rem;
     border-right: none;
     border-bottom: 1px solid #eee;
+    flex-shrink: 0;
   }
   .settings-nav-item {
-    padding: 0.5rem 1rem;
+    padding: 0.5rem 1.25rem;
     white-space: nowrap;
+    justify-content: center;
   }
   .settings-content {
     padding: 1.5rem;
   }
 }
+

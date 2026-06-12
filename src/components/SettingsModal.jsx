@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, User, Shield, Bell, Trash2, MapPin, Phone, Lock, Heart, Star, Zap, Clock } from 'lucide-react';
+import { X, User, Shield, Bell, Trash2, MapPin, Phone, Lock, Heart, Star, Zap, Clock, Leaf, CloudRain } from 'lucide-react';
 import './SettingsModal.css';
 
 export default function SettingsModal({ open, onClose, userId, currentUserName, onUpdateName }) {
@@ -11,7 +11,6 @@ export default function SettingsModal({ open, onClose, userId, currentUserName, 
   const [profileData, setProfileData] = useState({
     fullName: currentUserName || '',
     email: '',
-    phoneNumber: '',
     preferredLocation: '',
     githubHandle: '',
     createdAt: ''
@@ -191,26 +190,13 @@ export default function SettingsModal({ open, onClose, userId, currentUserName, 
               <span>Profile</span>
             </button>
             <button 
-              className={`settings-nav-item ${activeTab === 'memories' ? 'active' : ''}`}
-              onClick={() => setActiveTab('memories')}
-            >
-              <Heart size={18} />
-              <span>Memories</span>
-            </button>
-            <button 
               className={`settings-nav-item ${activeTab === 'security' ? 'active' : ''}`}
               onClick={() => setActiveTab('security')}
             >
               <Shield size={18} />
               <span>Security</span>
             </button>
-            <button 
-              className={`settings-nav-item ${activeTab === 'preferences' ? 'active' : ''}`}
-              onClick={() => setActiveTab('preferences')}
-            >
-              <Bell size={18} />
-              <span>Preferences</span>
-            </button>
+
           </aside>
           
           <main className="settings-content">
@@ -235,81 +221,134 @@ export default function SettingsModal({ open, onClose, userId, currentUserName, 
             
             {activeTab === 'profile' && (
               <form onSubmit={handleUpdateProfile}>
-                <h3 className="settings-section-title">Public Profile</h3>
-                <div className="settings-form-group">
-                  <label>Full Name</label>
-                  <input 
-                    type="text" 
-                    value={profileData.fullName} 
-                    onChange={(e) => setProfileData({...profileData, fullName: e.target.value})}
-                    placeholder="Enter your name"
-                    required
-                  />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem' }}>
+                  <div>
+                    <h3 className="settings-section-title" style={{ marginBottom: '0.25rem' }}>Public Profile</h3>
+                    <p style={{ color: '#888', fontSize: '0.875rem' }}>Manage your account details and garden identity.</p>
+                  </div>
+                  <div className="account-badge">
+                    <Star size={14} fill="currentColor" />
+                    <span>Member since {profileData.createdAt ? new Date(profileData.createdAt).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) : 'June 2026'}</span>
+                  </div>
                 </div>
-                <div className="settings-form-group">
-                  <label>Email Address</label>
-                  <input 
-                    type="email" 
-                    value={profileData.email} 
-                    onChange={(e) => setProfileData({...profileData, email: e.target.value})}
-                    placeholder="yourname@example.com"
-                    required
-                  />
+
+                {/* Garden Impact Stats */}
+                <div className="settings-stats-inline">
+                  <div className="stat-inline-card">
+                    <div className="stat-inline-icon" style={{ background: '#eef2ef', color: 'var(--primary)' }}>
+                      <Leaf size={18} />
+                    </div>
+                    <div className="stat-inline-info">
+                      <span className="stat-inline-label">Plants Owned</span>
+                      <span className="stat-inline-value">{stats.ownedCount}</span>
+                    </div>
+                  </div>
+                  <div className="stat-inline-card">
+                    <div className="stat-inline-icon" style={{ background: '#f0f7ff', color: '#3b82f6' }}>
+                      <CloudRain size={18} />
+                    </div>
+                    <div className="stat-inline-info">
+                      <span className="stat-inline-label">CO2 Reduced</span>
+                      <span className="stat-inline-value">{stats.totalCO2}kg</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="settings-form-group">
-                  <label><Phone size={14} style={{ marginRight: '5px' }} /> Phone Number</label>
-                  <input 
-                    type="tel" 
-                    value={profileData.phoneNumber} 
-                    onChange={(e) => setProfileData({...profileData, phoneNumber: e.target.value})}
-                    placeholder="+977-98XXXXXXXX"
-                  />
+
+
+                <div style={{ height: '3rem' }}></div> {/* Section Spacer */}
+
+                <div className="settings-form-grid">
+                  <div className="settings-form-group">
+                    <label>Full Name</label>
+                    <input 
+                      type="text" 
+                      value={profileData.fullName} 
+                      onChange={(e) => setProfileData({...profileData, fullName: e.target.value})}
+                      placeholder="Enter your name"
+                      required
+                    />
+                  </div>
+                  <div className="settings-form-group">
+                    <label>Email Address</label>
+                    <input 
+                      type="email" 
+                      value={profileData.email} 
+                      onChange={(e) => setProfileData({...profileData, email: e.target.value})}
+                      placeholder="yourname@example.com"
+                      required
+                    />
+                  </div>
+                  <div className="settings-form-group">
+                    <label><Phone size={14} style={{ marginRight: '5px' }} /> Phone Number</label>
+                    <input 
+                      type="tel" 
+                      value={profileData.phoneNumber} 
+                      onChange={(e) => setProfileData({...profileData, phoneNumber: e.target.value})}
+                      placeholder="+977-98XXXXXXXX"
+                    />
+                  </div>
+                  <div className="settings-form-group">
+                    <label><MapPin size={14} style={{ marginRight: '5px' }} /> Preferred Location</label>
+                    <input 
+                      type="text" 
+                      value={profileData.preferredLocation} 
+                      onChange={(e) => setProfileData({...profileData, preferredLocation: e.target.value})}
+                      placeholder="e.g. Kathmandu, Nepal"
+                    />
+                  </div>
                 </div>
-                <div className="settings-form-group">
-                  <label><MapPin size={14} style={{ marginRight: '5px' }} /> Preferred Location</label>
-                  <input 
-                    type="text" 
-                    value={profileData.preferredLocation} 
-                    onChange={(e) => setProfileData({...profileData, preferredLocation: e.target.value})}
-                    placeholder="e.g. Kathmandu, Nepal"
-                  />
-                </div>
-                <div className="settings-actions">
+
+                <div style={{ height: '2.5rem' }}></div> {/* Bottom Spacer */}
+
+
+                <div className="settings-actions" style={{ marginTop: '1.5rem' }}>
+
                   <button type="submit" className="save-settings-btn" disabled={loading}>
                     {loading ? 'Saving...' : 'Save Changes'}
                   </button>
                 </div>
               </form>
+
+
             )}
 
             {activeTab === 'security' && (
-              <div>
+              <div className="animate-fade-in">
                 <form onSubmit={handleChangePassword}>
+
                   <h3 className="settings-section-title">Change Password</h3>
-                  <div className="settings-form-group">
-                    <label>Current Password</label>
-                    <input 
-                      type="password" 
-                      value={passwords.current}
-                      onChange={(e) => setPasswords({...passwords, current: e.target.value})}
-                    />
+                  <div style={{ height: '1.5rem' }}></div> {/* Spacer */}
+
+                  <div className="settings-form-grid">
+                    <div className="settings-form-group">
+                      <label>Current Password</label>
+                      <input 
+                        type="password" 
+                        value={passwords.current}
+                        onChange={(e) => setPasswords({...passwords, current: e.target.value})}
+                        autoComplete="current-password"
+                      />
+                    </div>
+                    <div className="settings-form-group">
+                      <label>New Password</label>
+                      <input 
+                        type="password" 
+                        value={passwords.new}
+                        onChange={(e) => setPasswords({...passwords, new: e.target.value})}
+                        autoComplete="new-password"
+                      />
+                    </div>
+                    <div className="settings-form-group">
+                      <label>Confirm Password</label>
+                      <input 
+                        type="password" 
+                        value={passwords.confirm}
+                        onChange={(e) => setPasswords({...passwords, confirm: e.target.value})}
+                        autoComplete="new-password"
+                      />
+                    </div>
                   </div>
-                  <div className="settings-form-group">
-                    <label>New Password</label>
-                    <input 
-                      type="password" 
-                      value={passwords.new}
-                      onChange={(e) => setPasswords({...passwords, new: e.target.value})}
-                    />
-                  </div>
-                  <div className="settings-form-group">
-                    <label>Confirm New Password</label>
-                    <input 
-                      type="password" 
-                      value={passwords.confirm}
-                      onChange={(e) => setPasswords({...passwords, confirm: e.target.value})}
-                    />
-                  </div>
+
                   <div className="settings-actions">
                     <button type="submit" className="save-settings-btn" disabled={loading}>
                       Update Password
@@ -317,81 +356,24 @@ export default function SettingsModal({ open, onClose, userId, currentUserName, 
                   </div>
                 </form>
 
+                <div style={{ height: '4rem' }}></div> {/* Large Spacer before Danger Zone */}
+
+
                 <div className="danger-zone">
                   <h3 className="settings-section-title" style={{ color: '#ef4444' }}>Danger Zone</h3>
-                  <p style={{ fontSize: '0.875rem', color: '#666', marginBottom: '1rem' }}> Once you delete your account, there is no going back. Please be certain. </p>
-                  <button onClick={handleDeleteAccount} className="delete-account-btn">
-                    <Trash2 size={16} style={{ marginRight: '8px' }} />
-                    Delete Account
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'preferences' && (
-              <div>
-                <h3 className="settings-section-title">Notifications</h3>
-                
-                <div className="setting-toggle-row">
-                  <div className="toggle-info">
-                    <h4>Watering Reminders</h4>
-                    <p>Receive alerts when your plants need water.</p>
-                  </div>
-                  <label className="switch">
-                    <input 
-                      type="checkbox" 
-                      checked={notifications.watering} 
-                      onChange={() => setNotifications({...notifications, watering: !notifications.watering})}
-                    />
-                    <span className="slider"></span>
-                  </label>
-                </div>
-
-                <div className="setting-toggle-row">
-                  <div className="toggle-info">
-                    <h4>Marketplace Updates</h4>
-                    <p>New plants and exclusive discounts.</p>
-                  </div>
-                  <label className="switch">
-                    <input 
-                      type="checkbox" 
-                      checked={notifications.marketplace} 
-                      onChange={() => setNotifications({...notifications, marketplace: !notifications.marketplace})}
-                    />
-                    <span className="slider"></span>
-                  </label>
-                </div>
-
-                <div className="setting-toggle-row">
-                  <div className="toggle-info">
-                    <h4>Newsletter</h4>
-                    <p>Weekly tips from our plant experts.</p>
-                  </div>
-                  <label className="switch">
-                    <input 
-                      type="checkbox" 
-                      checked={notifications.newsletter} 
-                      onChange={() => setNotifications({...notifications, newsletter: !notifications.newsletter})}
-                    />
-                    <span className="slider"></span>
-                  </label>
-                </div>
-
-                <div style={{ marginTop: '2rem' }}>
-                  <h3 className="settings-section-title">App Theme</h3>
-                  <div style={{ display: 'flex', gap: '1rem' }}>
-                    <div style={{ padding: '1rem', border: '2px solid var(--primary)', borderRadius: '1rem', flex: 1, textAlign: 'center' }}>
-                      <div style={{ width: '30px', height: '30px', background: '#fff', border: '1px solid #ccc', borderRadius: '50%', margin: '0 auto 0.5rem' }}></div>
-                      <span style={{ fontWeight: '700', fontSize: '0.875rem' }}>Light Mode</span>
-                    </div>
-                    <div style={{ padding: '1rem', border: '2px solid #eee', borderRadius: '1rem', flex: 1, textAlign: 'center', opacity: 0.5 }}>
-                      <div style={{ width: '30px', height: '30px', background: '#333', borderRadius: '50%', margin: '0 auto 0.5rem' }}></div>
-                      <span style={{ fontWeight: '700', fontSize: '0.875rem' }}>Dark (Soon)</span>
-                    </div>
+                  <div style={{ background: '#fff5f5', padding: '1.25rem', borderRadius: '1rem', border: '1px solid #fee2e2' }}>
+                    <p style={{ fontSize: '0.9rem', color: '#b91c1c', marginBottom: '1rem', fontWeight: '500' }}> Once you delete your account, there is no going back. All your garden history, plants, and progress will be permanently erased. </p>
+                    <button onClick={handleDeleteAccount} className="delete-account-btn">
+                      <Trash2 size={16} style={{ marginRight: '8px' }} />
+                      Delete Account
+                    </button>
                   </div>
                 </div>
               </div>
+
             )}
+
+
           </main>
         </div>
       </div>
