@@ -572,79 +572,6 @@
   }
 }
 
-@media (max-width: 480px) {
-  .app-header {
-    padding: 0.5rem 0.75rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  }
-
-  .brand-button {
-    padding: 0.2rem 0.3rem;
-  }
-
-  .header-logo {
-    height: 24px;
-  }
-
-  .btn-primary,
-  .btn-secondary {
-    padding: 0.45rem 0.75rem;
-    font-size: 0.8rem;
-    min-height: 38px;
-    border-radius: var(--radius-md);
-  }
-
-  .mega-menu, .brand-dropdown-menu {
-    position: fixed;
-    bottom: 0;
-    top: auto;
-    right: 0;
-    left: 0;
-    width: 100%;
-    max-height: 80vh;
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-    overflow-y: auto;
-    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.2);
-    animation: slideUp 0.3s ease-out;
-  }
-
-  .mega-menu-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.75rem;
-    padding: 1.25rem;
-  }
-
-  .mega-menu-item {
-    padding: 1rem 0.5rem;
-    gap: 0.5rem;
-  }
-
-  .mega-menu-icon {
-    font-size: 1.5rem;
-  }
-
-  .mega-menu-label {
-    font-size: 0.8rem;
-  }
-
-  .dropdown-header {
-    padding: 1rem 1.25rem;
-  }
-
-  .dropdown-nav {
-    padding: 0.75rem;
-  }
-
-  .dropdown-item {
-    padding: 0.85rem 1rem;
-    font-size: 1rem;
-  }
-
-  .header-actions {
-    gap: 0.5rem;
-  }
-}
-
 /* Animation for smooth transitions */
 @keyframes slideUp {
   from {
@@ -668,15 +595,134 @@
   }
 }
 
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.header-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 99;
+  animation: fadeIn 0.3s ease;
+}
+
 .brand-dropdown-menu,
 .mega-menu {
   animation: slideDown 0.3s ease;
 }
 
 @media (max-width: 480px) {
-  .brand-dropdown-menu,
-  .mega-menu {
-    animation: slideUp 0.3s ease-out;
+  .app-header {
+    padding: 0.5rem 0.75rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+
+  .brand-button {
+    padding: 0.3rem 0.4rem;
+  }
+
+  .header-logo {
+    height: 24px;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    padding: 0.5rem 0.85rem;
+    font-size: 0.85rem;
+    min-height: 42px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .switch-account-btn {
+    padding: 0.5rem;
+    min-width: 42px;
+  }
+  
+  .switch-account-btn .btn-text {
+    display: none;
+  }
+  
+  .switch-account-btn::after {
+    content: "🔄";
+    font-size: 1.1rem;
+  }
+
+  .mega-menu, .brand-dropdown-menu {
+    position: fixed;
+    bottom: 0;
+    top: auto;
+    right: 0;
+    left: 0;
+    width: 100%;
+    max-height: 85vh;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    overflow-y: auto;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.2);
+    animation: slideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+    z-index: 1001;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .mega-menu-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.85rem;
+    padding: 1.5rem;
+  }
+
+  .mega-menu-item {
+    padding: 1.25rem 0.5rem;
+    gap: 0.65rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+  }
+
+  .mega-menu-icon {
+    font-size: 1.75rem;
+  }
+
+  .mega-menu-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .dropdown-header {
+    padding: 1.25rem 1.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .dropdown-nav {
+    padding: 1rem;
+  }
+
+  .dropdown-item {
+    padding: 1.1rem 1.25rem;
+    font-size: 1.1rem;
+    border-bottom: 1px solid var(--bg-secondary);
+  }
+  
+  .dropdown-item:last-child {
+    border-bottom: none;
+  }
+
+  .header-actions {
+    gap: 0.65rem;
+  }
+  
+  .mega-menu-header {
+    padding: 1.5rem;
+  }
+  
+  .mega-menu-footer {
+    padding: 1.5rem;
+    background: var(--bg-surface);
   }
 }
    
