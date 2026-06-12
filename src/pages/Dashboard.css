@@ -34,60 +34,81 @@
 
 @media (max-width: 640px) {
   .dashboard-header {
-    margin-bottom: 1.5rem;
+    margin-bottom: 2rem;
+    text-align: left;
   }
 
   .dashboard-greeting {
-    font-size: 1.5rem;
+    font-size: 1.75rem;
+    letter-spacing: -0.03em;
   }
   
   .dashboard-subtext {
-    font-size: 0.875rem;
+    font-size: 0.95rem;
+    opacity: 0.8;
   }
   
   .dashboard-stats-grid {
-    gap: 1rem;
-    margin-bottom: 2rem;
+    gap: 1.25rem;
+    margin-bottom: 2.5rem;
   }
 
   .stat-card {
-    padding: 1.25rem;
-    border-radius: 0.875rem;
+    padding: 1.5rem;
+    border-radius: 1.5rem;
+    border: 1px solid rgba(255,255,255,0.8);
+    background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+    box-shadow: var(--shadow-md);
   }
   
   .stat-card-title {
-    font-size: 0.9rem;
+    font-size: 0.95rem;
+    font-weight: 700;
   }
 
   .stat-value-number, .aqi-number {
-    font-size: 2rem;
+    font-size: 2.25rem;
+    color: var(--primary);
   }
   
   .collection-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 0.75rem;
+    gap: 1rem;
+  }
+
+  .plant-card {
+    border-radius: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid rgba(0,0,0,0.03);
   }
 
   .plant-image-container {
-    height: 140px;
+    height: 150px;
   }
 
   .plant-info {
-    padding: 0.75rem;
+    padding: 1rem;
   }
 
   .plant-name {
-    font-size: 0.9rem;
+    font-size: 0.95rem;
+    font-weight: 800;
   }
 
   .add-new-card {
-    min-height: 200px;
+    border-radius: 1.5rem;
+    background: rgba(46, 96, 58, 0.03);
+    border: 2px dashed rgba(46, 96, 58, 0.2);
   }
 }
 
 @media (max-width: 400px) {
   .collection-grid {
-    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .stat-card {
+    padding: 1.25rem;
   }
 }
 

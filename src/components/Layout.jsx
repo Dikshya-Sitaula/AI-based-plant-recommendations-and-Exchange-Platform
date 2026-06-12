@@ -89,6 +89,11 @@ export default function Layout() {
               <MapPin size={20} />
               <span>Smart Recs</span>
             </NavLink>
+            <div className="sidebar-divider"></div>
+            <Link to="/" className="sidebar-nav-item exit-link">
+              <LogOut size={20} style={{ transform: 'rotate(180deg)' }} />
+              <span>Back to Home</span>
+            </Link>
           </nav>
         </div>
         
@@ -122,27 +127,27 @@ export default function Layout() {
 
       {/* Bottom Navigation for Mobile */}
       <nav className="bottom-nav">
+        <Link to="/" className="nav-item">
+          <LogOut size={22} style={{ transform: 'rotate(180deg)' }} />
+          <span>Home</span>
+        </Link>
         <NavLink to="/dashboard" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
-          <LayoutDashboard size={24} />
-          <span>Dashboard</span>
+          <LayoutDashboard size={22} />
+          <span>Feed</span>
         </NavLink>
         <NavLink to="/scan" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
           <div className="scan-btn">
-            <Camera size={28} />
+            <Camera size={26} />
           </div>
-          <span>Smart Scan</span>
-        </NavLink>
-        <NavLink to="/recommendation" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
-          <MapPin size={24} />
-          <span>Recommend</span>
+          <span>Scan</span>
         </NavLink>
         <NavLink to="/marketplace" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
-          <Store size={24} />
-          <span>Market</span>
+          <Store size={22} />
+          <span>Shop</span>
         </NavLink>
         <NavLink to="/rewards" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
-          <Trophy size={24} />
-          <span>Rewards</span>
+          <Trophy size={22} />
+          <span>Ranks</span>
         </NavLink>
       </nav>
     </div>
