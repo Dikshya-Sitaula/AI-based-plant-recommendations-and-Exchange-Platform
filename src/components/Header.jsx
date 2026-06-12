@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ChevronDown, X } from 'lucide-react';
+import { ChevronDown, X, Menu } from 'lucide-react';
 import logo from "../assets/Leaf and Life logo.png";
 import './Header.css';
 
@@ -62,9 +62,18 @@ export default function Header({ isAuthenticated, onOpenAuth, onSwitchAccount, o
 
   const isAnyMenuOpen = brandDropdownOpen || megaMenuOpen;
 
+  // Re-ordering menu items for better mobile flow
+  const allFeatures = [
+    { label: 'Dashboard', href: '/dashboard', icon: '📊' },
+    { label: 'Marketplace', href: '/marketplace', icon: '🛒' },
+    { label: 'Smart Scan', href: '/scan', icon: '📷' },
+    { label: 'Recommend', href: '/recommendation', icon: '💡' },
+    { label: 'Community', href: '/rewards', icon: '👥' },
+  ];
+
   return (
     <>
-      {/* Backdrop for mobile UX */}
+      {/* Unified Mobile Backdrop */}
       {isAnyMenuOpen && (
         <div 
           className="header-backdrop" 
@@ -76,53 +85,33 @@ export default function Header({ isAuthenticated, onOpenAuth, onSwitchAccount, o
       )}
       
       <header className="app-header">
-        {/* Brand Section with Dropdown */}
         <div className="header-brand-section">
-          <div className="brand-dropdown-wrapper" ref={brandDropdownRef}>
-            <button
-              className="brand-button"
-              onClick={() => setBrandDropdownOpen(!brandDropdownOpen)}
-              aria-expanded={brandDropdownOpen}
-              aria-haspopup="true"
-            >
-              <img src={logo} alt="Leaf and Life" className="header-logo" />
-              <span className="brand-name">Leaf & Life</span>
-              <ChevronDown
-                size={18}
-                className={`dropdown-icon ${brandDropdownOpen ? 'open' : ''}`}
-              />
-            </button>
+          {/* Mobile Menu Icon */}
+          <button 
+            className="mobile-menu-trigger" 
+            onClick={() => setMegaMenuOpen(!megaMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            <Menu size={24} />
+          </button>
 
-            {/* Brand Dropdown Menu */}
-            {brandDropdownOpen && (
-              <div className="brand-dropdown-menu">
-                <div className="dropdown-header">
-                  <h3>Navigation</h3>
-                  <button className="close-btn" onClick={handleBrandDropdownClose} aria-label="Close menu">
-                    <X size={18} />
-                  </button>
-                </div>
-                <nav className="dropdown-nav">
-                  {brandMenuItems.map((item) => (
-                    <Link
-                      key={item.href}
-                      to={item.href}
-                      className="dropdown-item"
-                      onClick={handleBrandDropdownClose}
-                    >
-                      {item.label}
-                    </Link>
-                  ))}
-                </nav>
-              </div>
-            )}
-          </div>
+          <Link to="/" className="brand-logo-link">
+            <img src={logo} alt="Leaf and Life" className="header-logo" />
+            <span className="brand-name">Leaf & Life</span>
+          </Link>
         </div>
 
-        {/* Center Spacer */}
-        <div className="header-center"></div>
+        <div className="header-center">
+          {/* Desktop Navigation - Hidden on mobile via CSS */}
+          <nav className="desktop-nav">
+            {brandMenuItems.map((item) => (
+              <Link key={item.href} to={item.href} className="desktop-nav-link">
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+        </div>
 
-        {/* Actions Section */}
         <div className="header-actions">
           {isAuthenticated && (
             <button 
@@ -134,11 +123,11 @@ export default function Header({ isAuthenticated, onOpenAuth, onSwitchAccount, o
             </button>
           )}
 
-          {/* Get Started Button with Mega Menu */}
+          {/* Unified Menu Trigger (Mobile) / Get Started (Desktop) */}
           <div className="mega-menu-wrapper" ref={megaMenuRef}>
             <button
               type="button"
-              className="btn-primary"
+              className="btn-primary get-started-btn"
               onClick={() => {
                 if (isAuthenticated) {
                   onGetStarted();
@@ -150,26 +139,27 @@ export default function Header({ isAuthenticated, onOpenAuth, onSwitchAccount, o
               aria-haspopup="true"
             >
               <span className="btn-text">Get Started</span>
-              {!isAuthenticated && (
-                <ChevronDown
-                  size={18}
-                  className={`dropdown-icon ${megaMenuOpen ? 'open' : ''}`}
-                />
-              )}
+              <ChevronDown
+                size={18}
+                className={`dropdown-icon ${megaMenuOpen ? 'open' : ''}`}
+              />
             </button>
 
-            {/* Mega Menu */}
+            {/* Premium Unified Mobile Menu / Mega Menu */}
             {megaMenuOpen && !isAuthenticated && (
-              <div className="mega-menu">
+              <div className="mega-menu premium-unified-menu">
                 <div className="mega-menu-header">
-                  <h2>Explore Features</h2>
+                  <div>
+                    <h2>Explore Features</h2>
+                    <p className="menu-subtitle">Unlock the full potential of your green space</p>
+                  </div>
                   <button className="close-btn" onClick={handleMegaMenuClose} aria-label="Close menu">
-                    <X size={20} />
+                    <X size={24} />
                   </button>
                 </div>
 
                 <div className="mega-menu-grid">
-                  {megaMenuItems.map((item) => (
+                  {allFeatures.map((item) => (
                     <Link
                       key={item.href}
                       to={item.href}
@@ -182,17 +172,36 @@ export default function Header({ isAuthenticated, onOpenAuth, onSwitchAccount, o
                   ))}
                 </div>
 
+                {/* Navigation Section (Highly visible on mobile) */}
+                <div className="mobile-nav-section">
+                  <h3 className="section-label">Quick Links</h3>
+                  <div className="mobile-nav-links">
+                    {brandMenuItems.map((item) => (
+                      <Link
+                        key={item.href}
+                        to={item.href}
+                        className="mobile-nav-item"
+                        onClick={handleMegaMenuClose}
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+
                 <div className="mega-menu-footer">
-                  <p>Sign in to access all features</p>
-                  <button 
-                    className="btn-primary-small"
-                    onClick={() => {
-                      setMegaMenuOpen(false);
-                      onOpenAuth();
-                    }}
-                  >
-                    Sign In Now
-                  </button>
+                  <div className="footer-content">
+                    <p>New to Leaf & Life?</p>
+                    <button 
+                      className="btn-primary-small"
+                      onClick={() => {
+                        setMegaMenuOpen(false);
+                        onOpenAuth();
+                      }}
+                    >
+                      Join Community
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
