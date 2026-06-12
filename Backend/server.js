@@ -21,6 +21,7 @@ const plantDetailsMap = require('./plantDetails');
      app.use(cors());
      app.use(express.json());
      app.use('/plants', express.static(path.join(__dirname, '../public/plants')));
+     app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
      // Routes
      app.use('/api/auth', authRoutes);

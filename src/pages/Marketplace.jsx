@@ -13,9 +13,9 @@ function PlantCard({ plant, onBuyClick, onClick }) {
     <div className="plant-card" onClick={() => onClick(plant.id)}>
       <div className="plant-image-wrap">
         <img src={plant.image} alt={plant.name} className="marketplace-img" onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1416879598555-259160a2bece?q=80&w=400'; }} />
-        <div className="badge">{plant.type}</div>
         <button className="like-btn" onClick={(e) => e.stopPropagation()}><Heart size={18} /></button>
       </div>
+
       <div className="plant-details">
         <div className="plant-info-top">
           <h3>{plant.name}</h3>
@@ -171,10 +171,10 @@ export default function Marketplace() {
   }, []);
 
   const filteredPlants = plants.filter(plant => {
-    if (activeTab !== 'all' && plant.type !== activeTab) return false;
     if (searchQuery && !plant.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     return true;
   });
+
 
   const handleAddToCart = (plant, qty) => {
     const existingItem = cart.find(item => item.id === plant.id);
@@ -309,18 +309,7 @@ export default function Marketplace() {
           </div>
         </div>
 
-        <div className="tabs-container">
-          {['all', 'swap', 'thrift', 'buy', 'sell'].map(tab => (
-            <button 
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`tab-button ${activeTab === tab ? 'active' : ''}`}
-              type="button"
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
+
 
         <div className="plants-grid">
           {loading ? (

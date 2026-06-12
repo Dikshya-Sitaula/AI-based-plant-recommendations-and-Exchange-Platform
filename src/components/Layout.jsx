@@ -22,6 +22,8 @@ export default function Layout() {
     if (typeof window === 'undefined') return 1;
     return localStorage.getItem('leafLifeUserId') || 1;
   });
+  const [userAvatar, setUserAvatar] = useState(null);
+
 
   const openAuthModal = () => setAuthOpen(true);
   const openSettingsModal = () => {
@@ -59,6 +61,20 @@ export default function Layout() {
     };
   }, [authOpen, settingsOpen]);
 
+  useEffect(() => {
+    if (isAuthenticated && userId) {
+      fetch(`http://${window.location.hostname}:5000/api/auth/profile/${userId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.profile_image) {
+            setUserAvatar(`http://${window.location.hostname}:5000${data.profile_image}`);
+          }
+        })
+        .catch(err => console.error("Profile fetch error:", err));
+    }
+  }, [isAuthenticated, userId]);
+
+
   return (
     <div className="app-container dashboard-layout">
       <AuthModal
@@ -75,7 +91,17 @@ export default function Layout() {
           setUserName(nameToSet);
           setUserId(finalId);
           
+          // Initial fetch for avatar after login
+          fetch(`http://${window.location.hostname}:5000/api/auth/profile/${finalId}`)
+            .then(res => res.json())
+            .then(userData => {
+              if (userData.profile_image) {
+                setUserAvatar(`http://${window.location.hostname}:5000${userData.profile_image}`);
+              }
+            });
+
           setAuthOpen(false);
+
           navigate('/dashboard');
         }}
       />
@@ -86,7 +112,9 @@ export default function Layout() {
         userId={userId}
         currentUserName={userName}
         onUpdateName={(newName) => setUserName(newName)}
+        onUpdateAvatar={(newAvatar) => setUserAvatar(newAvatar)}
       />
+
       
       {/* Sidebar Navigation */}
       <aside className="sidebar">
@@ -123,10 +151,11 @@ export default function Layout() {
         <div className="sidebar-bottom">
           <div className="user-profile">
             <img 
-              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=E2E8CE&color=2D5A27`} 
+              src={userAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=E2E8CE&color=2D5A27`} 
               alt={userName} 
               className="user-avatar" 
             />
+
             <div className="user-info">
               <span className="user-name">{userName}</span>
               <span className="user-role">Plant Parent</span>

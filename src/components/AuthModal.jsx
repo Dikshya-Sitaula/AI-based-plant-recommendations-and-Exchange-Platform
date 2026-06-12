@@ -49,7 +49,8 @@ export default function AuthModal({ open, onClose, onSuccess }) {
           body: JSON.stringify({ 
             email: googleUser.email,
             fullName: googleUser.name,
-            googleId: googleUser.sub
+            googleId: googleUser.sub,
+            accessToken: tokenResponse.access_token
           }),
         });
         const data = await response.json();

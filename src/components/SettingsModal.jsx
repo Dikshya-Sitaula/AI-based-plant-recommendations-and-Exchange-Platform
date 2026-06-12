@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, User, Shield, Bell, Trash2, MapPin, Phone, Lock, Heart, Star, Zap, Clock, Leaf, CloudRain } from 'lucide-react';
+import { X, User, Shield, Bell, Trash2, MapPin, Phone, Lock, Heart, Star, Zap, Clock, Leaf, CloudRain, Camera, Edit2 } from 'lucide-react';
 import './SettingsModal.css';
 
-export default function SettingsModal({ open, onClose, userId, currentUserName, onUpdateName }) {
+export default function SettingsModal({ open, onClose, userId, currentUserName, onUpdateName, onUpdateAvatar }) {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('profile');
   const [loading, setLoading] = useState(false);
@@ -13,8 +13,11 @@ export default function SettingsModal({ open, onClose, userId, currentUserName, 
     email: '',
     preferredLocation: '',
     githubHandle: '',
-    createdAt: ''
+    createdAt: '',
+    profileImage: ''
   });
+  const [avatarPreview, setAvatarPreview] = useState(null);
+
   
   const [stats, setStats] = useState({
     ownedCount: 0,
@@ -27,7 +30,10 @@ export default function SettingsModal({ open, onClose, userId, currentUserName, 
     confirm: ''
   });
 
+  const [avatarFile, setAvatarFile] = useState(null);
+
   const [notifications, setNotifications] = useState({
+
     watering: true,
     newsletter: false,
     marketplace: true
@@ -57,8 +63,12 @@ export default function SettingsModal({ open, onClose, userId, currentUserName, 
           phoneNumber: data.phone_number || '',
           preferredLocation: data.preferred_location || '',
           githubHandle: data.github_handle || '',
-          createdAt: data.created_at || ''
+          createdAt: data.created_at || '',
+          profileImage: data.profile_image || ''
         });
+        if (data.profile_image) {
+          setAvatarPreview(`http://${window.location.hostname}:5000${data.profile_image}`);
+        }
       }
     } catch (err) {
       console.error('Failed to fetch profile:', err);
@@ -91,24 +101,37 @@ export default function SettingsModal({ open, onClose, userId, currentUserName, 
     setLoading(true);
     setMessage({ text: '', type: '' });
     try {
+      const formData = new FormData();
+      formData.append('userId', userId);
+      formData.append('fullName', profileData.fullName || '');
+      formData.append('email', profileData.email || '');
+      formData.append('phoneNumber', profileData.phoneNumber || '');
+      formData.append('preferredLocation', profileData.preferredLocation || '');
+      formData.append('githubHandle', profileData.githubHandle || '');
+      
+      if (avatarFile) {
+        formData.append('profileImage', avatarFile);
+      }
+
       const response = await fetch(`http://${window.location.hostname}:5000/api/auth/profile/update`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId,
-          fullName: profileData.fullName,
-          email: profileData.email,
-          phoneNumber: profileData.phoneNumber,
-          preferredLocation: profileData.preferredLocation,
-          githubHandle: profileData.githubHandle
-        })
+        body: formData
+        // Note: Content-Type header should NOT be set manually for FormData so boundary is generated
       });
       
       if (response.ok) {
+        const data = await response.json();
         localStorage.setItem('leafLifeUserName', profileData.fullName);
         if (onUpdateName) onUpdateName(profileData.fullName);
+        
+        if (data.profileImage && onUpdateAvatar) {
+          onUpdateAvatar(`http://${window.location.hostname}:5000${data.profileImage}`);
+        }
+        
         showMessage('Profile updated successfully!');
+        setAvatarFile(null); // Clear selected file after success
       } else {
+
         const error = await response.json();
         showMessage(error.message || 'Failed to update profile', 'error');
       }
@@ -118,6 +141,7 @@ export default function SettingsModal({ open, onClose, userId, currentUserName, 
       setLoading(false);
     }
   };
+
 
   const handleChangePassword = async (e) => {
     e.preventDefault();
@@ -231,6 +255,45 @@ export default function SettingsModal({ open, onClose, userId, currentUserName, 
                     <span>Member since {profileData.createdAt ? new Date(profileData.createdAt).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) : 'June 2026'}</span>
                   </div>
                 </div>
+
+                {/* Profile Picture Section */}
+                <div className="profile-pic-section">
+                  <div className="profile-pic-wrapper">
+                    <img 
+                      src={avatarPreview || `https://ui-avatars.com/api/?name=${encodeURIComponent(profileData.fullName)}&background=E2E8CE&color=2D5A27&size=128`} 
+                      alt="Profile" 
+                      className="profile-avatar-img"
+                    />
+                    <label htmlFor="avatar-upload" className="avatar-edit-badge">
+                      <Camera size={16} />
+                      <input 
+                        id="avatar-upload"
+                        type="file" 
+                        accept="image/*" 
+                        style={{ display: 'none' }}
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (file) {
+                            setAvatarFile(file);
+                            const reader = new FileReader();
+                            reader.onloadend = () => {
+                              setAvatarPreview(reader.result);
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                      />
+
+                    </label>
+                  </div>
+                  <div className="profile-pic-info">
+                    <h4>Profile Picture</h4>
+                    <p>JPG, GIF or PNG. Max size of 2MB.</p>
+                  </div>
+                </div>
+
+                <div style={{ height: '1.5rem' }}></div>
+
 
                 {/* Garden Impact Stats */}
                 <div className="settings-stats-inline">

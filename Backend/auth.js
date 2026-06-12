@@ -4,6 +4,33 @@ const db = require('./db');
 const { OAuth2Client } = require('google-auth-library');
 const jwt = require('jsonwebtoken');
 const jwksClient = require('jwks-rsa');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+// Configure Multer for Profile Pictures
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadDir = path.join(__dirname, 'uploads/profiles');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'profile-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ 
+  storage: storage,
+  limits: { fileSize: 2 * 1024 * 1024 } // 2MB limit
+});
+
+
+// Polyfill fetch for Node environments without native fetch
+const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const appleJwksClient = jwksClient({
@@ -90,21 +117,54 @@ async function handleSocialLogin(req, res, { email, fullName, googleId, appleId 
 
 // Google Auth Route
 router.post('/google', async (req, res) => {
-  const { credential } = req.body;
+  const { credential, accessToken, email, fullName, googleId } = req.body;
+  
   try {
-    const ticket = await googleClient.verifyIdToken({
-      idToken: credential,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
-    const payload = ticket.getPayload();
+    if (credential) {
+      // Verify ID Token (JWT)
+      const ticket = await googleClient.verifyIdToken({
+        idToken: credential,
+        audience: process.env.GOOGLE_CLIENT_ID,
+      });
+      const payload = ticket.getPayload();
+      
+      return await handleSocialLogin(req, res, {
+        email: payload.email,
+        fullName: payload.name,
+        googleId: payload.sub
+      });
+    } 
     
-    await handleSocialLogin(req, res, {
-      email: payload.email,
-      fullName: payload.name,
-      googleId: payload.sub
-    });
+    if (accessToken) {
+      // Verify Access Token via Google's tokeninfo endpoint
+      const response = await fetch(`https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=${accessToken}`);
+      const info = await response.json();
+      
+      if (info.error) {
+        throw new Error('Invalid access token');
+      }
+
+      // Ensure the token belongs to our client and matches the provided email
+      if (info.email !== email) {
+        throw new Error('Email mismatch');
+      }
+
+      return await handleSocialLogin(req, res, {
+        email,
+        fullName,
+        googleId
+      });
+    }
+
+    // Fallback for legacy/unverified (Not recommended for production)
+    if (email && googleId) {
+      console.warn('Unverified Google login attempt for:', email);
+      return await handleSocialLogin(req, res, { email, fullName, googleId });
+    }
+
+    res.status(400).json({ message: 'Missing Google credentials' });
   } catch (err) {
-    console.error('Google token verification failed:', err);
+    console.error('Google verification failed:', err.message);
     res.status(401).json({ message: 'Invalid Google token' });
   }
 });
@@ -194,7 +254,7 @@ router.post('/login', async (req, res) => {
 router.get('/profile/:userId', async (req, res) => {
   try {
     const [rows] = await db.execute(
-      'SELECT id, full_name, email, phone_number, preferred_location, github_handle, created_at FROM users WHERE id = ?',
+      'SELECT id, full_name, email, phone_number, preferred_location, github_handle, profile_image, created_at FROM users WHERE id = ?',
       [req.params.userId]
     );
     if (rows.length === 0) return res.status(404).json({ message: 'User not found' });
@@ -211,8 +271,17 @@ router.get('/profile/:userId', async (req, res) => {
 });
 
 // Update Profile Info
-router.post('/profile/update', async (req, res) => {
+router.post('/profile/update', upload.single('profileImage'), async (req, res) => {
   const { userId, fullName, email, phoneNumber, preferredLocation, githubHandle } = req.body;
+  const profileImage = req.file ? `/uploads/profiles/${req.file.filename}` : null;
+
+  // Safety: Prevent 'undefined' from breaking MySQL query
+  const safeFullName = fullName || null;
+  const safeEmail = email || null;
+  const safePhone = phoneNumber || null;
+  const safeLocation = preferredLocation || null;
+  const safeGithub = githubHandle || null;
+
   console.log(`[PROFILE] Update request for User ID: ${userId}`, req.body);
 
   try {
@@ -224,17 +293,26 @@ router.post('/profile/update', async (req, res) => {
       }
     }
 
-    const [result] = await db.execute(
-      'UPDATE users SET full_name = ?, email = ?, phone_number = ?, preferred_location = ?, github_handle = ? WHERE id = ?',
-      [fullName, email, phoneNumber, preferredLocation, githubHandle, userId]
-    );
-    console.log(`[PROFILE] Update result:`, result);
-    res.json({ message: 'Profile updated successfully' });
+    let query = 'UPDATE users SET full_name = ?, email = ?, phone_number = ?, preferred_location = ?, github_handle = ?';
+    let params = [safeFullName, safeEmail, safePhone, safeLocation, safeGithub];
+
+    if (profileImage) {
+      query += ', profile_image = ?';
+      params.push(profileImage);
+    }
+
+    query += ' WHERE id = ?';
+    params.push(userId);
+
+    const [result] = await db.execute(query, params);
+    res.json({ message: 'Profile updated successfully', profileImage });
   } catch (err) {
     console.error(`[PROFILE] Update error for User ${userId}:`, err.message);
     res.status(500).json({ message: `Failed to update profile: ${err.message}` });
   }
 });
+
+
 
 // Change Password
 router.post('/profile/change-password', async (req, res) => {
