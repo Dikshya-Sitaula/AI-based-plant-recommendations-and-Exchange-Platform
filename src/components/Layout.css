@@ -212,6 +212,19 @@ body {
   transform: scale(1.05);
 }
 
+.layout-mobile-header {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  .layout-mobile-header {
+    display: block;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+  }
+}
+
 /* Desktop styles remain unchanged above... */
 
 @media (max-width: 640px) {

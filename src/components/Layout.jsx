@@ -4,6 +4,7 @@ import { Store, Camera, Trophy, LayoutDashboard, MapPin, LogOut, Settings } from
 import './Layout.css';
 import logo from "../assets/Leaf and Life logo.png";
 import AuthModal from './AuthModal';
+import Header from './Header';
 
 export default function Layout() {
   const navigate = useNavigate();
@@ -46,6 +47,16 @@ export default function Layout() {
 
   return (
     <div className="app-container dashboard-layout">
+      {/* Mobile Top Header */}
+      <div className="layout-mobile-header">
+        <Header 
+          isAuthenticated={isAuthenticated} 
+          onOpenAuth={openAuthModal}
+          onGetStarted={handleGetStarted}
+          onSwitchAccount={handleSwitchAccount}
+        />
+      </div>
+
       <AuthModal
         open={authOpen}
         onClose={() => setAuthOpen(false)}

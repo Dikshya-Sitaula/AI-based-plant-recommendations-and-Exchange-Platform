@@ -25,6 +25,7 @@ import {
 import './Landing.css';
 import logo from "../assets/Leaf and Life logo.png";
 import AuthModal from '../components/AuthModal';
+import Header from '../components/Header';
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -78,43 +79,17 @@ export default function Landing() {
 
   return (
     <div className="lp-root">
-      {/* Navbar */}
-      <nav className="lp-nav">
-        <div className="lp-nav-inner">
-          <button type="button" className="lp-brand lp-brand-action" onClick={handleLogoClick}>
-            <span className="lp-brand-mark" aria-hidden="true">
-              <img src={logo} alt="Leaf & Life logo" className="lp-brand-img" />
-            </span>
-            <span className="lp-brand-text">Leaf &amp; Life</span>
-            {isSubmitted && <span className={`lp-dropdown-arrow ${activeNav === 'landing' ? 'open' : ''}`} aria-hidden="true">▾</span>}
-          </button>
-
-          <div className="lp-nav-center">
-            <button type="button" className="lp-nav-link" onClick={() => navigate('/?landing=1')}>Home</button>
-            <button type="button" className="lp-nav-link" onClick={() => navigate('/about')}>About Us</button>
-            <button type="button" className="lp-nav-link" onClick={() => navigate('/contact')}>Contact</button>
-          </div>
-
-          <div className="lp-nav-actions">
-            {isSubmitted && (
-              <button
-                type="button"
-                className="lp-btn lp-btn-ghost lp-btn-sm"
-                onClick={() => {
-                  localStorage.removeItem('leafLifeSubmitted');
-                  localStorage.removeItem('leafLifeAuthenticated');
-                  window.location.reload();
-                }}
-              >
-                Switch Account
-              </button>
-            )}
-            <button type="button" className="lp-btn lp-btn-primary" onClick={handleGetStarted}>
-              Get Started
-            </button>
-          </div>
-        </div>
-      </nav>
+      <Header 
+        isAuthenticated={isSubmitted} 
+        onOpenAuth={openModal} 
+        onGetStarted={handleGetStarted}
+        onSwitchAccount={() => {
+          localStorage.removeItem('leafLifeSubmitted');
+          localStorage.removeItem('leafLifeAuthenticated');
+          localStorage.removeItem('leafLifeUserName');
+          window.location.reload();
+        }}
+      />
 
       <AuthModal
         open={showModal}

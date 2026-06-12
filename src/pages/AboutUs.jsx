@@ -24,6 +24,7 @@ import rishuImg from '../assets/Rishu Prajapati.jpeg';
 import aditaImg from '../assets/Adita Rai.jpeg';
 import lizaImg from '../assets/Liza Shrestha.jpeg';
 import AuthModal from '../components/AuthModal';
+import Header from '../components/Header';
 
 // Custom hook for scroll-reveal animation
 function useScrollReveal() {
@@ -123,42 +124,16 @@ export default function AboutUs() {
 
   return (
     <div className="lp-root about-root">
-      {/* Navbar — unchanged */}
-      <nav className="lp-nav">
-        <div className="lp-nav-inner">
-          <Link to="/" className="lp-brand" aria-label="Leaf & Life Home">
-            <span className="lp-brand-mark" aria-hidden="true">
-              <img src={logo} alt="" className="lp-brand-img" />
-            </span>
-            <span className="lp-brand-text">Leaf &amp; Life</span>
-          </Link>
-
-          <div className="lp-nav-links">
-            <Link className="lp-nav-link" to="/">Home</Link>
-            <Link className="lp-nav-link" to="/about">About Us</Link>
-            <Link className="lp-nav-link" to="/contact">Contact</Link>
-          </div>
-
-          <div className="lp-nav-actions">
-            {isSubmitted && (
-              <button
-                type="button"
-                className="lp-btn lp-btn-ghost lp-btn-sm"
-                onClick={() => {
-                  localStorage.removeItem('leafLifeSubmitted');
-                  localStorage.removeItem('leafLifeAuthenticated');
-                  window.location.reload();
-                }}
-              >
-                Switch Account
-              </button>
-            )}
-            <button type="button" className="lp-btn lp-btn-primary" onClick={handleGetStarted}>
-              Get Started
-            </button>
-          </div>
-        </div>
-      </nav>
+      <Header 
+        isAuthenticated={isSubmitted} 
+        onOpenAuth={openAuthModal} 
+        onGetStarted={handleGetStarted}
+        onSwitchAccount={() => {
+          localStorage.removeItem('leafLifeSubmitted');
+          localStorage.removeItem('leafLifeAuthenticated');
+          window.location.reload();
+        }}
+      />
 
       <AuthModal
         open={authOpen}

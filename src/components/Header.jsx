@@ -1,33 +1,34 @@
 import { useState, useRef, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { ChevronDown, X, Menu } from 'lucide-react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { 
+  ChevronDown, X, Menu, Home, Info, Mail, 
+  LayoutDashboard, Camera, Store, Trophy, MapPin, 
+  Settings, LogOut, User 
+} from 'lucide-react';
 import logo from "../assets/Leaf and Life logo.png";
 import './Header.css';
 
 export default function Header({ isAuthenticated, onOpenAuth, onSwitchAccount, onGetStarted }) {
-  const [brandDropdownOpen, setBrandDropdownOpen] = useState(false);
-  const [megaMenuOpen, setMegaMenuOpen] = useState(false);
-  const brandDropdownRef = useRef(null);
-  const megaMenuRef = useRef(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+  const location = useLocation();
+  const navigate = useNavigate();
 
-  // Close dropdowns when clicking outside
+  const userName = localStorage.getItem('leafLifeUserName') || 'Guest';
+
+  // Close menu when clicking outside or changing route
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (brandDropdownRef.current && !brandDropdownRef.current.contains(event.target)) {
-        setBrandDropdownOpen(false);
-      }
-      if (megaMenuRef.current && !megaMenuRef.current.contains(event.target)) {
-        setMegaMenuOpen(false);
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setIsMenuOpen(false);
       }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
-    
-    // Body scroll lock on mobile when menus are open
-    if (brandDropdownOpen || megaMenuOpen) {
-      if (window.innerWidth <= 480) {
-        document.body.style.overflow = 'hidden';
-      }
+    setIsMenuOpen(false); // Close on route change
+
+    if (isMenuOpen) {
+      document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
     }
@@ -36,174 +37,136 @@ export default function Header({ isAuthenticated, onOpenAuth, onSwitchAccount, o
       document.removeEventListener('mousedown', handleClickOutside);
       document.body.style.overflow = '';
     };
-  }, [brandDropdownOpen, megaMenuOpen]);
+  }, [location, isMenuOpen]);
 
-  const handleBrandDropdownClose = () => {
-    setBrandDropdownOpen(false);
+  const handleLogout = () => {
+    localStorage.removeItem('leafLifeAuthenticated');
+    localStorage.removeItem('leafLifeSubmitted');
+    localStorage.removeItem('leafLifeUserName');
+    window.location.href = '/';
   };
 
-  const handleMegaMenuClose = () => {
-    setMegaMenuOpen(false);
-  };
-
-  const brandMenuItems = [
-    { label: 'Home', href: '/' },
-    { label: 'About Us', href: '/about' },
-    { label: 'Contact', href: '#contact' },
+  const navLinks = [
+    { label: 'Home', href: '/', icon: <Home size={20} /> },
+    { label: 'About Us', href: '/about', icon: <Info size={20} /> },
+    { label: 'Contact', href: '/contact', icon: <Mail size={20} /> },
   ];
 
-  const megaMenuItems = [
-    { label: 'Marketplace', href: '/marketplace', icon: '🛒' },
-    { label: 'Smart Recommendation', href: '/recommendation', icon: '💡' },
-    { label: 'Smart Scan', href: '/scan', icon: '📷' },
-    { label: 'Dashboard', href: '/dashboard', icon: '📊' },
-    { label: 'Community', href: '/rewards', icon: '👥' },
-  ];
-
-  const isAnyMenuOpen = brandDropdownOpen || megaMenuOpen;
-
-  // Re-ordering menu items for better mobile flow
-  const allFeatures = [
-    { label: 'Dashboard', href: '/dashboard', icon: '📊' },
-    { label: 'Marketplace', href: '/marketplace', icon: '🛒' },
-    { label: 'Smart Scan', href: '/scan', icon: '📷' },
-    { label: 'Recommend', href: '/recommendation', icon: '💡' },
-    { label: 'Community', href: '/rewards', icon: '👥' },
+  const dashboardLinks = [
+    { label: 'Dashboard', href: '/dashboard', icon: <LayoutDashboard size={20} /> },
+    { label: 'Smart Scan', href: '/scan', icon: <Camera size={20} /> },
+    { label: 'Marketplace', href: '/marketplace', icon: <Store size={20} /> },
+    { label: 'Community', href: '/rewards', icon: <Trophy size={20} /> },
+    { label: 'Smart Recs', href: '/recommendation', icon: <MapPin size={20} /> },
   ];
 
   return (
     <>
-      {/* Unified Mobile Backdrop */}
-      {isAnyMenuOpen && (
-        <div 
-          className="header-backdrop" 
-          onClick={() => {
-            setBrandDropdownOpen(false);
-            setMegaMenuOpen(false);
-          }}
-        />
-      )}
+      {/* Backdrop */}
+      {isMenuOpen && <div className="header-backdrop-blur" onClick={() => setIsMenuOpen(false)} />}
       
-      <header className="app-header">
-        <div className="header-brand-section">
-          {/* Mobile Menu Icon */}
-          <button 
-            className="mobile-menu-trigger" 
-            onClick={() => setMegaMenuOpen(!megaMenuOpen)}
-            aria-label="Toggle menu"
-          >
-            <Menu size={24} />
-          </button>
-
-          <Link to="/" className="brand-logo-link">
-            <img src={logo} alt="Leaf and Life" className="header-logo" />
-            <span className="brand-name">Leaf & Life</span>
+      <header className="main-app-header">
+        <div className="header-inner">
+          {/* Logo - Left */}
+          <Link to="/" className="header-logo-container">
+            <img src={logo} alt="Leaf and Life" className="header-logo-img" />
+            <span className="header-brand-name">Leaf & Life</span>
           </Link>
-        </div>
 
-        <div className="header-center">
-          {/* Desktop Navigation - Hidden on mobile via CSS */}
-          <nav className="desktop-nav">
-            {brandMenuItems.map((item) => (
-              <Link key={item.href} to={item.href} className="desktop-nav-link">
-                {item.label}
+          {/* Desktop Nav - Middle */}
+          <nav className="desktop-main-nav">
+            {navLinks.map(link => (
+              <Link key={link.href} to={link.href} className="desktop-link">
+                {link.label}
               </Link>
             ))}
           </nav>
+
+          {/* Desktop Actions - Right */}
+          <div className="desktop-header-actions">
+            {!isAuthenticated ? (
+              <button className="btn-header-primary" onClick={onGetStarted}>
+                Get Started
+              </button>
+            ) : (
+              <Link to="/dashboard" className="btn-header-secondary">
+                Go to Dashboard
+              </Link>
+            )}
+          </div>
+
+          {/* Mobile Hamburger - Right */}
+          <button 
+            className="mobile-hamburger-btn" 
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-label="Toggle Navigation"
+          >
+            {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
+          </button>
         </div>
 
-        <div className="header-actions">
-          {isAuthenticated && (
-            <button 
-              type="button" 
-              className="btn-secondary switch-account-btn"
-              onClick={onSwitchAccount}
-            >
-              <span className="btn-text">Switch Account</span>
-            </button>
-          )}
+        {/* Mobile Drawer */}
+        <div className={`mobile-navigation-drawer ${isMenuOpen ? 'open' : ''}`} ref={menuRef}>
+          <div className="drawer-content">
+            {/* Section 1: Public Links */}
+            <div className="drawer-section">
+              <div className="drawer-nav-list">
+                {navLinks.map(link => (
+                  <Link key={link.href} to={link.href} className="drawer-link">
+                    <span className="drawer-link-icon">{link.icon}</span>
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
 
-          {/* Unified Menu Trigger (Mobile) / Get Started (Desktop) */}
-          <div className="mega-menu-wrapper" ref={megaMenuRef}>
-            <button
-              type="button"
-              className="btn-primary get-started-btn"
-              onClick={() => {
-                if (isAuthenticated) {
-                  onGetStarted();
-                } else {
-                  setMegaMenuOpen(!megaMenuOpen);
-                }
-              }}
-              aria-expanded={megaMenuOpen}
-              aria-haspopup="true"
-            >
-              <span className="btn-text">Get Started</span>
-              <ChevronDown
-                size={18}
-                className={`dropdown-icon ${megaMenuOpen ? 'open' : ''}`}
-              />
-            </button>
+            <div className="drawer-divider" />
 
-            {/* Premium Unified Mobile Menu / Mega Menu */}
-            {megaMenuOpen && !isAuthenticated && (
-              <div className="mega-menu premium-unified-menu">
-                <div className="mega-menu-header">
-                  <div>
-                    <h2>Explore Features</h2>
-                    <p className="menu-subtitle">Unlock the full potential of your green space</p>
+            {/* Section 2: Dashboard Menu */}
+            <div className="drawer-section">
+              <h3 className="drawer-section-title">Dashboard Menu</h3>
+              <div className="drawer-nav-list">
+                {dashboardLinks.map(link => (
+                  <Link key={link.href} to={link.href} className="drawer-link">
+                    <span className="drawer-link-icon">{link.icon}</span>
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Section 3: User Profile - Fixed Bottom */}
+          <div className="drawer-footer-profile">
+            {isAuthenticated ? (
+              <div className="profile-container">
+                <div className="profile-info-row">
+                  <img 
+                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=E2E8CE&color=2D5A27`} 
+                    alt={userName} 
+                    className="profile-avatar" 
+                  />
+                  <div className="profile-text">
+                    <span className="profile-name">{userName}</span>
+                    <span className="profile-role">Plant Parent</span>
                   </div>
-                  <button className="close-btn" onClick={handleMegaMenuClose} aria-label="Close menu">
-                    <X size={24} />
+                </div>
+                <div className="profile-actions-row">
+                  <button className="profile-action-item">
+                    <Settings size={20} />
+                    <span>Settings</span>
+                  </button>
+                  <button className="profile-action-item logout" onClick={handleLogout}>
+                    <LogOut size={20} />
+                    <span>Logout</span>
                   </button>
                 </div>
-
-                <div className="mega-menu-grid">
-                  {allFeatures.map((item) => (
-                    <Link
-                      key={item.href}
-                      to={item.href}
-                      className="mega-menu-item"
-                      onClick={handleMegaMenuClose}
-                    >
-                      <div className="mega-menu-icon">{item.icon}</div>
-                      <span className="mega-menu-label">{item.label}</span>
-                    </Link>
-                  ))}
-                </div>
-
-                {/* Navigation Section (Highly visible on mobile) */}
-                <div className="mobile-nav-section">
-                  <h3 className="section-label">Quick Links</h3>
-                  <div className="mobile-nav-links">
-                    {brandMenuItems.map((item) => (
-                      <Link
-                        key={item.href}
-                        to={item.href}
-                        className="mobile-nav-item"
-                        onClick={handleMegaMenuClose}
-                      >
-                        {item.label}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="mega-menu-footer">
-                  <div className="footer-content">
-                    <p>New to Leaf & Life?</p>
-                    <button 
-                      className="btn-primary-small"
-                      onClick={() => {
-                        setMegaMenuOpen(false);
-                        onOpenAuth();
-                      }}
-                    >
-                      Join Community
-                    </button>
-                  </div>
-                </div>
               </div>
+            ) : (
+              <button className="drawer-auth-btn" onClick={() => { setIsMenuOpen(false); onOpenAuth(); }}>
+                <User size={20} />
+                <span>Sign In / Register</span>
+              </button>
             )}
           </div>
         </div>
