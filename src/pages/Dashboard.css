@@ -10,6 +10,105 @@
   margin-bottom: var(--space-lg);
 }
 
+.dashboard-top-layout {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+  flex-wrap: wrap;
+}
+
+.dashboard-user-profile {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  background: var(--color-white);
+  padding: 1rem 1.5rem;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border-light);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.dashboard-user-profile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.dashboard-profile-main {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.dashboard-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 2px solid var(--color-primary);
+  object-fit: cover;
+}
+
+.dashboard-user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-user-name {
+  font-weight: 800;
+  font-size: var(--fs-base);
+  color: var(--text-primary);
+}
+
+.dashboard-user-role {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.dashboard-profile-actions {
+  display: flex;
+  gap: 0.75rem;
+  border-left: 1px solid var(--border-light);
+  padding-left: 1.5rem;
+}
+
+.dashboard-action-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-dashboard);
+  color: var(--text-muted);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: none;
+}
+
+.dashboard-action-btn:hover {
+  background: var(--color-primary-light);
+  color: white;
+}
+
+.dashboard-action-btn.logout:hover {
+  background: #c53030;
+  color: white;
+}
+
+@media (max-width: 640px) {
+  .dashboard-top-layout {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .dashboard-user-profile {
+    justify-content: space-between;
+  }
+}
+
 .dashboard-greeting {
   font-size: var(--fs-xl);
   font-weight: 800;

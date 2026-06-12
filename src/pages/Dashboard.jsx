@@ -1,4 +1,4 @@
-import { Plus, Droplets, MapPin, Wind, Trophy, Leaf } from 'lucide-react';
+import { Plus, Droplets, MapPin, Wind, Trophy, Leaf, Settings, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import './Dashboard.css';
@@ -11,6 +11,13 @@ export default function Dashboard() {
   const [totalCO2, setTotalCO2] = useState("0.0");
   const [collection, setCollection] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const handleLogout = () => {
+    localStorage.removeItem('leafLifeAuthenticated');
+    localStorage.removeItem('leafLifeSubmitted');
+    localStorage.removeItem('leafLifeUserName');
+    window.location.reload();
+  };
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -42,17 +49,43 @@ export default function Dashboard() {
 
   return (
     <div className="dashboard-content animate-fade-in">
-      {/* Header */}
-      <header className="dashboard-header">
-        <div>
-          <h1 className="dashboard-greeting">Hi, {userName}! 👋</h1>
-          <p className="dashboard-subtext">
-            {ownedCount === 0 
-              ? "Start your green journey today." 
-              : "Your urban jungle is thriving."}
-          </p>
+      {/* Dashboard Top Section */}
+      <div className="dashboard-top-layout">
+        {/* Header */}
+        <header className="dashboard-header">
+          <div>
+            <h1 className="dashboard-greeting">Hi, {userName}! 👋</h1>
+            <p className="dashboard-subtext">
+              {ownedCount === 0 
+                ? "Start your green journey today." 
+                : "Your urban jungle is thriving."}
+            </p>
+          </div>
+        </header>
+
+        {/* User Profile Card (Visible on Dashboard Content) */}
+        <div className="dashboard-user-profile">
+          <div className="dashboard-profile-main">
+            <img 
+              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=E2E8CE&color=2D5A27`} 
+              alt={userName} 
+              className="dashboard-avatar" 
+            />
+            <div className="dashboard-user-info">
+              <span className="dashboard-user-name">{userName}</span>
+              <span className="dashboard-user-role">Plant Parent</span>
+            </div>
+          </div>
+          <div className="dashboard-profile-actions">
+            <button className="dashboard-action-btn" title="Settings">
+              <Settings size={18} />
+            </button>
+            <button className="dashboard-action-btn logout" title="Log Out" onClick={handleLogout}>
+              <LogOut size={18} />
+            </button>
+          </div>
         </div>
-      </header>
+      </div>
       
       {/* Top Row: Stats Cards */}
       <div className="dashboard-stats-grid">
