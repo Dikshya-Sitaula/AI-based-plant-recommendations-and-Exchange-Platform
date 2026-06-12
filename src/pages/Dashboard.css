@@ -33,6 +33,10 @@
 }
 
 @media (max-width: 640px) {
+  .dashboard-header {
+    margin-bottom: 1.5rem;
+  }
+
   .dashboard-greeting {
     font-size: 1.5rem;
   }
@@ -41,17 +45,49 @@
     font-size: 0.875rem;
   }
   
+  .dashboard-stats-grid {
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
   .stat-card {
-    padding: 1rem;
+    padding: 1.25rem;
+    border-radius: 0.875rem;
   }
   
   .stat-card-title {
-    font-size: 0.875rem;
+    font-size: 0.9rem;
+  }
+
+  .stat-value-number, .aqi-number {
+    font-size: 2rem;
   }
   
   .collection-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+
+  .plant-image-container {
+    height: 140px;
+  }
+
+  .plant-info {
+    padding: 0.75rem;
+  }
+
+  .plant-name {
+    font-size: 0.9rem;
+  }
+
+  .add-new-card {
+    min-height: 200px;
+  }
+}
+
+@media (max-width: 400px) {
+  .collection-grid {
     grid-template-columns: 1fr;
-    gap: 1rem;
   }
 }
 

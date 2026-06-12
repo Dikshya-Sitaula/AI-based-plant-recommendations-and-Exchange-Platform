@@ -381,44 +381,108 @@
 
 @media (max-width: 640px) {
   .marketplace-container {
-    margin: 0 auto;
+    padding: 0 0.5rem;
+  }
+  
+  .marketplace-header {
+    margin-bottom: 1rem;
+  }
+
+  .title-medium {
+    font-size: 1.25rem;
   }
   
   .floating-cart {
     width: 48px;
     height: 48px;
-    top: 1rem;
-    right: 1rem;
+    top: 0.75rem;
+    right: 0.75rem;
   }
   
   .search-bar {
     margin-top: 0.75rem;
-    padding: 0.4rem 0.8rem;
+    padding: 0.35rem 0.75rem;
   }
   
   .search-bar input {
     font-size: 0.9rem;
+    padding: 0.4rem 0;
   }
   
   .tabs-container {
-    gap: 0.5rem;
+    gap: 0.4rem;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+  }
+  
+  .tab-button {
+    padding: 0.4rem 1rem;
+    font-size: 0.85rem;
   }
   
   .plants-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 0.75rem;
+    gap: 0.65rem;
   }
   
   .plant-card {
     border-radius: var(--radius-md);
   }
   
-  .plant-name {
-    font-size: 0.8rem;
+  .plant-details {
+    padding: 0.75rem;
+  }
+
+  .plant-details h3 {
+    font-size: 0.85rem;
   }
   
-  .plant-price {
-    font-size: 0.85rem;
+  .price {
+    font-size: 0.8rem;
+  }
+
+  .add-to-cart-card {
+    padding: 0.5rem;
+    font-size: 0.75rem;
+    border-radius: var(--radius-md);
+    gap: 0.4rem;
+  }
+
+  .add-to-cart-card svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+@media (max-width: 400px) {
+  .plants-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .plant-card {
+    display: flex;
+    align-items: center;
+    height: 120px;
+  }
+  
+  .plant-image-wrap {
+    width: 120px;
+    height: 120px;
+    aspect-ratio: auto;
+  }
+  
+  .plant-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100%;
+  }
+
+  .plant-info-top {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
   }
 }
 

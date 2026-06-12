@@ -641,29 +641,55 @@
 @keyframes spinA { to { transform: rotate(360deg); } }
 
 @media (max-width: 600px) {
-  .rec-page { padding: 36px 16px 60px; }
+  .rec-page { padding: 36px 16px 80px; }
 
-  .rec-card { padding: 28px 20px; border-radius: 22px; }
+  .rec-card { padding: 24px 16px; border-radius: 20px; }
 
-  .rec-space-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .rec-title { font-size: 1.75rem; }
+  
+  .rec-subtitle { font-size: 0.85rem; }
 
-  .rec-space-card { padding: 14px 14px; gap: 10px; }
+  .summary-banner {
+    padding: 1rem;
+    gap: 0.75rem;
+    justify-content: center;
+  }
+
+  .summary-banner > div {
+    min-width: 70px;
+  }
+
+  .summary-banner > div:nth-child(even) {
+    display: none; /* Hide dividers on small mobile */
+  }
+
+  .rec-space-grid { grid-template-columns: 1fr; gap: 8px; }
+
+  .rec-space-card { padding: 12px; gap: 10px; }
 
   .rec-space-ico { width: 38px; height: 38px; border-radius: 10px; }
 
   .rec-location-row { flex-direction: column; }
 
-  .rec-loc-btn { height: 48px; justify-content: center; }
+  .rec-loc-btn { height: 48px; justify-content: center; width: 100%; }
 
   .rec-input { height: 48px; }
 
-  .rec-light-grid { gap: 8px; }
+  .rec-light-grid { grid-template-columns: 1fr; gap: 8px; }
 
-  .rec-light-card { padding: 16px 8px 14px; }
+  .rec-light-card { padding: 12px; flex-direction: row; text-align: left; }
 
   .rec-light-ico { width: 42px; height: 42px; }
+
+  .plant-grid {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
 }
 
 @media (max-width: 400px) {
-  .rec-space-grid { grid-template-columns: 1fr; }
+  .rec-badge {
+    padding: 4px 12px;
+    font-size: 0.6rem;
+  }
 }  

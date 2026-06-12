@@ -160,60 +160,79 @@
 }
 @media (max-width: 640px) {
   .plant-detail-container {
-    padding: 1rem 0.75rem;
+    padding: 0.5rem;
   }
   
   .detail-title-new {
-    font-size: 1.75rem;
+    font-size: 1.5rem;
   }
   
   .scientific-name-new {
-    font-size: 1rem;
+    font-size: 0.9rem;
   }
   
   .carousel-container {
-    aspect-ratio: 4/3;
+    aspect-ratio: 1/1;
+    border-radius: 1rem;
   }
   
   .carousel-arrow {
-    width: 2.5rem;
-    height: 2.5rem;
-  }
-  
-  .carousel-arrow.left {
-    left: 0.75rem;
-  }
-  
-  .carousel-arrow.right {
-    right: 0.75rem;
+    width: 2.25rem;
+    height: 2.25rem;
   }
   
   .metadata-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
     padding: 1rem;
+    border-radius: 1rem;
+  }
+
+  .metadata-value {
+    font-size: 1.1rem;
   }
   
   .plant-detail-card {
-    padding: 1.5rem;
-    gap: 1.5rem;
+    padding: 1.25rem;
+    gap: 1.25rem;
+    border-radius: 1.5rem;
   }
   
-  .section-subtitle {
+  .detail-section h3 {
     font-size: 1.1rem;
+  }
+
+  .detail-section p {
+    font-size: 0.95rem;
   }
   
   .add-to-cart-big-new {
     padding: 1rem;
-    font-size: 1rem;
+    font-size: 1.1rem;
   }
-  
-  .detail-value-text {
-    font-size: 1rem;
+
+  .specialized-care-grid-section h2 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
   }
-  
-  .description-text {
-    font-size: 1rem;
+
+  .care-box-new {
+    padding: 1rem !important;
+    gap: 0.75rem !important;
+  }
+
+  .care-box-new h4 {
+    font-size: 0.95rem !important;
+  }
+
+  .care-box-new p {
+    font-size: 0.85rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .metadata-grid {
+    grid-template-columns: 1fr;
   }
 }
 

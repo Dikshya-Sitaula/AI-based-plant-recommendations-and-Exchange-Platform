@@ -480,16 +480,50 @@
 }
 
 @media (max-width: 520px) {
-  .am-card {
-    width: calc(100% - 24px);
-    padding: 18px;
+  .am-backdrop {
+    padding: 12px;
   }
+
+  .am-shell {
+    border-radius: 24px;
+    max-height: 95vh;
+  }
+
+  .am-header {
+    padding: 24px 20px 10px;
+  }
+
+  .am-title {
+    font-size: 1.5rem;
+  }
+
+  .am-card {
+    width: calc(100% - 20px);
+    padding: 16px;
+    margin-bottom: 24px;
+  }
+
+  .am-input {
+    padding: 12px 12px 12px 40px;
+    font-size: 0.95rem;
+  }
+
+  .am-icon {
+    left: 12px;
+  }
+
   .am-social-icon-row {
     gap: 10px;
   }
+  
   .am-social-icon-btn {
-    min-height: 52px;
-    border-radius: 14px;
+    min-height: 48px;
+    border-radius: 12px;
+  }
+  
+  .am-submit {
+    padding: 12px;
+    font-size: 1rem;
   }
 }
 
