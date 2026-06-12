@@ -158,6 +158,65 @@
   font-size: 1.5rem;
   color: var(--text-muted);
 }
+@media (max-width: 640px) {
+  .plant-detail-container {
+    padding: 1rem 0.75rem;
+  }
+  
+  .detail-title-new {
+    font-size: 1.75rem;
+  }
+  
+  .scientific-name-new {
+    font-size: 1rem;
+  }
+  
+  .carousel-container {
+    aspect-ratio: 4/3;
+  }
+  
+  .carousel-arrow {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+  
+  .carousel-arrow.left {
+    left: 0.75rem;
+  }
+  
+  .carousel-arrow.right {
+    right: 0.75rem;
+  }
+  
+  .metadata-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 1rem;
+  }
+  
+  .plant-detail-card {
+    padding: 1.5rem;
+    gap: 1.5rem;
+  }
+  
+  .section-subtitle {
+    font-size: 1.1rem;
+  }
+  
+  .add-to-cart-big-new {
+    padding: 1rem;
+    font-size: 1rem;
+  }
+  
+  .detail-value-text {
+    font-size: 1rem;
+  }
+  
+  .description-text {
+    font-size: 1rem;
+  }
+}
+
 @media (min-width: 768px) {
   .detail-layout {
     grid-template-columns: 1fr 1fr;
@@ -166,9 +225,17 @@
   .detail-image-section {
     aspect-ratio: auto;
   }
+  
+  .metadata-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
-/* New Stack and Carousel Layout Styles */
+@media (min-width: 900px) {
+  .carousel-container {
+    aspect-ratio: 21/9;
+  }
+}
 .plant-detail-card {
   background: var(--bg-surface, #ffffff);
   border-radius: 2rem;

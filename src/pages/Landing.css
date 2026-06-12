@@ -983,8 +983,147 @@
 .lp-bounce { animation: lp-bounce-slow 3s ease-in-out infinite; }
 
 /* Responsive */
+@media (max-width: 768px) {
+  .lp-container {
+    padding: 0 16px;
+  }
+  
+  .lp-nav-inner {
+    padding: 12px 16px;
+  }
+  
+  .lp-brand-text {
+    font-size: 0.9rem;
+  }
+  
+  .lp-hero {
+    padding: 48px 0 64px;
+  }
+  
+  .lp-hero-title {
+    font-size: clamp(28px, 6vw, 48px);
+    margin-bottom: 12px;
+  }
+  
+  .lp-hero-subtitle {
+    font-size: 0.95rem;
+  }
+  
+  .lp-hero-actions {
+    flex-direction: column;
+  }
+  
+  .lp-btn-lg,
+  .lp-btn-xl {
+    width: 100%;
+  }
+  
+  .lp-section {
+    padding: 56px 0;
+  }
+  
+  .lp-section-head {
+    margin-bottom: 32px;
+  }
+  
+  .lp-h2 {
+    font-size: clamp(22px, 5vw, 32px);
+  }
+  
+  .lp-lead {
+    font-size: 0.9rem;
+  }
+  
+  .lp-card {
+    padding: 20px;
+    border-radius: 20px;
+  }
+  
+  .lp-glow {
+    display: none;
+  }
+  
+  .lp-modal {
+    padding: 20px;
+    border-radius: 20px;
+  }
+}
+
+@media (max-width: 640px) {
+  .lp-container {
+    padding: 0 12px;
+  }
+  
+  .lp-hero-grid {
+    gap: 24px;
+  }
+  
+  .lp-hero-media {
+    order: -1;
+  }
+  
+  .lp-two-col {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  
+  .lp-grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .lp-grid-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .lp-feat-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .lp-steps {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  
+  .lp-impact-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .lp-bullets {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  
+  .lp-footer-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  
+  .lp-float {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    gap: 10px;
+    padding: 12px;
+  }
+  
+  .lp-float-icon {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .lp-pill {
+    font-size: 10px;
+  }
+  
+  .lp-checklist {
+    font-size: 0.85rem;
+  }
+}
+
 @media (min-width: 600px) {
   .lp-feat-grid { grid-template-columns: repeat(2, 1fr); }
+  .lp-grid-4 { grid-template-columns: repeat(3, 1fr); }
+  .lp-grid-3 { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (min-width: 900px) {
@@ -1009,4 +1148,3 @@
     animation: none !important;
   }
 }
-  

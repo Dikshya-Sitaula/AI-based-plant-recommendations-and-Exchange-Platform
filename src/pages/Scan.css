@@ -1,6 +1,7 @@
 .scan-container {
   max-width: 600px;
   margin: 0 auto;
+  padding: 0 1rem;
 }
 
 .text-center { text-align: center; }
@@ -58,6 +59,25 @@
 .bottom-left { bottom: 0; left: 0; border-width: 0 0 3px 3px; }
 .bottom-right { bottom: 0; right: 0; border-width: 0 3px 3px 0; }
 
+/* Mobile Responsiveness */
+@media (max-width: 640px) {
+  .scan-container {
+    padding: 0 0.5rem;
+  }
+  
+  .camera-container {
+    margin-bottom: 1rem;
+  }
+  
+  .corner {
+    width: 30px;
+    height: 30px;
+  }
+  
+  .p-4 {
+    padding: 1rem;
+  }
+}
 .btn-capture {
   width: 80px;
   height: 80px;

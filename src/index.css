@@ -102,6 +102,21 @@ h1, h2, h3, h4 {
   font-size: 1rem;
 }
 
+/* Mobile Typography */
+@media (max-width: 640px) {
+  .title-large {
+    font-size: 1.75rem;
+  }
+  
+  .title-medium {
+    font-size: 1.25rem;
+  }
+  
+  h1, h2, h3, h4 {
+    font-size: clamp(1rem, 5vw, 2rem);
+  }
+}
+
 /* Shared UI Components */
 .glass-panel {
   background: var(--gradient-glass);

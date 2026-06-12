@@ -212,6 +212,32 @@ body {
   transform: scale(1.05);
 }
 
+/* Mobile Responsiveness */
+@media (max-width: 640px) {
+  .sidebar {
+    display: none;
+  }
+  
+  .main-content {
+    padding: 1rem 0.75rem;
+    margin-bottom: 70px;
+  }
+  
+  .bottom-nav {
+    display: flex;
+  }
+  
+  .sidebar-logo {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 1024px) {
+  .main-content {
+    padding: 1.5rem 1rem;
+  }
+}
+
 @media (min-width: 768px) {
   .sidebar {
     display: flex;
@@ -225,4 +251,3 @@ body {
     display: none;
   }
 }
-   
