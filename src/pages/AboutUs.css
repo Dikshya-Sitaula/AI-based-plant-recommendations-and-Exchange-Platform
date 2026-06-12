@@ -446,6 +446,52 @@
 }
 
 /* ── Responsive ─────────────────────────────────── */
+@media (max-width: 640px) {
+  .au-section {
+    padding: 48px 0;
+  }
+  
+  .au-section-head {
+    margin-bottom: 32px;
+  }
+
+  .au-hero {
+    padding: 60px 0 40px;
+  }
+
+  .au-hero-inner {
+    gap: 16px;
+  }
+
+  .au-stats-counter {
+    margin-top: 32px;
+    padding-top: 24px;
+  }
+
+  .au-stats-counter-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+
+  .au-stat-number {
+    font-size: 1.5rem;
+  }
+  
+  .au-mv-card {
+    padding: 24px;
+  }
+  
+  .au-team-card {
+    padding: 24px 16px;
+    border-radius: 24px;
+  }
+  
+  .au-team-avatar-wrap {
+    width: 100px;
+    height: 100px;
+  }
+}
+
 @media (min-width: 640px) {
   .au-team-grid   { grid-template-columns: repeat(2, 1fr); }
   .au-values-grid { grid-template-columns: repeat(2, 1fr); }

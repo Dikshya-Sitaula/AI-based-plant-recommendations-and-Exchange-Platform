@@ -1405,7 +1405,7 @@
   .c-wrap { padding: 0 24px; }
   .lp-nav-inner { padding: 16px 24px; }
   .c-hero { grid-template-columns: 1fr; }
-  .c-hero-left { padding: 108px 32px 72px; min-height: 60vh; }
+  .c-hero-left { padding: 108px 32px 72px; min-height: auto; }
   .c-hero-right { padding: 56px 32px; }
   .c-hero-right::before { display: none; }
   .ways-grid { grid-template-columns: 1fr 1fr; }
@@ -1419,9 +1419,18 @@
 }
 
 @media (max-width: 640px) {
-  .f-row { grid-template-columns: 1fr; }
+  .f-row { grid-template-columns: 1fr; gap: 12px; margin-bottom: 12px; }
   .ways-grid { grid-template-columns: 1fr; }
   .way-card { padding: 36px 28px; }
-  .lp-footer-grid { grid-template-columns: 1fr; }
-  .lp-footer-bottom { flex-direction: column; align-items: flex-start; }
+  .lp-footer-grid { grid-template-columns: 1fr; gap: 40px; }
+  .lp-footer-bottom { flex-direction: column; align-items: flex-start; gap: 24px; }
+  
+  .c-hero-h1 { font-size: 2.75rem; }
+  .c-hero-desc { font-size: 0.9rem; }
+  
+  .c-wrap { padding: 0 16px; }
+  .ways-section, .support-section, .faq-section, .loc-section { padding: 64px 0; }
+  
+  .lp-nav-center { display: none; }
+  .lp-brand-text { display: none; }
 }   
