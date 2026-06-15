@@ -1,4 +1,4 @@
-import { Plus, Droplets, MapPin, Wind, Trophy, Leaf, ShoppingCart, X, Trash2, QrCode, Loader2, CheckCircle, Minus } from 'lucide-react';
+import { Plus, Droplets, MapPin, Wind, Trophy, Leaf, ShoppingCart, X, Trash2, QrCode, Loader2, CheckCircle, Minus, ArrowLeftRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import './Dashboard.css';
@@ -27,6 +27,12 @@ export default function Dashboard() {
   const [paymentStatus, setPaymentStatus] = useState('pending');
   const [success, setSuccess] = useState(false);
   const [networkIp, setNetworkIp] = useState(window.location.hostname);
+
+  // P2P Listing State
+  const [showListingModal, setShowListingModal] = useState(false);
+  const [plantToList, setPlantToList] = useState(null);
+  const [listingType, setListingType] = useState('sale');
+  const [listingPrice, setListingPrice] = useState('Rs. 450');
 
   useEffect(() => {
     localStorage.setItem('cart', JSON.stringify(cart));
@@ -142,6 +148,32 @@ export default function Dashboard() {
     };
     fetchDashboardData();
   }, [userId]);
+
+  const handleListPlant = async () => {
+    try {
+      const response = await fetch(`http://${window.location.hostname}:5000/api/marketplace/list`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plantId: plantToList.id,
+          userId,
+          listingType,
+          price: listingPrice
+        })
+      });
+      const data = await response.json();
+      if (data.success) {
+        alert('Plant listed in Community Marketplace!');
+        setShowListingModal(false);
+        // Refresh collection
+        const collectionRes = await fetch(`http://${window.location.hostname}:5000/api/user/${userId}/collection`);
+        const collectionData = await collectionRes.json();
+        setCollection(collectionData || []);
+      }
+    } catch (err) {
+      console.error("Listing error:", err);
+    }
+  };
 
   // Calculate AQI based on plants (Simulated improvement)
   // Baseline AQI is 100 (Unhealthy for sensitive groups), improved by plants
@@ -322,8 +354,30 @@ export default function Dashboard() {
                 </div>
               </div>
               <div className="plant-info">
-                <h3 className="plant-name">{plant.name}</h3>
-                <p className="plant-status">Healthy • {plant.quantity > 1 ? `${plant.quantity} plants` : '1 plant'}</p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div>
+                    <h3 className="plant-name">{plant.name}</h3>
+                    <p className="plant-status">Healthy • {plant.quantity > 1 ? `${plant.quantity} plants` : '1 plant'}</p>
+                  </div>
+                  <button 
+                    className="btn-icon" 
+                    title="List for Sale/Exchange"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPlantToList(plant);
+                      setListingPrice(plant.price);
+                      setShowListingModal(true);
+                    }}
+                    style={{ background: 'var(--bg-secondary)', color: 'var(--primary)', padding: '8px', borderRadius: '10px' }}
+                  >
+                    <ArrowLeftRight size={16} />
+                  </button>
+                </div>
+                {plant.is_listed === 1 && (
+                  <span style={{ fontSize: '0.7rem', background: '#fff8e6', color: '#f59e0b', padding: '2px 8px', borderRadius: '4px', fontWeight: '800', marginTop: '4px', display: 'inline-block' }}>
+                    LISTED: {plant.listing_type.toUpperCase()}
+                  </span>
+                )}
               </div>
             </div>
           ))}
@@ -419,6 +473,102 @@ export default function Dashboard() {
             <div className="modal-actions" style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               <button type="button" onClick={closeModals} className="btn-primary w-full" style={{ padding: '1rem', borderRadius: '9999px', background: 'var(--gradient-primary)', color: 'white', border: 'none', fontWeight: '700', cursor: 'pointer' }}>Continue Browsing</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* P2P Listing Modal */}
+      {showListingModal && (
+        <div className="modal-overlay" style={{ zIndex: 10000, display: 'flex' }} onClick={() => setShowListingModal(false)}>
+          <div className="glass-panel modal-content animate-scale-up" style={{ zIndex: 10001, background: 'white', padding: '2rem', borderRadius: '2rem', maxWidth: '420px', width: '95%' }} onClick={(e) => e.stopPropagation()}>
+            <button className="close-modal" onClick={() => setShowListingModal(false)} style={{ position: 'absolute', top: '15px', right: '15px', background: '#f5f5f5', borderRadius: '50%', padding: '5px' }}><X size={20} /></button>
+            
+            <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+              <h3 style={{ fontSize: '1.5rem', fontWeight: '800' }}>List for Community</h3>
+              <p style={{ color: '#666' }}>Share your <b>{plantToList?.name}</b> with others.</p>
+            </div>
+
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.8rem', fontWeight: '700', fontSize: '0.9rem', color: '#444' }}>Select Listing Intent</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                <button 
+                  onClick={() => setListingType('sale')}
+                  className={`type-select-btn ${listingType === 'sale' ? 'active' : ''}`}
+                  style={{ 
+                    padding: '12px', borderRadius: '16px', border: '2px solid',
+                    borderColor: listingType === 'sale' ? '#10B981' : '#eee',
+                    background: listingType === 'sale' ? '#ecfdf5' : 'white',
+                    color: listingType === 'sale' ? '#059669' : '#666',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px'
+                  }}
+                >
+                  <ShoppingCart size={20} />
+                  <span style={{ fontWeight: '800', fontSize: '0.85rem' }}>For Sale</span>
+                </button>
+                <button 
+                  onClick={() => setListingType('exchange')}
+                  className={`type-select-btn ${listingType === 'exchange' ? 'active' : ''}`}
+                  style={{ 
+                    padding: '12px', borderRadius: '16px', border: '2px solid',
+                    borderColor: listingType === 'exchange' ? '#3B82F6' : '#eee',
+                    background: listingType === 'exchange' ? '#eff6ff' : 'white',
+                    color: listingType === 'exchange' ? '#2563eb' : '#666',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px'
+                  }}
+                >
+                  <ArrowLeftRight size={20} />
+                  <span style={{ fontWeight: '800', fontSize: '0.85rem' }}>Exchange</span>
+                </button>
+                <button 
+                  onClick={() => setListingType('thrift')}
+                  className={`type-select-btn ${listingType === 'thrift' ? 'active' : ''}`}
+                  style={{ 
+                    padding: '12px', borderRadius: '16px', border: '2px solid',
+                    borderColor: listingType === 'thrift' ? '#FF4B4B' : '#eee',
+                    background: listingType === 'thrift' ? '#fff1f1' : 'white',
+                    color: listingType === 'thrift' ? '#dc2626' : '#666',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px'
+                  }}
+                >
+                  <Heart size={20} />
+                  <span style={{ fontWeight: '800', fontSize: '0.85rem' }}>Thrift It</span>
+                </button>
+                <button 
+                  onClick={() => setListingType('both')}
+                  className={`type-select-btn ${listingType === 'both' ? 'active' : ''}`}
+                  style={{ 
+                    padding: '12px', borderRadius: '16px', border: '2px solid',
+                    borderColor: listingType === 'both' ? 'var(--primary)' : '#eee',
+                    background: listingType === 'both' ? 'var(--primary-light)' : 'white',
+                    color: listingType === 'both' ? 'var(--primary)' : '#666',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px'
+                  }}
+                >
+                  <Users size={20} />
+                  <span style={{ fontWeight: '800', fontSize: '0.85rem' }}>Both</span>
+                </button>
+              </div>
+            </div>
+
+            {(listingType === 'sale' || listingType === 'both') && (
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>Asking Price</label>
+                <input 
+                  type="text" 
+                  value={listingPrice}
+                  onChange={(e) => setListingPrice(e.target.value)}
+                  style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #eee', fontSize: '1.1rem', fontWeight: '700' }}
+                />
+              </div>
+            )}
+
+            <button 
+              className="btn-primary w-full" 
+              onClick={handleListPlant}
+              style={{ padding: '1.1rem', fontSize: '1.1rem', borderRadius: '9999px', background: 'var(--primary)', color: 'white' }}
+            >
+              List Now
+            </button>
           </div>
         </div>
       )}
