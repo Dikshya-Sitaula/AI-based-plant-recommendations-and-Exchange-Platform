@@ -713,8 +713,8 @@ const plantDetailsMap = require('./plantDetails');
             SELECT p.*, u.full_name as seller_name, u.preferred_location as seller_location, u.profile_image as seller_avatar
             FROM plants p
             JOIN users u ON p.seller_id = u.id
-            WHERE p.is_listed = 1 AND p.seller_id != ?
-          `, [userId || 0]);
+            WHERE p.is_listed = 1
+          `, []);
           res.json(listings);
         } catch (error) {
           console.error('[COMMUNITY] Fetch listings error:', error);
