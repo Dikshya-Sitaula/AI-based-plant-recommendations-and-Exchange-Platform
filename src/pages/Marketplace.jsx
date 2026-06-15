@@ -1,33 +1,74 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, Heart, MapPin, ShoppingCart, X, Minus, Plus, QrCode, CheckCircle, Loader2, Trash2 } from 'lucide-react';
+import { Search, Filter, Heart, MapPin, ShoppingCart, X, Minus, Plus, QrCode, CheckCircle, Loader2, Trash2, Users, ArrowLeftRight } from 'lucide-react';
 import './Marketplace.css';
 
-function PlantCard({ plant, onBuyClick, onClick }) {
+function PlantCard({ plant, onBuyClick, onClick, isCommunity }) {
   const handleAction = (e) => {
     e.stopPropagation();
     onBuyClick(e, plant);
   };
 
+  const getBadgeColor = () => {
+    if (plant.listing_type === 'thrift') return '#FF4B4B';
+    if (plant.listing_type === 'exchange') return '#3B82F6';
+    if (plant.listing_type === 'sale') return '#10B981';
+    return 'var(--primary)';
+  };
+
   return (
-    <div className="plant-card" onClick={() => onClick(plant.id)}>
+    <div className={`plant-card ${isCommunity ? 'community-item' : ''}`} onClick={() => onClick(plant.id)}>
       <div className="plant-image-wrap">
-        <img src={plant.image} alt={plant.name} className="marketplace-img" onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1416879598555-259160a2bece?q=80&w=400'; }} />
+        <img 
+          src={plant.image.startsWith('http') ? plant.image : `http://${window.location.hostname}:5000${encodeURI(plant.image)}`} 
+          alt={plant.name} 
+          className="marketplace-img" 
+          onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1416879598555-259160a2bece?q=80&w=400'; }} 
+        />
         <button className="like-btn" onClick={(e) => e.stopPropagation()}><Heart size={18} /></button>
+        
+        {isCommunity && (
+          <>
+            <div className="seller-badge">
+              <Users size={12} />
+              {plant.seller_name || 'Guest'}
+            </div>
+            <div className="type-badge" style={{ backgroundColor: getBadgeColor() }}>
+              {plant.listing_type?.toUpperCase() || 'LISTED'}
+            </div>
+          </>
+        )}
       </div>
 
       <div className="plant-details">
         <div className="plant-info-top">
-          <h3>{plant.name}</h3>
-          <p className="price">{plant.price}</p>
+          <div style={{ flex: 1 }}>
+            <h3>{plant.name}</h3>
+            <p className="location" style={{ fontSize: '0.75rem', color: '#888', display: 'flex', alignItems: 'center', gap: '3px' }}>
+              <MapPin size={10} />
+              {plant.location || 'Local'}
+            </p>
+          </div>
+          <div className="price-tag">
+            <p className="price">{plant.listing_type === 'exchange' ? 'SWAP' : (plant.original_price || plant.price)}</p>
+          </div>
         </div>
         
         <button 
-          className="add-to-cart-card" 
+          className={`action-btn ${isCommunity ? 'request-btn' : 'buy-btn-card'}`} 
           onClick={handleAction}
         >
-          <ShoppingCart size={16} />
-          Add to Cart
+          {isCommunity ? (
+            <>
+              <ArrowLeftRight size={16} />
+              <span>{plant.listing_type === 'exchange' ? 'Request Swap' : 'Send Offer'}</span>
+            </>
+          ) : (
+            <>
+              <ShoppingCart size={16} />
+              <span>Add to Cart</span>
+            </>
+          )}
         </button>
       </div>
     </div>
@@ -38,7 +79,8 @@ export default function Marketplace() {
   const navigate = useNavigate();
   const [plants, setPlants] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('all');
+  const [activeTab, setActiveTab] = useState('store'); // 'store', 'community'
+  const [communityPlants, setCommunityPlants] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [cart, setCart] = useState(() => {
     try {
@@ -129,6 +171,20 @@ export default function Marketplace() {
       }
     };
     fetchPlants();
+
+    const fetchCommunityPlants = async () => {
+      const uId = localStorage.getItem('leafLifeUserId') || 1;
+      try {
+        const response = await fetch(`http://${window.location.hostname}:5000/api/marketplace/community?userId=${uId}`);
+        const data = await response.json();
+        if (Array.isArray(data)) {
+          setCommunityPlants(data);
+        }
+      } catch (err) {
+        console.error("Error fetching community plants:", err);
+      }
+    };
+    fetchCommunityPlants();
   }, []);
 
 
@@ -170,7 +226,7 @@ export default function Marketplace() {
     return () => window.removeEventListener('keydown', handleEsc);
   }, []);
 
-  const filteredPlants = plants.filter(plant => {
+  const filteredPlants = (activeTab === 'store' ? plants : communityPlants).filter(plant => {
     if (searchQuery && !plant.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     return true;
   });
@@ -260,6 +316,100 @@ export default function Marketplace() {
     setSuccess(false);
     setSelectedPlant(null);
     setPaymentSessionId(null);
+    setShowTradeModal(false);
+    setShowAddModal(false);
+  };
+
+  const [showTradeModal, setShowTradeModal] = useState(false);
+  const [tradePlant, setTradePlant] = useState(null);
+  const [tradeDetails, setTradeDetails] = useState('');
+
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newPlant, setNewPlant] = useState({
+    name: '',
+    price: 'Rs. 450',
+    listingType: 'sale',
+    type: 'plant',
+    location: '',
+    description: '',
+    image: null
+  });
+  const [adding, setAdding] = useState(false);
+
+  const handleAddPlant = async (e) => {
+    e.preventDefault();
+    const userStr = localStorage.getItem('leafLifeAuthenticated');
+    if (!userStr) { alert('Please log in first.'); return; }
+    
+    setAdding(true);
+    const formData = new FormData();
+    formData.append('name', newPlant.name);
+    formData.append('price', newPlant.price);
+    formData.append('listingType', newPlant.listingType);
+    formData.append('type', newPlant.type);
+    formData.append('location', newPlant.location);
+    formData.append('description', newPlant.description);
+    formData.append('sellerId', localStorage.getItem('leafLifeUserId') || 1);
+    if (newPlant.image) formData.append('image', newPlant.image);
+
+    try {
+      const response = await fetch(`http://${window.location.hostname}:5000/api/marketplace/add`, {
+        method: 'POST',
+        body: formData
+      });
+      const data = await response.json();
+      if (data.success) {
+        alert('Listing created successfully!');
+        setShowAddModal(false);
+        setNewPlant({ name: '', price: 'Rs. 450', listingType: 'sale', type: 'plant', location: '', description: '', image: null });
+        // Refresh community plants
+        const uId = localStorage.getItem('leafLifeUserId') || 1;
+        const commRes = await fetch(`http://${window.location.hostname}:5000/api/marketplace/community?userId=${uId}`);
+        const commData = await commRes.json();
+        setCommunityPlants(commData);
+      }
+    } catch (err) {
+      console.error("Error adding product:", err);
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  const handleCommunityRequest = (plant) => {
+    const userStr = localStorage.getItem('leafLifeAuthenticated');
+    if (!userStr) {
+      alert('Please log in to contact community members.');
+      return;
+    }
+    setTradePlant(plant);
+    setShowTradeModal(true);
+  };
+
+  const submitTradeRequest = async (type) => {
+    const uId = localStorage.getItem('leafLifeUserId') || 1;
+    try {
+      const response = await fetch(`http://${window.location.hostname}:5000/api/trade/request`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          senderId: uId,
+          receiverId: tradePlant.seller_id,
+          plantId: tradePlant.id,
+          requestType: type,
+          offerDetails: tradeDetails
+        })
+      });
+      const data = await response.json();
+      if (data.success) {
+        alert('Request sent successfully!');
+        setShowTradeModal(false);
+        setTradeDetails('');
+      } else {
+        alert(data.error || 'Failed to send request');
+      }
+    } catch (err) {
+      console.error("Trade request error:", err);
+    }
   };
 
 
@@ -307,6 +457,48 @@ export default function Marketplace() {
               <button className="btn-icon" type="button"><Filter size={20} /></button>
             </div>
           </div>
+
+          <div className="marketplace-tab-container">
+            <div className="marketplace-tabs">
+              <button 
+                className={`mode-tab ${activeTab === 'store' ? 'active' : ''}`}
+                onClick={() => setActiveTab('store')}
+              >
+                <ShoppingCart size={18} />
+                <div className="tab-text">
+                  <span className="tab-title">Nursery Store</span>
+                  <span className="tab-desc">Certified & Professional</span>
+                </div>
+              </button>
+              <button 
+                className={`mode-tab ${activeTab === 'community' ? 'active' : ''}`}
+                onClick={() => setActiveTab('community')}
+              >
+                <Users size={18} />
+                <div className="tab-text">
+                  <span className="tab-title">Community Market</span>
+                  <span className="tab-desc">P2P Trade & Thrift</span>
+                </div>
+              </button>
+            </div>
+
+            {activeTab === 'community' && (
+              <button 
+                className="btn-list-plant animate-pop-in" 
+                onClick={() => setShowAddModal(true)}
+              >
+                <Plus size={20} />
+                Create Listing
+              </button>
+            )}
+          </div>
+
+          {activeTab === 'community' && (
+            <div className="community-info-bar">
+              <div className="info-icon"><ArrowLeftRight size={20} /></div>
+              <p>Directly connect with plant lovers. Send requests to <strong>Trade</strong> or <strong>Buy</strong> from individuals.</p>
+            </div>
+          )}
         </div>
 
 
@@ -318,8 +510,9 @@ export default function Marketplace() {
             <PlantCard 
               key={plant.id} 
               plant={plant} 
-              onBuyClick={handleBuyClick} 
+              onBuyClick={activeTab === 'store' ? handleBuyClick : (e, p) => handleCommunityRequest(p)} 
               onClick={goToDetail} 
+              isCommunity={activeTab === 'community'}
             />
           ))}
         </div>
@@ -404,6 +597,50 @@ export default function Marketplace() {
         </div>
       )}
 
+      {showTradeModal && (
+        <div className="modal-overlay" style={{ zIndex: 10000, display: 'flex' }} onClick={closeModals}>
+          <div className="glass-panel modal-content animate-scale-up" style={{ zIndex: 10001, background: 'white', color: 'black', opacity: 1, transform: 'none', maxWidth: '420px', width: '95%', padding: '2rem', borderRadius: '2rem' }} onClick={(e) => e.stopPropagation()}>
+            <button className="close-modal" onClick={closeModals} style={{ position: 'absolute', top: '15px', right: '15px', background: '#f5f5f5', borderRadius: '50%', padding: '5px' }}><X size={20} /></button>
+            
+            <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+              <h3 style={{ fontSize: '1.5rem', fontWeight: '800' }}>Interested in {tradePlant?.name}?</h3>
+              <p style={{ color: '#666' }}>Sent a request to <b>{tradePlant?.seller_name}</b>.</p>
+            </div>
+
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>Message or Offer Details</label>
+              <textarea 
+                placeholder="Hi, I'm interested in buying/swapping..."
+                value={tradeDetails}
+                onChange={(e) => setTradeDetails(e.target.value)}
+                style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #eee', minHeight: '100px', resize: 'none' }}
+              ></textarea>
+            </div>
+
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              {(tradePlant?.listing_type === 'sale' || tradePlant?.listing_type === 'both') && (
+                <button 
+                  className="btn-primary" 
+                  onClick={() => submitTradeRequest('buy')}
+                  style={{ flex: 1, padding: '1rem', borderRadius: '9999px', background: 'var(--primary)', color: 'white', fontWeight: '700' }}
+                >
+                  Buy for {tradePlant?.original_price || tradePlant?.price}
+                </button>
+              )}
+              {(tradePlant?.listing_type === 'exchange' || tradePlant?.listing_type === 'both') && (
+                <button 
+                  className="btn-secondary" 
+                  onClick={() => submitTradeRequest('exchange')}
+                  style={{ flex: 1, padding: '1rem', borderRadius: '9999px', background: 'var(--primary-light)', color: 'var(--primary)', fontWeight: '700', border: 'none' }}
+                >
+                  Request Swap
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {showCart && (
         <div className="modal-overlay" style={{ zIndex: 10000, display: 'flex' }} onClick={() => { console.log('Overlay clicked, closing...'); setShowCart(false); }}>
           <div className="glass-panel modal-content animate-scale-up" style={{ zIndex: 10001, background: 'white', color: 'black', opacity: 1, transform: 'none', maxWidth: '460px', width: '95%', padding: '2rem', borderRadius: '2rem' }} onClick={(e) => e.stopPropagation()}>
@@ -462,6 +699,120 @@ export default function Marketplace() {
                 <button type="button" onClick={() => setShowCart(false)} className="buy-btn" style={{ width: '100%' }}>Browse Marketplace</button>
               </div>
             )}
+          </div>
+        </div>
+      )}
+      {showAddModal && (
+        <div className="modal-overlay" style={{ zIndex: 10000, display: 'flex' }} onClick={closeModals}>
+          <div className="glass-panel modal-content animate-scale-up" style={{ zIndex: 10001, background: 'white', color: 'black', opacity: 1, transform: 'none', maxWidth: '480px', width: '95%', padding: '2rem', borderRadius: '2rem', maxHeight: '90vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
+            <button className="close-modal" onClick={closeModals} style={{ position: 'absolute', top: '15px', right: '15px', background: '#f5f5f5', borderRadius: '50%', padding: '5px' }}><X size={20} /></button>
+            
+            <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+              <h3 style={{ fontSize: '1.75rem', fontWeight: '800' }}>Create New Listing</h3>
+              <p style={{ color: '#666' }}>Sell, Thrift, or Exchange your plant.</p>
+            </div>
+
+            <form onSubmit={handleAddPlant} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>Plant Name</label>
+                <input required type="text" placeholder="e.g. Monstera Deliciosa" value={newPlant.name} onChange={e => setNewPlant({...newPlant, name: e.target.value})} style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #eee' }} />
+              </div>
+
+              <div style={{ marginBottom: '0.5rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.8rem', fontWeight: '700', color: '#444' }}>Listing Category</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                    <button 
+                      type="button"
+                      onClick={() => setNewPlant({...newPlant, listingType: 'sale'})}
+                      style={{ 
+                        padding: '12px', borderRadius: '14px', border: '2px solid',
+                        borderColor: newPlant.listingType === 'sale' ? '#10B981' : '#eee',
+                        background: newPlant.listingType === 'sale' ? '#ecfdf5' : 'white',
+                        color: newPlant.listingType === 'sale' ? '#059669' : '#666',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontWeight: '800'
+                      }}
+                    >
+                      <ShoppingCart size={18} /> Sale
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => setNewPlant({...newPlant, listingType: 'exchange'})}
+                      style={{ 
+                        padding: '12px', borderRadius: '14px', border: '2px solid',
+                        borderColor: newPlant.listingType === 'exchange' ? '#3B82F6' : '#eee',
+                        background: newPlant.listingType === 'exchange' ? '#eff6ff' : 'white',
+                        color: newPlant.listingType === 'exchange' ? '#2563eb' : '#666',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontWeight: '800'
+                      }}
+                    >
+                      <ArrowLeftRight size={18} /> Swap
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => setNewPlant({...newPlant, listingType: 'thrift'})}
+                      style={{ 
+                        padding: '12px', borderRadius: '14px', border: '2px solid',
+                        borderColor: newPlant.listingType === 'thrift' ? '#FF4B4B' : '#eee',
+                        background: newPlant.listingType === 'thrift' ? '#fff1f1' : 'white',
+                        color: newPlant.listingType === 'thrift' ? '#dc2626' : '#666',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontWeight: '800'
+                      }}
+                    >
+                      <Heart size={18} /> Thrift
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => setNewPlant({...newPlant, listingType: 'both'})}
+                      style={{ 
+                        padding: '12px', borderRadius: '14px', border: '2px solid',
+                        borderColor: newPlant.listingType === 'both' ? 'var(--primary)' : '#eee',
+                        background: newPlant.listingType === 'both' ? 'var(--primary-light)' : 'white',
+                        color: newPlant.listingType === 'both' ? 'var(--primary)' : '#666',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontWeight: '800'
+                      }}
+                    >
+                      <Users size={18} /> Both
+                    </button>
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>Price (Rs.)</label>
+                <input 
+                  type="text" 
+                  placeholder="e.g. 450" 
+                  value={newPlant.price} 
+                  onChange={e => setNewPlant({...newPlant, price: e.target.value})} 
+                  style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #eee' }} 
+                  disabled={newPlant.listingType === 'exchange'} 
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>Location</label>
+                <input type="text" placeholder="Kathmandu, Nepal" value={newPlant.location} onChange={e => setNewPlant({...newPlant, location: e.target.value})} style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #eee' }} />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>Description (Optional)</label>
+                <textarea placeholder="Tell us more about the plant..." value={newPlant.description} onChange={e => setNewPlant({...newPlant, description: e.target.value})} style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #eee', minHeight: '80px', resize: 'none' }}></textarea>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>Plant Photo</label>
+                <input required type="file" accept="image/*" onChange={e => setNewPlant({...newPlant, image: e.target.files[0]})} style={{ width: '100%', padding: '10px', borderRadius: '12px', border: '1px dashed #ccc' }} />
+              </div>
+
+              <button 
+                type="submit" 
+                className="btn-primary" 
+                disabled={adding}
+                style={{ width: '100%', padding: '1.1rem', fontSize: '1.1rem', borderRadius: '9999px', background: 'var(--primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+              >
+                {adding ? <Loader2 className="animate-spin" size={20} /> : null}
+                {adding ? 'Creating Listing...' : 'List Product Now'}
+              </button>
+            </form>
           </div>
         </div>
       )}
