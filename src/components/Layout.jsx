@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Outlet, NavLink, Link, useNavigate } from 'react-router-dom';
-import { Store, Camera, Trophy, LayoutDashboard, MapPin, LogOut, Settings } from 'lucide-react';
+import { Store, Camera, Trophy, LayoutDashboard, MapPin, LogOut, Settings, Users } from 'lucide-react';
 import './Layout.css';
 import logo from "../assets/Leaf and Life logo.png";
 import AuthModal from './AuthModal';
@@ -137,9 +137,13 @@ export default function Layout() {
               <Store size={20} />
               <span>Marketplace</span>
             </NavLink>
+            <NavLink to="/community" className="sidebar-nav-item">
+              <Users size={20} />
+              <span>Community</span>
+            </NavLink>
             <NavLink to="/rewards" className="sidebar-nav-item">
               <Trophy size={20} />
-              <span>Community</span>
+              <span>Rewards</span>
             </NavLink>
             <NavLink to="/recommendation" className="sidebar-nav-item">
               <MapPin size={20} />
@@ -192,6 +196,10 @@ export default function Layout() {
         <NavLink to="/recommendation" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
           <MapPin size={24} />
           <span>Recommend</span>
+        </NavLink>
+        <NavLink to="/community" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+          <Users size={24} />
+          <span>Community</span>
         </NavLink>
         <NavLink to="/marketplace" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
           <Store size={24} />
