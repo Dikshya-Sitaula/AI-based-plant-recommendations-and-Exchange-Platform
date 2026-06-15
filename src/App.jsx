@@ -10,6 +10,7 @@ import Recommendation from './pages/Recommendation';
 import AboutUs from './pages/AboutUs';
 import Contact from './pages/Contact';
 import MobileBill from './pages/MobileBill';
+import Community from './pages/Community';
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
           <Route path="scan" element={<Scan />} />
           <Route path="recommendation" element={<Recommendation />} />
           <Route path="rewards" element={<Rewards />} />
+          <Route path="community" element={<Community />} />
           <Route path="dashboard" element={<Dashboard />} />
         </Route>
       </Routes>
