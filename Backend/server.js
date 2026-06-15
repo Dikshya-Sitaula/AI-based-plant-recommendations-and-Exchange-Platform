@@ -17,6 +17,23 @@ const plantDetailsMap = require('./plantDetails');
      
      const upload = multer({ storage: multer.memoryStorage() });
 
+     // Configure Multer for Community Plant Uploads
+     const plantStorage = multer.diskStorage({
+       destination: function (req, file, cb) {
+         const uploadDir = path.join(__dirname, 'uploads/plants');
+         if (!fs.existsSync(uploadDir)) {
+           fs.mkdirSync(uploadDir, { recursive: true });
+         }
+         cb(null, uploadDir);
+       },
+       filename: function (req, file, cb) {
+         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+         cb(null, 'plant-' + uniqueSuffix + path.extname(file.originalname));
+       }
+     });
+
+     const uploadPlant = multer({ storage: plantStorage });
+
      // Middleware
      app.use(cors());
      app.use(express.json());
@@ -142,6 +159,36 @@ const plantDetailsMap = require('./plantDetails');
               // Column likely already exists
             }
           }
+
+          // P2P Marketplace Schema Update
+          const p2pColumns = [
+            { name: 'seller_id', type: 'INT' },
+            { name: 'listing_type', type: 'VARCHAR(50)' }, // 'sale', 'exchange', 'both'
+            { name: 'is_listed', type: 'TINYINT(1) DEFAULT 0' },
+            { name: 'original_price', type: 'VARCHAR(255)' }
+          ];
+
+          for (const col of p2pColumns) {
+            try {
+              await db.execute(`ALTER TABLE plants ADD COLUMN ${col.name} ${col.type}`);
+              console.log(`✅ Added P2P column: ${col.name}`);
+            } catch (err) {}
+          }
+
+          // Create Trade Requests Table
+          await db.execute(`
+            CREATE TABLE IF NOT EXISTS trade_requests (
+              id INT AUTO_INCREMENT PRIMARY KEY,
+              sender_id INT NOT NULL,
+              receiver_id INT NOT NULL,
+              plant_id INT NOT NULL,
+              request_type VARCHAR(50) NOT NULL, -- 'buy' or 'exchange'
+              status VARCHAR(50) DEFAULT 'pending', -- 'pending', 'accepted', 'rejected'
+              offer_details TEXT,
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+          `);
+          console.log('✅ Trade requests table initialized');
 
           // Seed initial data if table is empty
           const [rows] = await db.execute('SELECT COUNT(*) as count FROM plants');
@@ -613,9 +660,177 @@ const plantDetailsMap = require('./plantDetails');
          console.error('[DASHBOARD] Error fetching stats:', error);
          res.status(500).json({ error: 'Failed to fetch stats' });
        }
-     });
+      });
 
-     // --- Identification Endpoint ---
+      // --- P2P / Community Endpoints ---
+
+      // List a plant in the community marketplace
+      app.post('/api/marketplace/list', async (req, res) => {
+        try {
+          const { plantId, userId, listingType, price } = req.body;
+          
+          const [result] = await db.execute(
+            'UPDATE plants SET is_listed = 1, listing_type = ?, seller_id = ?, original_price = ? WHERE id = ? AND buyer_id = ?',
+            [listingType, userId, price, plantId, userId]
+          );
+
+          if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Plant not found or not owned by user' });
+          }
+
+          res.json({ success: true, message: 'Plant listed successfully' });
+        } catch (error) {
+          console.error('[COMMUNITY] Listing error:', error);
+          res.status(500).json({ error: 'Failed to list plant' });
+        }
+      });
+
+      // Add a COMPLETELY NEW product to the community marketplace
+      app.post('/api/marketplace/add', uploadPlant.single('image'), async (req, res) => {
+        try {
+          const { name, type, price, location, listingType, sellerId, description } = req.body;
+          const imagePath = req.file ? `/uploads/plants/${req.file.filename}` : '/plants/default.jpg';
+
+          const [result] = await db.execute(
+            `INSERT INTO plants 
+             (name, type, price, location, image, is_listed, listing_type, seller_id, original_price, description, space_tag, sunlight_need) 
+             VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?, ?, 'Any', '2')`,
+            [name, type || 'plant', price, location || 'Kathmandu', imagePath, listingType, sellerId, price, description || '']
+          );
+
+          res.json({ success: true, message: 'Product added to marketplace', plantId: result.insertId });
+        } catch (error) {
+          console.error('[COMMUNITY] Add product error:', error);
+          res.status(500).json({ error: 'Failed to add product' });
+        }
+      });
+
+      // Fetch community listings (not owned by current user)
+      app.get('/api/marketplace/community', async (req, res) => {
+        try {
+          const { userId } = req.query;
+          const [listings] = await db.execute(`
+            SELECT p.*, u.full_name as seller_name, u.preferred_location as seller_location, u.profile_image as seller_avatar
+            FROM plants p
+            JOIN users u ON p.seller_id = u.id
+            WHERE p.is_listed = 1 AND p.seller_id != ?
+          `, [userId || 0]);
+          res.json(listings);
+        } catch (error) {
+          console.error('[COMMUNITY] Fetch listings error:', error);
+          res.status(500).json({ error: 'Failed to fetch community listings' });
+        }
+      });
+
+      // Send a trade/buy request
+      app.post('/api/trade/request', async (req, res) => {
+        try {
+          const { senderId, receiverId, plantId, requestType, offerDetails } = req.body;
+          
+          // Check if already requested
+          const [existing] = await db.execute(
+            'SELECT id FROM trade_requests WHERE sender_id = ? AND plant_id = ? AND status = "pending"',
+            [senderId, plantId]
+          );
+          if (existing.length > 0) {
+            return res.status(400).json({ error: 'Request already pending' });
+          }
+
+          await db.execute(
+            'INSERT INTO trade_requests (sender_id, receiver_id, plant_id, request_type, offer_details) VALUES (?, ?, ?, ?, ?)',
+            [senderId, receiverId, plantId, requestType, offerDetails || '']
+          );
+
+          res.json({ success: true, message: 'Request sent successfully' });
+        } catch (error) {
+          console.error('[TRADE] Request error:', error);
+          res.status(500).json({ error: 'Failed to send request' });
+        }
+      });
+
+      // Fetch requests for a user (both incoming and outgoing)
+      app.get('/api/trade/requests/:userId', async (req, res) => {
+        try {
+          const { userId } = req.params;
+          
+          const [incoming] = await db.execute(`
+            SELECT r.*, p.name as plant_name, p.image as plant_image, u.full_name as sender_name
+            FROM trade_requests r
+            JOIN plants p ON r.plant_id = p.id
+            LEFT JOIN users u ON r.sender_id = u.id
+            WHERE r.receiver_id = ?
+            ORDER BY r.created_at DESC
+          `, [userId]);
+
+          const [outgoing] = await db.execute(`
+            SELECT r.*, p.name as plant_name, p.image as plant_image, u.full_name as receiver_name
+            FROM trade_requests r
+            JOIN plants p ON r.plant_id = p.id
+            LEFT JOIN users u ON r.receiver_id = u.id
+            WHERE r.sender_id = ?
+            ORDER BY r.created_at DESC
+          `, [userId]);
+
+          res.json({ incoming, outgoing });
+        } catch (error) {
+          console.error('[TRADE] Fetch requests error:', error);
+          res.status(500).json({ error: 'Failed to fetch requests' });
+        }
+      });
+
+      // Respond to a request (Accept/Reject)
+      app.post('/api/trade/respond', async (req, res) => {
+        try {
+          const { requestId, status, userId } = req.body; // status: 'accepted', 'rejected'
+          
+          const [requestRows] = await db.execute('SELECT * FROM trade_requests WHERE id = ?', [requestId]);
+          const request = requestRows[0];
+          
+          if (!request) return res.status(404).json({ error: 'Request not found' });
+          if (request.receiver_id != userId) return res.status(403).json({ error: 'Unauthorized' });
+
+          await db.execute('UPDATE trade_requests SET status = ? WHERE id = ?', [status, requestId]);
+
+          if (status === 'accepted') {
+            // Transfer ownership
+            await db.execute(
+              'UPDATE plants SET buyer_id = ?, seller_id = NULL, is_listed = 0, is_sold = 1 WHERE id = ?',
+              [request.sender_id, request.plant_id]
+            );
+            
+            // Reject all other pending requests for this plant
+            await db.execute(
+              'UPDATE trade_requests SET status = "rejected" WHERE plant_id = ? AND status = "pending" AND id != ?',
+              [request.plant_id, requestId]
+            );
+          }
+
+          res.json({ success: true, message: `Request ${status}` });
+        } catch (error) {
+          console.error('[TRADE] Response error:', error);
+          res.status(500).json({ error: 'Failed to update request' });
+        }
+      });
+
+      // Fetch all users (Community discovery)
+      app.get('/api/community/users', async (req, res) => {
+        try {
+          const { currentUserId } = req.query;
+          const [users] = await db.execute(`
+            SELECT id, full_name, profile_image, preferred_location, 
+            (SELECT COUNT(*) FROM plants WHERE seller_id = users.id AND is_listed = 1) as listing_count
+            FROM users 
+            WHERE id != ?
+            ORDER BY listing_count DESC
+          `, [currentUserId || 0]);
+          res.json(users);
+        } catch (error) {
+          console.error('[COMMUNITY] Fetch users error:', error);
+          res.status(500).json({ error: 'Failed to fetch users' });
+        }
+      });
+
+      // --- Identification Endpoint ---
      app.post('/api/identify', upload.single('image'), async (req, res) => {
        console.log('[IDENTIFY] Identification request received.');
        try {
