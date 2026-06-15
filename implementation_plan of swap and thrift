@@ -1,0 +1,77 @@
+# P2P Plant Selling and Exchange Feature
+
+This plan outlines the implementation of a peer-to-peer (P2P) marketplace and exchange system within the Leaf-Life application. Users will be able to list their plants for sale or exchange, and other users can send requests to buy or swap.
+
+## User Review Required
+
+> [!IMPORTANT]
+> **Renaming Existing "Community" Link**: The current sidebar link labeled "Community" points to the Rewards page. I propose renaming this link to "Rewards" and creating a new "Community" link that leads to the actual P2P Exchange Hub.
+
+> [!IMPORTANT]
+> **Manual Verification**: After implementation, testing will require two separate user accounts to demonstrate the request-and-accept flow.
+
+## Proposed Changes
+
+---
+
+### Backend
+
+#### [MODIFY] [server.js](file:///c:/Projects/Leaf-Life%20-%20Copy/Backend/server.js)
+- Update `initDB` to:
+    - Add `seller_id` (INT), `listing_type` (VARCHAR), `is_listed` (TINYINT) to `plants` table.
+    - Create `trade_requests` table to track P2P transactions.
+- Add New Endpoints:
+    - `POST /api/marketplace/list`: Mark a user's plant as listed for sale/exchange.
+    - `GET /api/marketplace/community`: Fetch all user-listed plants.
+    - `GET /api/community/users`: Fetch other users on the platform.
+    - `POST /api/trade/request`: Create a buy or exchange request.
+    - `GET /api/trade/requests/:userId`: Fetch incoming and outgoing trade requests.
+    - `POST /api/trade/respond`: Accept or reject a trade request.
+
+#### [MODIFY] [auth.js](file:///c:/Projects/Leaf-Life%20-%20Copy/Backend/auth.js)
+- Ensure profile fetching includes necessary information for community display (name, location, avatar).
+
+---
+
+### Frontend
+
+#### [NEW] [Community.jsx](file:///c:/Projects/Leaf-Life%20-%20Copy/src/pages/Community.jsx)
+- A new page for the "Exchange Hub".
+- Features:
+    - **Connect Tab**: Discover other plant parents and see their listings.
+    - **Inbound Requests Tab**: Manage requests from other users to buy or exchange your plants.
+    - **Outbound Requests Tab**: Track requests you've sent to others.
+
+#### [MODIFY] [Dashboard.jsx](file:///c:/Projects/Leaf-Life%20-%20Copy/src/pages/Dashboard.jsx)
+- Update the plant card in the collection to include a "List for Sale/Exchange" button.
+- Add a modal or simple interface to set the listing type and price.
+
+#### [MODIFY] [Marketplace.jsx](file:///c:/Projects/Leaf-Life%20-%20Copy/src/pages/Marketplace.jsx)
+- Add a toggle between "Store" (app-seeded plants) and "Community" (user-listed plants).
+- Update community plant cards to show the seller's name and a "Send Request" button.
+
+#### [MODIFY] [Layout.jsx](file:///c:/Projects/Leaf-Life%20-%20Copy/src/components/Layout.jsx)
+- Rename existing "Community" link to "Rewards".
+- Add a new "Community" link pointing to the `/community` route.
+
+#### [MODIFY] [App.jsx](file:///c:/Projects/Leaf-Life%20-%20Copy/src/App.jsx)
+- Register the new `/community` route.
+
+---
+
+## Open Questions
+
+- **Manual Approval vs. Automatic**: For "Buy" requests, should we integrate with the existing payment system or just let users coordinate manually? (Initial plan: Manual coordination/approval followed by a simulated "Handover").
+- **Exchange Detail**: For an "Exchange", should the requester specify which of their plants they want to swap, or just send a general "Interested in Exchange" request?
+
+## Verification Plan
+
+### Automated Tests
+- Use `curl` or Postman to verify new API endpoints (`/api/trade/request`, etc).
+- Verify database migrations using a SQL client or by restarting the server and checking logs.
+
+### Manual Verification
+1. **List a Plant**: Log in as User A, list a plant from the dashboard.
+2. **Browse & Request**: Log in as User B, find the plant in the community marketplace, and send a buy request.
+3. **Accept Request**: Log in as User A, go to the Community page, see the request, and accept it.
+4. **Ownership Transfer**: Verify that the plant's owner has successfully changed after acceptance.
