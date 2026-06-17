@@ -177,6 +177,33 @@
   justify-content: center;
   color: var(--text-muted);
   backdrop-filter: blur(4px);
+  z-index: 5;
+}
+
+.delete-listing-btn {
+  position: absolute;
+  top: 3rem; /* Below the like button */
+  right: 0.5rem;
+  background: rgba(255, 75, 75, 0.15);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ff4b4b;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 75, 75, 0.2);
+  cursor: pointer;
+  z-index: 5;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.delete-listing-btn:hover {
+  background: #ff4b4b;
+  color: white;
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 4px 12px rgba(255, 75, 75, 0.3);
 }
 
 .plant-details {
