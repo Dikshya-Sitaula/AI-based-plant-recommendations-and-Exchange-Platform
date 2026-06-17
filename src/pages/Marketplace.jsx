@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, Filter, Heart, MapPin, ShoppingCart, X, Minus, Plus, QrCode, CheckCircle, Loader2, Trash2, Users, ArrowLeftRight } from 'lucide-react';
 import './Marketplace.css';
 
@@ -111,6 +111,8 @@ function PlantCard({ plant, onBuyClick, onClick, isCommunity, isOwner, onDelete 
 
 export default function Marketplace() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const sellerId = searchParams.get('seller');
   const [plants, setPlants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all'); // 'all', 'buy', 'thrift', 'swap'
@@ -266,6 +268,9 @@ export default function Marketplace() {
   ];
 
   const filteredPlants = combinedPlants.filter(plant => {
+    // 0. Seller ID Filter (from Community Connect)
+    if (sellerId && (!plant.isCommunity || plant.seller_id !== parseInt(sellerId))) return false;
+
     // 1. Search Query Filter
     if (searchQuery && !plant.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
 
@@ -628,7 +633,27 @@ export default function Marketplace() {
           </div>
         </div>
 
-
+        {sellerId && (
+          <div className="filter-info-bar animate-slide-down">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <Users size={18} color="#3B82F6" />
+              <p>
+                Showing plants from <strong>{combinedPlants.find(p => p.seller_id === parseInt(sellerId))?.seller_name || 'Community Member'}</strong>
+              </p>
+            </div>
+            <button 
+              className="clear-filter-btn"
+              onClick={() => {
+                const newParams = new URLSearchParams(searchParams);
+                newParams.delete('seller');
+                setSearchParams(newParams);
+              }}
+            >
+              <X size={14} />
+              Clear Filter
+            </button>
+          </div>
+        )}
 
         <div className="marketplace-body">
           {loading ? (

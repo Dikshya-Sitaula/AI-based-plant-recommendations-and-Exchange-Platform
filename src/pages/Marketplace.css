@@ -610,3 +610,54 @@
   color: #888;
   font-size: 0.9rem;
 }
+
+/* Filter Info Bar */
+.filter-info-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f0f4ff;
+  border-left: 5px solid #3b82f6;
+  padding: 14px 20px;
+  border-radius: 16px;
+  margin: 1.5rem 0;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.08);
+}
+
+.filter-info-bar p {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #1e40af;
+  font-weight: 500;
+}
+
+.clear-filter-btn {
+  background: white;
+  border: 1.5px solid #bfdbfe;
+  color: #3b82f6;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.clear-filter-btn:hover {
+  background: #3b82f6;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(59, 130, 246, 0.2);
+}
+
+.animate-slide-down {
+  animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

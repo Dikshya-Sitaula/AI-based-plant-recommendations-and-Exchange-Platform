@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Users, ArrowLeftRight, ShoppingCart, Check, X, Clock, MapPin, Search, MessageCircle, ExternalLink, Loader2 } from 'lucide-react';
 import './Community.css';
 
 export default function Community() {
+  const navigate = useNavigate();
   const userId = localStorage.getItem('leafLifeUserId') || 1;
   const [activeTab, setActiveTab] = useState('connect'); // 'connect', 'requests'
   const [users, setUsers] = useState([]);
@@ -126,7 +128,7 @@ export default function Community() {
                       </div>
                     </div>
                     <div className="user-actions">
-                      <button className="btn-secondary" onClick={() => window.location.href = `/marketplace?seller=${user.id}`}>
+                      <button className="btn-secondary" onClick={() => navigate(`/marketplace?seller=${user.id}`)}>
                         View Plants
                         <ExternalLink size={14} />
                       </button>
