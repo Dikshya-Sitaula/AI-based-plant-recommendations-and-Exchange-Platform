@@ -25,9 +25,11 @@ function PlantCard({ plant, onBuyClick, onClick, isCommunity, isOwner, onDelete 
   };
 
   const getBadgeColor = () => {
-    if (plant.listing_type === 'thrift') return '#FF4B4B';
-    if (plant.listing_type === 'exchange') return '#3B82F6';
-    if (plant.listing_type === 'sale') return '#10B981';
+    if (!isCommunity) return '#10B981'; // Green for Nursery Buy
+    if (plant.listing_type === 'thrift') return '#FF4B4B'; // Red for Thrift
+    if (plant.listing_type === 'exchange') return '#3B82F6'; // Blue for Swap
+    if (plant.listing_type === 'sale') return '#10B981'; // Green for P2P Buy
+    if (plant.listing_type === 'both') return 'var(--primary)'; // Dark Green for mixed
     return 'var(--primary)';
   };
 
