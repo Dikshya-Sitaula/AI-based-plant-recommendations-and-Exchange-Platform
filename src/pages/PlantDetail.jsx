@@ -123,7 +123,15 @@ export default function PlantDetail() {
       const collResponse = await fetch(`http://${networkIp}:5000/api/user/${currentUserId}/collection`);
       const collData = await collResponse.json();
       
-      const allPlants = [...data, ...collData];
+      // Also fetch from community marketplace to get seller info
+      const commResponse = await fetch(`http://${networkIp}:5000/api/marketplace/community`);
+      const commData = await commResponse.json();
+      
+      const plantsArr = Array.isArray(data) ? data : [];
+      const collArr = Array.isArray(collData) ? collData : [];
+      const commArr = Array.isArray(commData) ? commData : [];
+      
+      const allPlants = [...plantsArr, ...collArr, ...commArr];
       const found = allPlants.find(p => p.id === plantId);
       
       if (found) {

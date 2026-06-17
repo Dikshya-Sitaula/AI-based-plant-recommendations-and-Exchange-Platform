@@ -655,7 +655,7 @@ export default function Marketplace() {
                           isOwner={true}
                           onDelete={handleDeleteListing}
                           onBuyClick={handleBuyClick}
-                          onClick={(id) => navigate(`/plant/${id}?type=community`)}
+                          onClick={(id) => navigate(`/marketplace/${id}?type=community`)}
                         />
                       ))
                     }
@@ -677,7 +677,7 @@ export default function Marketplace() {
                         plant={plant}
                         isCommunity={true}
                         onBuyClick={handleBuyClick}
-                        onClick={(id) => navigate(`/plant/${id}?type=community`)}
+                          onClick={(id) => navigate(`/marketplace/${id}?type=community`)}
                       />
                     ))
                   }
@@ -702,7 +702,7 @@ export default function Marketplace() {
                     isOwner={isOwner}
                     onDelete={handleDeleteListing}
                     onBuyClick={handleBuyClick}
-                    onClick={(id) => navigate(`/plant/${id}?type=${plant.isCommunity ? 'community' : 'store'}`)}
+                    onClick={(id) => navigate(`/marketplace/${id}?type=${plant.isCommunity ? 'community' : 'store'}`)}
                   />
                 );
               })}
