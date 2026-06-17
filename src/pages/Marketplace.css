@@ -122,6 +122,290 @@
   gap: 1.25rem;
 }
 
+.plant-card {
+  background: var(--bg-surface);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+  border: 1px solid rgba(0,0,0,0.02);
+}
+
+.plant-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+
+.plant-image-wrap {
+  position: relative;
+  aspect-ratio: 1;
+  background: var(--bg-secondary);
+  overflow: hidden;
+}
+
+.marketplace-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.badge {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  color: var(--primary-dark);
+  backdrop-filter: blur(4px);
+}
+
+.like-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: rgba(255, 255, 255, 0.9);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  backdrop-filter: blur(4px);
+  z-index: 5;
+}
+
+.delete-listing-btn {
+  position: absolute;
+  top: 3rem; /* Below the like button */
+  right: 0.5rem;
+  background: rgba(255, 75, 75, 0.15);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ff4b4b;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 75, 75, 0.2);
+  cursor: pointer;
+  z-index: 5;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.delete-listing-btn:hover {
+  background: #ff4b4b;
+  color: white;
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 4px 12px rgba(255, 75, 75, 0.3);
+}
+
+.plant-details {
+  padding: 1rem;
+}
+
+.plant-info-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.plant-details h3 {
+  font-size: 1rem;
+  margin-bottom: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-primary);
+}
+
+.price {
+  font-weight: 700;
+  color: var(--primary);
+  font-size: 0.9rem;
+}
+
+.buy-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+  background: var(--gradient-primary);
+  color: white;
+  border-radius: var(--radius-full);
+  padding: 0.75rem;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(46, 96, 58, 0.15);
+}
+
+.buy-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(46, 96, 58, 0.2);
+}
+
+.quantity-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  margin: 2rem 0;
+}
+
+.qty-btn {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+}
+
+.qty-btn:hover {
+  border-color: var(--primary);
+  background: white;
+  color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.qty-value {
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  min-width: 45px;
+  text-align: center;
+}
+
+.location {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.add-to-cart-card {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  background: var(--primary);
+  color: white;
+  padding: 0.75rem;
+  border-radius: var(--radius-lg);
+  font-size: 0.9rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.card-qty-selector-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.daraz-selector {
+  display: flex;
+  align-items: center;
+  border: 1px solid #dadada;
+  border-radius: 2px;
+  background: white;
+}
+
+.daraz-selector.small .daraz-btn {
+  width: 28px;
+  height: 28px;
+}
+
+.daraz-selector.small .daraz-input {
+  width: 32px;
+  height: 28px;
+}
+
+.daraz-btn {
+  width: 32px;
+  height: 32px;
+  background: #f5f5f5;
+  border: none;
+  font-size: 1.1rem;
+  color: #757575;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.daraz-btn:disabled {
+  color: #d9d9d9;
+}
+
+.daraz-input {
+  width: 40px;
+  height: 32px;
+  border: none;
+  border-left: 1px solid #dadada;
+  border-right: 1px solid #dadada;
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.confirm-btn-small {
+  background: var(--primary);
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.confirm-btn-circle {
+  background: var(--primary);
+  color: white;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--shadow-md);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+}
+
+.w-full {
+  width: 100%;
+}
+
+.text-center {
+  text-align: center;
+}
+
 @media (min-width: 768px) {
   .plants-grid {
     grid-template-columns: repeat(3, 1fr);
