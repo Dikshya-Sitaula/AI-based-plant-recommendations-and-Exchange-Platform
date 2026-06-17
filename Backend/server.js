@@ -722,6 +722,26 @@ const plantDetailsMap = require('./plantDetails');
         }
       });
 
+      // Delete (unlist) a community listing — only the owner can do this
+      app.delete('/api/marketplace/listing/:plantId', async (req, res) => {
+        try {
+          const { plantId } = req.params;
+          const { userId } = req.body;
+          const [rows] = await db.execute(
+            'SELECT id FROM plants WHERE id = ? AND seller_id = ? AND is_listed = 1',
+            [plantId, userId]
+          );
+          if (rows.length === 0) {
+            return res.status(403).json({ error: 'Not authorized or listing not found' });
+          }
+          await db.execute('UPDATE plants SET is_listed = 0 WHERE id = ?', [plantId]);
+          res.json({ success: true });
+        } catch (error) {
+          console.error('[COMMUNITY] Delete listing error:', error);
+          res.status(500).json({ error: 'Failed to delete listing' });
+        }
+      });
+
       // Send a trade/buy request
       app.post('/api/trade/request', async (req, res) => {
         try {
