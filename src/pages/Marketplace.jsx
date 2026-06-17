@@ -3,10 +3,25 @@ import { useNavigate } from 'react-router-dom';
 import { Search, Filter, Heart, MapPin, ShoppingCart, X, Minus, Plus, QrCode, CheckCircle, Loader2, Trash2, Users, ArrowLeftRight } from 'lucide-react';
 import './Marketplace.css';
 
-function PlantCard({ plant, onBuyClick, onClick, isCommunity }) {
+function PlantCard({ plant, onBuyClick, onClick, isCommunity, isOwner, onDelete }) {
   const handleAction = (e) => {
     e.stopPropagation();
     onBuyClick(e, plant);
+  };
+
+  const handleDelete = (e) => {
+    e.stopPropagation();
+    if (window.confirm(`Remove "${plant.name}" from listings?`)) {
+      onDelete(plant.id);
+    }
+  };
+  const getBadgeText = () => {
+    if (!isCommunity) return 'BUY';
+    if (plant.listing_type === 'exchange') return 'SWAP';
+    if (plant.listing_type === 'sale') return 'BUY';
+    if (plant.listing_type === 'thrift') return 'THRIFT';
+    if (plant.listing_type === 'both') return 'BUY/SWAP';
+    return plant.listing_type?.toUpperCase() || 'LISTED';
   };
 
   const getBadgeColor = () => {
@@ -26,6 +41,16 @@ function PlantCard({ plant, onBuyClick, onClick, isCommunity }) {
           onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1416879598555-259160a2bece?q=80&w=400'; }}
         />
         <button className="like-btn" onClick={(e) => e.stopPropagation()}><Heart size={18} /></button>
+
+        {isOwner && (
+          <button
+            className="delete-listing-btn"
+            onClick={handleDelete}
+            title="Remove listing"
+          >
+            <Trash2 size={15} />
+          </button>
+        )}
 
         {isCommunity && (
           <>
@@ -57,8 +82,15 @@ function PlantCard({ plant, onBuyClick, onClick, isCommunity }) {
         <button
           className={`action-btn ${isCommunity ? 'request-btn' : 'buy-btn-card'}`}
           onClick={handleAction}
+          disabled={isOwner}
+          style={isOwner ? { opacity: 0.7, cursor: 'default', background: '#f5f5f5', color: '#888', border: '1px solid #ddd' } : {}}
         >
-          {isCommunity ? (
+          {isOwner ? (
+            <>
+              <CheckCircle size={16} />
+              <span>My Listing</span>
+            </>
+          ) : isCommunity ? (
             <>
               <ArrowLeftRight size={16} />
               <span>{plant.listing_type === 'exchange' ? 'Request Swap' : 'Send Offer'}</span>
@@ -246,7 +278,7 @@ export default function Marketplace() {
     }
 
     if (activeTab === 'thrift') {
-      return plant.isCommunity && plant.listing_type === 'thrift';
+      return plant.isCommunity && (plant.listing_type === 'thrift' || plant.listing_type === 'both');
     }
 
     if (activeTab === 'swap') {
@@ -278,6 +310,27 @@ export default function Marketplace() {
     if (!priceStr) return 0;
     const numeric = priceStr.toString().replace(/[^0-9]/g, '');
     return parseInt(numeric) || 0;
+  };
+
+  const handleDeleteListing = async (plantId) => {
+    const userId = parseInt(localStorage.getItem('leafLifeUserId')) || 1;
+    try {
+      const res = await fetch(`http://${window.location.hostname}:5000/api/marketplace/listing/${plantId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        // Remove from local state immediately so all views refresh
+        setCommunityPlants(prev => prev.filter(p => p.id !== plantId));
+      } else {
+        alert('Could not delete listing: ' + (data.error || 'Unknown error'));
+      }
+    } catch (err) {
+      console.error('Delete listing error:', err);
+      alert('Failed to connect to server.');
+    }
   };
 
   const handleBuyClick = (e, plant) => {
@@ -359,7 +412,7 @@ export default function Marketplace() {
   const [newPlant, setNewPlant] = useState({
     name: '',
     price: 'Rs. 450',
-    listingType: 'sale',
+    listingType: 'exchange',
     type: 'plant',
     location: '',
     description: '',
@@ -378,11 +431,18 @@ export default function Marketplace() {
     navigator.geolocation.getCurrentPosition(async (position) => {
       try {
         const { latitude, longitude } = position.coords;
-        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`);
         const data = await response.json();
-        const city = data.address.city || data.address.town || data.address.village || data.address.state || "Unknown Location";
-        const country = data.address.country || "";
-        setNewPlant({ ...newPlant, location: `${city}${country ? ', ' + country : ''}` });
+
+        const addr = data.address;
+        // Search for more specific local areas first
+        const specificArea = addr.suburb || addr.neighbourhood || addr.quarter || addr.hamlet || addr.village || "";
+        const city = addr.city || addr.town || addr.municipality || "Kathmandu";
+
+        // Combine for a specific address like "Samakhusi, Kathmandu"
+        const finalLocation = specificArea ? `${specificArea}, ${city}` : city;
+
+        setNewPlant({ ...newPlant, location: finalLocation });
       } catch (err) {
         console.error("Location detection error:", err);
         alert("Failed to detect location address.");
@@ -421,7 +481,7 @@ export default function Marketplace() {
       if (data.success) {
         alert('Listing created successfully!');
         setShowAddModal(false);
-        setNewPlant({ name: '', price: 'Rs. 450', listingType: 'sale', type: 'plant', location: '', description: '', image: null });
+        setNewPlant({ name: '', price: 'Rs. 450', listingType: 'exchange', type: 'plant', location: '', description: '', image: null });
         // Refresh community plants
         const uId = localStorage.getItem('leafLifeUserId') || 1;
         const commRes = await fetch(`http://${window.location.hostname}:5000/api/marketplace/community?userId=${uId}`);
@@ -590,6 +650,8 @@ export default function Marketplace() {
                           key={`my-${plant.id}`}
                           plant={plant}
                           isCommunity={true}
+                          isOwner={true}
+                          onDelete={handleDeleteListing}
                           onBuyClick={handleBuyClick}
                           onClick={(id) => navigate(`/plant/${id}?type=community`)}
                         />
@@ -627,15 +689,21 @@ export default function Marketplace() {
             </div>
           ) : (
             <div className="plants-grid">
-              {filteredPlants.map(plant => (
-                <PlantCard
-                  key={`${plant.isCommunity ? 'c' : 's'}-${plant.id}`}
-                  plant={plant}
-                  isCommunity={plant.isCommunity}
-                  onBuyClick={handleBuyClick}
-                  onClick={(id) => navigate(`/plant/${id}?type=${plant.isCommunity ? 'community' : 'store'}`)}
-                />
-              ))}
+              {filteredPlants.map(plant => {
+                const currentUserId = parseInt(localStorage.getItem('leafLifeUserId')) || 1;
+                const isOwner = plant.isCommunity && plant.seller_id === currentUserId;
+                return (
+                  <PlantCard
+                    key={`${plant.isCommunity ? 'c' : 's'}-${plant.id}`}
+                    plant={plant}
+                    isCommunity={plant.isCommunity}
+                    isOwner={isOwner}
+                    onDelete={handleDeleteListing}
+                    onBuyClick={handleBuyClick}
+                    onClick={(id) => navigate(`/plant/${id}?type=${plant.isCommunity ? 'community' : 'store'}`)}
+                  />
+                );
+              })}
             </div>
           )}
         </div>
@@ -843,20 +911,7 @@ export default function Marketplace() {
 
               <div style={{ marginBottom: '0.5rem' }}>
                 <label style={{ display: 'block', marginBottom: '0.8rem', fontWeight: '700', color: '#444' }}>Listing Category</label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                  <button
-                    type="button"
-                    onClick={() => setNewPlant({ ...newPlant, listingType: 'sale' })}
-                    style={{
-                      padding: '12px', borderRadius: '14px', border: '2px solid',
-                      borderColor: newPlant.listingType === 'sale' ? '#10B981' : '#eee',
-                      background: newPlant.listingType === 'sale' ? '#ecfdf5' : 'white',
-                      color: newPlant.listingType === 'sale' ? '#059669' : '#666',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontWeight: '800'
-                    }}
-                  >
-                    <ShoppingCart size={18} /> Sale
-                  </button>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem' }}>
                   <button
                     type="button"
                     onClick={() => setNewPlant({ ...newPlant, listingType: 'exchange' })}
@@ -865,10 +920,10 @@ export default function Marketplace() {
                       borderColor: newPlant.listingType === 'exchange' ? '#3B82F6' : '#eee',
                       background: newPlant.listingType === 'exchange' ? '#eff6ff' : 'white',
                       color: newPlant.listingType === 'exchange' ? '#2563eb' : '#666',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontWeight: '800'
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '6px', fontWeight: '800'
                     }}
                   >
-                    <ArrowLeftRight size={18} /> Swap
+                    <ArrowLeftRight size={20} /> <span style={{ fontSize: '0.8rem' }}>Swap</span>
                   </button>
                   <button
                     type="button"
@@ -878,10 +933,10 @@ export default function Marketplace() {
                       borderColor: newPlant.listingType === 'thrift' ? '#FF4B4B' : '#eee',
                       background: newPlant.listingType === 'thrift' ? '#fff1f1' : 'white',
                       color: newPlant.listingType === 'thrift' ? '#dc2626' : '#666',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontWeight: '800'
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '6px', fontWeight: '800'
                     }}
                   >
-                    <Heart size={18} /> Thrift
+                    <Heart size={20} /> <span style={{ fontSize: '0.8rem' }}>Thrift</span>
                   </button>
                   <button
                     type="button"
@@ -891,10 +946,10 @@ export default function Marketplace() {
                       borderColor: newPlant.listingType === 'both' ? 'var(--primary)' : '#eee',
                       background: newPlant.listingType === 'both' ? 'var(--primary-light)' : 'white',
                       color: newPlant.listingType === 'both' ? 'var(--primary)' : '#666',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontWeight: '800'
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '6px', fontWeight: '800'
                     }}
                   >
-                    <Users size={18} /> Both
+                    <Users size={20} /> <span style={{ fontSize: '0.8rem' }}>Both</span>
                   </button>
                 </div>
               </div>
@@ -914,20 +969,20 @@ export default function Marketplace() {
               <div>
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>Location</label>
                 <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                  <input 
-                    required 
-                    type="text" 
-                    placeholder="Kathmandu, Nepal" 
-                    value={newPlant.location} 
-                    onChange={e => setNewPlant({...newPlant, location: e.target.value})} 
-                    style={{ width: '100%', padding: '12px', paddingRight: '45px', borderRadius: '12px', border: '1px solid #eee' }} 
+                  <input
+                    required
+                    type="text"
+                    placeholder="e.g. Samakhusi, Kathmandu"
+                    value={newPlant.location}
+                    onChange={e => setNewPlant({ ...newPlant, location: e.target.value })}
+                    style={{ width: '100%', padding: '12px', paddingRight: '45px', borderRadius: '12px', border: '1px solid #eee' }}
                   />
-                  <button 
+                  <button
                     type="button"
                     onClick={detectLocation}
                     title="Detect my location"
-                    style={{ 
-                      position: 'absolute', right: '10px', background: 'none', border: 'none', 
+                    style={{
+                      position: 'absolute', right: '10px', background: 'none', border: 'none',
                       color: 'var(--primary)', cursor: 'pointer', display: 'flex', alignItems: 'center',
                       opacity: detectingLocation ? 0.5 : 1
                     }}
