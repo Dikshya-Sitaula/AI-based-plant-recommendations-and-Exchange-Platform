@@ -1,0 +1,19 @@
+{
+	"folders": [
+		{
+			"path": "../../.git"
+		},
+		{
+			"path": "../../dist"
+		},
+		{
+			"path": ".."
+		},
+		{
+			"path": "../../Backend"
+		},
+		{
+			"path": "../../public"
+		}
+	]
+}
