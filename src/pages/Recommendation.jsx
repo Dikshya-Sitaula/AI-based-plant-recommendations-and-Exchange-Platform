@@ -182,11 +182,23 @@ export default function Recommendation() {
     }
   };
 
-  const handleFinalizePurchase = () => {
-    setCart([]);
-    localStorage.removeItem('cart');
-    setSuccess(true);
-    setShowQRPrompt(false);
+  const handleFinalizePurchase = async () => {
+    try {
+      const response = await fetch(`http://${window.location.hostname}:5000/api/payment/complete/${paymentSessionId}`, {
+        method: 'POST'
+      });
+      if (response.ok) {
+        setCart([]);
+        localStorage.removeItem('cart');
+        setSuccess(true);
+        setShowQRPrompt(false);
+      } else {
+        alert("Failed to finalize checkout.");
+      }
+    } catch (err) {
+      console.error("Checkout finalization error:", err);
+      alert("Something went wrong.");
+    }
   };
 
   const parsePrice = (priceStr) => {
@@ -424,10 +436,24 @@ export default function Recommendation() {
               </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', padding: '1rem', backgroundColor: '#f5f5f5', borderRadius: '1rem' }}>
-              <Loader2 className="animate-spin" size={20} color="var(--primary)" />
-              <span style={{ fontSize: '0.875rem', fontWeight: '600' }}>Waiting for mobile scan...</span>
-            </div>
+            <button 
+              onClick={handleFinalizePurchase}
+              style={{ 
+                width: '100%', 
+                padding: '1.25rem', 
+                fontSize: '1.1rem', 
+                borderRadius: '9999px', 
+                background: 'var(--primary)', 
+                color: 'white', 
+                fontWeight: '800',
+                border: 'none',
+                cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(46, 96, 58, 0.2)'
+              }}
+            >
+              Done & Checkout
+            </button>
+            <p style={{ marginTop: '1rem', fontSize: '0.8rem', color: '#999' }}>Click Done after you have completed the payment.</p>
           </div>
         </div>
       )}

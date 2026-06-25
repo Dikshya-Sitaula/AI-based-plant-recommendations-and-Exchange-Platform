@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Search, Filter, Heart, MapPin, ShoppingCart, X, Minus, Plus, QrCode, CheckCircle, Loader2, Trash2, Users, ArrowLeftRight } from 'lucide-react';
+import { Search, Filter, Heart, MapPin, ShoppingCart, X, Minus, Plus, QrCode, CheckCircle, Loader2, Trash2, Users, ArrowLeftRight, Camera } from 'lucide-react';
 import './Marketplace.css';
 
 function PlantCard({ plant, onBuyClick, onClick, isCommunity, isOwner, onDelete }) {
@@ -37,10 +37,13 @@ function PlantCard({ plant, onBuyClick, onClick, isCommunity, isOwner, onDelete 
     <div className={`plant-card ${isCommunity ? 'community-item' : ''}`} onClick={() => onClick(plant.id)}>
       <div className="plant-image-wrap">
         <img
-          src={plant.image.startsWith('http') ? plant.image : `http://${window.location.hostname}:5000${encodeURI(plant.image)}`}
+          src={plant.image && plant.image.startsWith('http') ? plant.image : plant.image ? `http://${window.location.hostname}:5000${encodeURI(plant.image)}` : 'https://images.unsplash.com/photo-1416879598555-259160a2bece?q=80&w=400'}
           alt={plant.name}
           className="marketplace-img"
-          onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1416879598555-259160a2bece?q=80&w=400'; }}
+          onError={(e) => { 
+            console.log("Image load failed, using fallback");
+            e.target.src = 'https://images.unsplash.com/photo-1416879598555-259160a2bece?q=80&w=400'; 
+          }}
         />
         <button className="like-btn" onClick={(e) => e.stopPropagation()}><Heart size={18} /></button>
 
@@ -214,7 +217,11 @@ export default function Marketplace() {
         const response = await fetch(`http://${window.location.hostname}:5000/api/marketplace/community?userId=${uId}`);
         const data = await response.json();
         if (Array.isArray(data)) {
-          setCommunityPlants(data);
+          const transformedData = data.map(p => ({
+            ...p,
+            image: p.image && !p.image.startsWith('http') ? `http://${window.location.hostname}:5000${encodeURI(p.image)}` : p.image
+          }));
+          setCommunityPlants(transformedData);
         }
       } catch (err) {
         console.error("Error fetching community plants:", err);
@@ -394,11 +401,22 @@ export default function Marketplace() {
   };
 
   const handleFinalizePurchase = async () => {
-    // Clear cart upon successful payment
-    setCart([]);
-    localStorage.removeItem('cart');
-    setSuccess(true);
-    setShowQRPrompt(false);
+    try {
+      const response = await fetch(`http://${window.location.hostname}:5000/api/payment/complete/${paymentSessionId}`, {
+        method: 'POST'
+      });
+      if (response.ok) {
+        setCart([]);
+        localStorage.removeItem('cart');
+        setSuccess(true);
+        setShowQRPrompt(false);
+      } else {
+        alert("Failed to finalize checkout.");
+      }
+    } catch (err) {
+      console.error("Checkout finalization error:", err);
+      alert("Something went wrong.");
+    }
   };
 
   const closeModals = () => {
@@ -771,12 +789,12 @@ export default function Marketplace() {
 
       {showQRPrompt && (
         <div className="modal-overlay" style={{ zIndex: 10000, display: 'flex' }} onClick={closeModals}>
-          <div className="glass-panel modal-content text-center animate-scale-up" style={{ zIndex: 10001, background: 'white', color: 'black', opacity: 1, transform: 'none' }} onClick={(e) => e.stopPropagation()}>
-            <button className="close-modal" type="button" onClick={closeModals}><X size={20} /></button>
+          <div className="glass-panel modal-content text-center animate-scale-up" style={{ zIndex: 10001, background: 'white', color: 'black', opacity: 1, transform: 'none', padding: '2.5rem', borderRadius: '2rem', maxWidth: '420px', width: '95%' }} onClick={(e) => e.stopPropagation()}>
+            <button className="close-modal" type="button" onClick={closeModals} style={{ position: 'absolute', top: '15px', right: '15px', color: 'black', background: '#f5f5f5', borderRadius: '50%', padding: '5px', border: 'none' }}><X size={20} /></button>
             <div className="modal-header">
               <div className="qr-icon" style={{ marginBottom: '1rem', color: 'var(--primary)', display: 'flex', justifyContent: 'center' }}><QrCode size={48} /></div>
               <h3>Scan to Pay</h3>
-              <p style={{ fontSize: '0.875rem', color: '#666' }}>Scan this with your mobile to see the bill and pay.</p>
+              <p style={{ fontSize: '0.875rem', color: '#666' }}>Scan this QR code with your mobile to pay with eSewa.</p>
               <p style={{ fontWeight: '700', color: 'var(--primary)', fontSize: '1.25rem', marginTop: '0.5rem' }}>
                 Total: Rs. {cart.reduce((sum, item) => sum + (parsePrice(item.price) * (item.quantity || 1)), 0)}
               </p>
@@ -793,10 +811,14 @@ export default function Marketplace() {
               </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', padding: '1rem', backgroundColor: '#f5f5f5', borderRadius: '1rem' }}>
-              <Loader2 className="animate-spin" size={20} color="var(--primary)" />
-              <span style={{ fontSize: '0.875rem', fontWeight: '600' }}>Waiting for mobile scan...</span>
-            </div>
+            <button 
+              onClick={handleFinalizePurchase}
+              className="buy-btn"
+              style={{ width: '100%', padding: '1.25rem', fontSize: '1.1rem', borderRadius: '9999px', background: 'var(--primary)', color: 'white', fontWeight: '800' }}
+            >
+              Done & Checkout
+            </button>
+            <p style={{ marginTop: '1rem', fontSize: '0.8rem', color: '#999' }}>Click Done after you have completed the payment.</p>
           </div>
         </div>
       )}
@@ -836,7 +858,7 @@ export default function Marketplace() {
             </div>
 
             <div style={{ display: 'flex', gap: '1rem' }}>
-              {(tradePlant?.listing_type === 'sale' || tradePlant?.listing_type === 'both') && (
+              {(tradePlant?.listing_type === 'sale' || tradePlant?.listing_type === 'both' || tradePlant?.listing_type === 'thrift') && (
                 <button
                   className="btn-primary"
                   onClick={() => submitTradeRequest('buy')}
@@ -845,11 +867,11 @@ export default function Marketplace() {
                   Buy for {tradePlant?.original_price || tradePlant?.price}
                 </button>
               )}
-              {(tradePlant?.listing_type === 'exchange' || tradePlant?.listing_type === 'both') && (
+              {(tradePlant?.listing_type === 'exchange' || tradePlant?.listing_type === 'both' || tradePlant?.listing_type === 'swap' || !tradePlant?.listing_type) && (
                 <button
                   className="btn-secondary"
                   onClick={() => submitTradeRequest('exchange')}
-                  style={{ flex: 1, padding: '1rem', borderRadius: '9999px', background: 'var(--primary-light)', color: 'var(--primary)', fontWeight: '700', border: 'none' }}
+                  style={{ flex: 1, padding: '1rem', borderRadius: '9999px', background: '#3B82F6', color: 'white', fontWeight: '700', border: 'none' }}
                 >
                   Request Swap
                 </button>

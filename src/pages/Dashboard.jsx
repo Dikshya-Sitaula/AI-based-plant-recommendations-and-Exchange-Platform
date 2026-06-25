@@ -1,4 +1,4 @@
-import { Plus, Droplets, MapPin, Wind, Trophy, Leaf, ShoppingCart, X, Trash2, QrCode, Loader2, CheckCircle, Minus, ArrowLeftRight } from 'lucide-react';
+import { Plus, Droplets, MapPin, Wind, Trophy, Leaf, ShoppingCart, X, Trash2, QrCode, Loader2, CheckCircle, Minus, ArrowLeftRight, Camera } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import './Dashboard.css';
@@ -116,11 +116,23 @@ export default function Dashboard() {
     }
   };
 
-  const handleFinalizePurchase = () => {
-    setCart([]);
-    localStorage.removeItem('cart');
-    setSuccess(true);
-    setShowQRPrompt(false);
+  const handleFinalizePurchase = async () => {
+    try {
+      const response = await fetch(`http://${window.location.hostname}:5000/api/payment/complete/${paymentSessionId}`, {
+        method: 'POST'
+      });
+      if (response.ok) {
+        setCart([]);
+        localStorage.removeItem('cart');
+        setSuccess(true);
+        setShowQRPrompt(false);
+      } else {
+        alert("Failed to finalize checkout.");
+      }
+    } catch (err) {
+      console.error("Checkout finalization error:", err);
+      alert("Something went wrong.");
+    }
   };
 
   const closeModals = () => {
@@ -267,33 +279,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Card 2: Care Schedule */}
-        <div className="stat-card">
-          <div className="stat-card-header">
-            <h3 className="stat-card-title">Care Schedule</h3>
-            <div className="stat-icon-wrap bg-blue-light">
-              <Droplets size={20} className="text-blue" />
-            </div>
-          </div>
-          <div className="stat-card-body">
-            {groupedCollection.length > 0 ? (
-              <ul className="task-list">
-                {groupedCollection.slice(0, 2).map(plant => (
-                  <li key={plant.id} className="task-item">
-                    <div className="task-checkbox"></div>
-                    <div className="task-info">
-                      <span className="task-name">{plant.name} {plant.quantity > 1 && `(x${plant.quantity})`}</span>
-                      <span className="task-action">Check soil moisture</span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p style={{ fontSize: '0.875rem', color: '#888', margin: '1rem 0' }}>No pending tasks. Add plants to see your schedule!</p>
-            )}
-            <button className="btn-text" onClick={() => navigate('/marketplace')}>Find More Plants</button>
-          </div>
-        </div>
 
         {/* Card 3: Active Challenges */}
         <div className="stat-card">
@@ -440,26 +425,31 @@ export default function Dashboard() {
 
       {showQRPrompt && (
         <div className="modal-overlay" style={{ zIndex: 10000, display: 'flex' }} onClick={closeModals}>
-          <div className="glass-panel modal-content text-center animate-scale-up" style={{ zIndex: 10001, background: 'white', color: 'black', opacity: 1, transform: 'none', padding: '2rem', borderRadius: '2rem', maxWidth: '420px', width: '95%' }} onClick={(e) => e.stopPropagation()}>
-            <button className="close-modal" type="button" onClick={closeModals} style={{ position: 'absolute', top: '15px', right: '15px', color: 'black', background: '#f5f5f5', borderRadius: '50%', padding: '5px', border: 'none' }}><X size={20} /></button>
+          <div className="glass-panel modal-content text-center animate-scale-up" style={{ zIndex: 10001, background: 'white', color: 'black', opacity: 1, transform: 'none', padding: '2.5rem', borderRadius: '2rem', maxWidth: '420px', width: '95%' }} onClick={(e) => e.stopPropagation()}>
+            <button className="close-modal" type="button" onClick={closeModals} style={{ position: 'absolute', top: '15px', right: '15px', color: 'black', background: '#f5f5f5', borderRadius: '50%', padding: '5px', border: 'none', cursor: 'pointer' }}><X size={20} /></button>
             <div className="modal-header">
               <div className="qr-icon" style={{ marginBottom: '1rem', color: 'var(--primary)', display: 'flex', justifyContent: 'center' }}><QrCode size={48} /></div>
               <h3>Scan to Pay</h3>
-              <p style={{ fontSize: '0.875rem', color: '#666' }}>Scan this with your mobile to see the bill and pay.</p>
+              <p style={{ fontSize: '0.875rem', color: '#666' }}>Scan this QR code with your mobile to pay with eSewa.</p>
               <p style={{ fontWeight: '700', color: 'var(--primary)', fontSize: '1.25rem', marginTop: '0.5rem' }}>
                 Total: Rs. {cart.reduce((sum, item) => sum + (parsePrice(item.price) * item.quantity), 0)}
               </p>
             </div>
+
             <div style={{ backgroundColor: 'white', padding: '1rem', borderRadius: '1rem', display: 'inline-block', margin: '1.5rem 0', border: '1px solid #eee' }}>
               <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`${window.location.protocol}//${networkIp}${window.location.port ? ':' + window.location.port : ''}/bill/${paymentSessionId}`)}`} alt="Payment QR Code" style={{ width: '200px', height: '200px' }} />
               <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: '#888', wordBreak: 'break-all', maxWidth: '200px' }}>
                 {`${window.location.protocol}//${networkIp}${window.location.port ? ':' + window.location.port : ''}/bill/${paymentSessionId}`}
               </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', padding: '1rem', backgroundColor: '#f5f5f5', borderRadius: '1rem' }}>
-              <Loader2 className="animate-spin" size={20} color="var(--primary)" />
-              <span style={{ fontSize: '0.875rem', fontWeight: '600' }}>Waiting for mobile scan...</span>
-            </div>
+
+            <button 
+              onClick={handleFinalizePurchase}
+              style={{ width: '100%', padding: '1.25rem', fontSize: '1.1rem', borderRadius: '9999px', background: 'var(--primary)', color: 'white', fontWeight: '800', border: 'none', cursor: 'pointer' }}
+            >
+              Done & Checkout
+            </button>
+            <p style={{ marginTop: '1rem', fontSize: '0.8rem', color: '#999' }}>Click Done after you have completed the payment.</p>
           </div>
         </div>
       )}

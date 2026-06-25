@@ -23,6 +23,7 @@ export default function Layout() {
     return localStorage.getItem('leafLifeUserId') || 1;
   });
   const [userAvatar, setUserAvatar] = useState(null);
+  const [commNotifCount, setCommNotifCount] = useState(0);
 
 
   const openAuthModal = () => setAuthOpen(true);
@@ -61,6 +62,14 @@ export default function Layout() {
     };
   }, [authOpen, settingsOpen]);
 
+  const fetchNotifCount = () => {
+    if (!isAuthenticated || !userId) return;
+    fetch(`http://${window.location.hostname}:5000/api/trade/notifications/count/${userId}`)
+      .then(res => res.json())
+      .then(data => setCommNotifCount(data.count || 0))
+      .catch(err => console.error("Notif fetch error:", err));
+  };
+
   useEffect(() => {
     if (isAuthenticated && userId) {
       fetch(`http://${window.location.hostname}:5000/api/auth/profile/${userId}`)
@@ -71,6 +80,17 @@ export default function Layout() {
           }
         })
         .catch(err => console.error("Profile fetch error:", err));
+
+      fetchNotifCount();
+      const interval = setInterval(fetchNotifCount, 30000); // Check every 30s
+      
+      const handleRefresh = () => fetchNotifCount();
+      window.addEventListener('refreshNotifications', handleRefresh);
+
+      return () => {
+        clearInterval(interval);
+        window.removeEventListener('refreshNotifications', handleRefresh);
+      };
     }
   }, [isAuthenticated, userId]);
 
@@ -137,9 +157,12 @@ export default function Layout() {
               <Store size={20} />
               <span>Marketplace</span>
             </NavLink>
-            <NavLink to="/community" className="sidebar-nav-item">
+            <NavLink to="/community" className="sidebar-nav-item" style={{ position: 'relative' }}>
               <Users size={20} />
               <span>Community</span>
+              {commNotifCount > 0 && (
+                <span className="comm-badge-sidebar">{commNotifCount}</span>
+              )}
             </NavLink>
             <NavLink to="/rewards" className="sidebar-nav-item">
               <Trophy size={20} />
@@ -197,9 +220,12 @@ export default function Layout() {
           <MapPin size={24} />
           <span>Recommend</span>
         </NavLink>
-        <NavLink to="/community" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+        <NavLink to="/community" className={({isActive}) => isActive ? "nav-item active" : "nav-item"} style={{ position: 'relative' }}>
           <Users size={24} />
           <span>Community</span>
+          {commNotifCount > 0 && (
+            <span className="comm-badge-mobile">{commNotifCount}</span>
+          )}
         </NavLink>
         <NavLink to="/marketplace" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
           <Store size={24} />

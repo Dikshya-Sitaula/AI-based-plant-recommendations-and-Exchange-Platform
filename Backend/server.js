@@ -185,10 +185,24 @@ const plantDetailsMap = require('./plantDetails');
               request_type VARCHAR(50) NOT NULL, -- 'buy' or 'exchange'
               status VARCHAR(50) DEFAULT 'pending', -- 'pending', 'accepted', 'rejected'
               offer_details TEXT,
+              receiver_seen TINYINT(1) DEFAULT 0,
+              sender_seen TINYINT(1) DEFAULT 0,
               created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
           `);
           console.log('✅ Trade requests table initialized');
+
+          // Add missing columns if table already exists
+          const tradeCols = [
+            { name: 'receiver_seen', type: 'TINYINT(1) DEFAULT 0' },
+            { name: 'sender_seen', type: 'TINYINT(1) DEFAULT 0' }
+          ];
+          for (const col of tradeCols) {
+            try {
+              await db.execute(`ALTER TABLE trade_requests ADD COLUMN ${col.name} ${col.type}`);
+              console.log(`✅ Added column to trade_requests: ${col.name}`);
+            } catch (err) {}
+          }
 
           // Seed initial data if table is empty
           const [rows] = await db.execute('SELECT COUNT(*) as count FROM plants');
@@ -798,6 +812,38 @@ const plantDetailsMap = require('./plantDetails');
         }
       });
 
+      // Get trade notification count
+      app.get('/api/trade/notifications/count/:userId', async (req, res) => {
+        try {
+          const { userId } = req.params;
+          const [incoming] = await db.execute(
+            'SELECT COUNT(*) as count FROM trade_requests WHERE receiver_id = ? AND receiver_seen = 0 AND status = "pending"',
+            [userId]
+          );
+          const [outgoing] = await db.execute(
+            'SELECT COUNT(*) as count FROM trade_requests WHERE sender_id = ? AND sender_seen = 0 AND status IN ("accepted", "rejected")',
+            [userId]
+          );
+          const total = (incoming[0].count || 0) + (outgoing[0].count || 0);
+          res.json({ count: total });
+        } catch (error) {
+          res.status(500).json({ error: 'Failed to fetch notification count' });
+        }
+      });
+
+      // Mark trade notifications as seen
+      app.post('/api/trade/notifications/clear/:userId', async (req, res) => {
+        try {
+          const { userId } = req.params;
+          // When looking at community/requests, mark all relevant as seen
+          await db.execute('UPDATE trade_requests SET receiver_seen = 1 WHERE receiver_id = ?', [userId]);
+          await db.execute('UPDATE trade_requests SET sender_seen = 1 WHERE sender_id = ? AND status IN ("accepted", "rejected")', [userId]);
+          res.json({ success: true });
+        } catch (error) {
+          res.status(500).json({ error: 'Failed to clear notifications' });
+        }
+      });
+
       // Respond to a request (Accept/Reject)
       app.post('/api/trade/respond', async (req, res) => {
         try {
@@ -809,7 +855,7 @@ const plantDetailsMap = require('./plantDetails');
           if (!request) return res.status(404).json({ error: 'Request not found' });
           if (request.receiver_id != userId) return res.status(403).json({ error: 'Unauthorized' });
 
-          await db.execute('UPDATE trade_requests SET status = ? WHERE id = ?', [status, requestId]);
+          await db.execute('UPDATE trade_requests SET status = ?, sender_seen = 0 WHERE id = ?', [status, requestId]);
 
           if (status === 'accepted') {
             // Transfer ownership

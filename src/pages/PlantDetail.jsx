@@ -4,7 +4,7 @@ import {
   ArrowLeft, Thermometer, Sun, Wind, MapPin, ShoppingCart, X, Minus, Plus, 
   QrCode, CheckCircle, Loader2, Trash2, Leaf, Lock, Unlock, Droplets, 
   Sparkles, Home, Maximize, Calendar, Scissors, Bug, Trophy, HelpCircle, 
-  CloudRain, Globe, Sprout
+  CloudRain, Globe, Sprout, ArrowLeftRight
 } from 'lucide-react';
 import PLANT_DETAILS from './plantData';
 import CARE_TIPS from './careTips.json';
@@ -92,6 +92,8 @@ export default function PlantDetail() {
   const [paymentStatus, setPaymentStatus] = useState('pending'); // pending, completed
   const [success, setSuccess] = useState(false);
   const [isTipsPayment, setIsTipsPayment] = useState(false);
+  const [showTradeModal, setShowTradeModal] = useState(false);
+  const [tradeDetails, setTradeDetails] = useState('');
 
   const plantId = parseInt(id);
 
@@ -275,17 +277,59 @@ export default function PlantDetail() {
     }
   };
 
+  const handleImmediateBuy = async () => {
+    const userStr = localStorage.getItem('leafLifeAuthenticated');
+    if (!userStr) {
+      alert('Please log in to purchase.');
+      return;
+    }
+    
+    // Determine the host for mobile access
+    const amount = parsePrice(plant.price);
+    const immediateItem = { ...plant, quantity: 1 };
+
+    try {
+      const response = await fetch(`http://${networkIp}:5000/api/payment/initiate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          cartItems: [immediateItem], 
+          userId: currentUserId, 
+          amount 
+        })
+      });
+      const data = await response.json();
+
+      setPaymentSessionId(data.sessionId);
+      setPaymentStatus('pending');
+      setShowCart(false);
+      setShowQRPrompt(true);
+      setIsTipsPayment(false);
+    } catch (err) {
+      console.error("Immediate purchase initiation error:", err);
+      alert("Failed to initiate payment.");
+    }
+  };
+
   const handleFinalizePurchase = async () => {
-    if (isTipsPayment) {
+    try {
+      const response = await fetch(`http://${window.location.hostname}:5000/api/payment/complete/${paymentSessionId}`, {
+        method: 'POST'
+      });
+      if (response.ok) {
+        if (!isTipsPayment) {
+          setCart([]);
+          localStorage.removeItem('cart');
+        }
         setSuccess(true);
         setShowQRPrompt(false);
-        fetchPlantAndImages(); // Refresh to show tips
-    } else {
-        setCart([]);
-        localStorage.removeItem('cart');
-        setSuccess(true);
-        setShowQRPrompt(false);
-        fetchPlantAndImages();
+        fetchPlantAndImages(); // Refresh to show tips or updated ownership
+      } else {
+        alert("Failed to finalize checkout.");
+      }
+    } catch (err) {
+      console.error("Checkout finalization error:", err);
+      alert("Something went wrong.");
     }
   };
 
@@ -297,6 +341,44 @@ export default function PlantDetail() {
     setSuccess(false);
     setPaymentSessionId(null);
     setIsTipsPayment(false);
+    setShowTradeModal(false);
+  };
+
+  const handleSwapOffer = () => {
+    const userStr = localStorage.getItem('leafLifeAuthenticated');
+    if (!userStr) {
+      alert('Please log in to send a swap offer.');
+      return;
+    }
+    setShowTradeModal(true);
+  };
+
+  const submitTradeRequest = async (type) => {
+    const currentUserId = localStorage.getItem('leafLifeUserId') || 1;
+    try {
+      const response = await fetch(`http://${networkIp}:5000/api/trade/request`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          senderId: currentUserId,
+          receiverId: plant.seller_id,
+          plantId: plant.id,
+          requestType: type,
+          offerDetails: tradeDetails
+        })
+      });
+      const data = await response.json();
+      if (data.success) {
+        alert('Swap offer sent successfully!');
+        setShowTradeModal(false);
+        setTradeDetails('');
+      } else {
+        alert(data.error || 'Failed to send offer');
+      }
+    } catch (err) {
+      console.error("Trade request error:", err);
+      alert('Something went wrong.');
+    }
   };
 
   if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading plant details...</div>;
@@ -522,13 +604,84 @@ export default function PlantDetail() {
 
           {!isOwned && (
             <div className="detail-actions-bottom">
-              <button className="add-to-cart-big-new" onClick={handleBuyClick}>
-                <ShoppingCart size={22} />
-                Add to Cart
-              </button>
+              {plant.seller_id ? (
+                /* Community / P2P Listing Actions */
+                <div style={{ display: 'flex', gap: '1rem', width: '100%', maxWidth: '600px', margin: '0 auto' }}>
+                  {(plant.listing_type === 'exchange' || plant.listing_type === 'both' || plant.listing_type === 'swap') && (
+                    <button 
+                      className="add-to-cart-big-new" 
+                      onClick={handleSwapOffer} 
+                      style={{ 
+                        background: '#3B82F6', 
+                        flex: (plant.listing_type === 'both') ? 1 : 'none',
+                        width: (plant.listing_type === 'both') ? 'auto' : '100%'
+                      }}
+                    >
+                      <ArrowLeftRight size={22} />
+                      Swap Offer
+                    </button>
+                  )}
+                  {(plant.listing_type === 'sale' || plant.listing_type === 'both' || plant.listing_type === 'thrift') && (
+                    <button 
+                      className="add-to-cart-big-new" 
+                      onClick={handleImmediateBuy} 
+                      style={{ 
+                        background: 'var(--primary)',
+                        flex: (plant.listing_type === 'both') ? 1 : 'none',
+                        width: (plant.listing_type === 'both') ? 'auto' : '100%'
+                      }}
+                    >
+                      <ShoppingCart size={22} />
+                      Buy {plant.price}
+                    </button>
+                  )}
+                </div>
+              ) : (
+                /* Nursery / Store Listing Actions */
+                <button className="add-to-cart-big-new" onClick={handleBuyClick}>
+                  <ShoppingCart size={22} />
+                  Add to Cart
+                </button>
+              )}
             </div>
           )}
         </div>
+
+        {/* Trade/Swap Modal */}
+        {showTradeModal && (
+          <div className="modal-overlay" style={{ zIndex: 10000, display: 'flex' }} onClick={closeModals}>
+            <div className="glass-panel modal-content animate-scale-up" style={{ zIndex: 10001, background: 'white', padding: '2rem', borderRadius: '2rem', maxWidth: '450px', width: '95%' }} onClick={(e) => e.stopPropagation()}>
+              <button className="close-modal" type="button" onClick={closeModals} style={{ position: 'absolute', top: '15px', right: '15px', background: '#f5f5f5', borderRadius: '50%', padding: '5px' }}><X size={20} /></button>
+              <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+                <div style={{ background: '#EFF6FF', width: '60px', height: '60px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem', color: '#3B82F6' }}>
+                  <ArrowLeftRight size={30} />
+                </div>
+                <h3 style={{ fontSize: '1.5rem', fontWeight: '800' }}>Send Swap Offer</h3>
+                <p style={{ color: '#666' }}>Interested in swapping for <b>{plant.name}</b>?</p>
+              </div>
+
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: '600', marginBottom: '0.5rem', color: '#333' }}>Your Offer Details (Optional)</label>
+                <textarea 
+                  placeholder="E.g., I can offer a Snake Plant or Monstera cutting in return..." 
+                  value={tradeDetails}
+                  onChange={(e) => setTradeDetails(e.target.value)}
+                  style={{ width: '100%', padding: '1rem', borderRadius: '1rem', border: '1px solid #ddd', minHeight: '120px', resize: 'none', fontSize: '0.95rem' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <button 
+                  onClick={() => submitTradeRequest(plant.listing_type === 'exchange' ? 'exchange' : 'both')} 
+                  style={{ width: '100%', padding: '1.1rem', borderRadius: '9999px', background: '#3B82F6', color: 'white', fontWeight: '700', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                >
+                  Send Swap Request <ArrowLeftRight size={18} />
+                </button>
+                <button onClick={closeModals} style={{ padding: '0.5rem', color: '#888', background: 'none', border: 'none', cursor: 'pointer' }}>Cancel</button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Select Quantity Modal */}
@@ -569,10 +722,24 @@ export default function PlantDetail() {
                 {billURL}
               </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', padding: '1rem', backgroundColor: '#f5f5f5', borderRadius: '1rem' }}>
-              <Loader2 className="animate-spin" size={20} color="var(--primary)" />
-              <span style={{ fontSize: '0.875rem', fontWeight: '600' }}>Waiting for mobile scan...</span>
-            </div>
+            <button 
+              onClick={handleFinalizePurchase}
+              style={{ 
+                width: '100%', 
+                padding: '1.25rem', 
+                fontSize: '1.1rem', 
+                borderRadius: '9999px', 
+                background: 'var(--primary)', 
+                color: 'white', 
+                fontWeight: '800',
+                border: 'none',
+                cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(46, 96, 58, 0.2)'
+              }}
+            >
+              Done & Checkout
+            </button>
+            <p style={{ marginTop: '1rem', fontSize: '0.8rem', color: '#999' }}>Click Done after you have completed the payment.</p>
           </div>
         </div>
       )}

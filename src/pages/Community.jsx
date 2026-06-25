@@ -33,7 +33,17 @@ export default function Community() {
 
   useEffect(() => {
     fetchCommunityData();
-  }, [userId]);
+    if (activeTab === 'requests') {
+      fetch(`http://${window.location.hostname}:5000/api/trade/notifications/clear/${userId}`, { method: 'POST' })
+        .then(() => {
+          // Notify the sidebar to refresh its count
+          window.dispatchEvent(new Event('refreshNotifications'));
+          // Refresh local data to update tab badge immediately
+          fetchCommunityData();
+        })
+        .catch(err => console.error("Clear notifications error:", err));
+    }
+  }, [userId, activeTab]);
 
   const handleRespond = async (requestId, status) => {
     try {
@@ -75,8 +85,12 @@ export default function Community() {
           >
             <ArrowLeftRight size={18} />
             Requests
-            {(requests.incoming.filter(r => r.status === 'pending').length > 0) && (
-              <span className="badge">{requests.incoming.filter(r => r.status === 'pending').length}</span>
+            {(requests.incoming.filter(r => r.status === 'pending' && r.receiver_seen === 0).length + 
+              requests.outgoing.filter(r => (r.status === 'accepted' || r.status === 'rejected') && r.sender_seen === 0).length > 0) && (
+              <span className="badge">
+                {requests.incoming.filter(r => r.status === 'pending' && r.receiver_seen === 0).length + 
+                 requests.outgoing.filter(r => (r.status === 'accepted' || r.status === 'rejected') && r.sender_seen === 0).length}
+              </span>
             )}
           </button>
         </div>

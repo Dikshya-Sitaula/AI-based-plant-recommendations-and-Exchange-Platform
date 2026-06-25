@@ -225,3 +225,39 @@ body {
     display: none;
   }
 }
+
+.comm-badge-sidebar {
+  position: absolute;
+  top: 9px;
+  right: 12px;
+  background-color: #ff4b4b;
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  box-shadow: 0 2px 4px rgba(255, 75, 75, 0.3);
+}
+
+.comm-badge-mobile {
+  position: absolute;
+  top: -5px;
+  right: 10px;
+  background-color: #ff4b4b;
+  color: white;
+  font-size: 0.6rem;
+  font-weight: 700;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  box-shadow: 0 2px 4px rgba(255, 75, 75, 0.3);
+}
