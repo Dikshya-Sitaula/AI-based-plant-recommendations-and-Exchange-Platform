@@ -91,9 +91,9 @@ function RevealRight({ children, delay = 0 }) {
 export default function AboutUs() {
   const navigate = useNavigate();
   const [authOpen, setAuthOpen] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(() => {
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('leafLifeSubmitted') === 'true';
+      return localStorage.getItem('leafLifeAuthenticated') === 'true';
     }
     return false;
   });
@@ -101,16 +101,24 @@ export default function AboutUs() {
   const openAuthModal = () => { setAuthOpen(true); };
 
   const handleGetStarted = () => {
-    if (isSubmitted) {
+    if (isAuthenticated) {
       navigate('/dashboard');
     } else {
       openAuthModal();
     }
   };
 
+  const handleSwitchAccount = () => {
+    localStorage.removeItem('leafLifeSubmitted');
+    localStorage.removeItem('leafLifeAuthenticated');
+    localStorage.removeItem('leafLifeUserName');
+    window.location.reload();
+  };
+
   const handleModalSubmit = () => {
     localStorage.setItem('leafLifeSubmitted', 'true');
-    setIsSubmitted(true);
+    localStorage.setItem('leafLifeAuthenticated', 'true');
+    setIsAuthenticated(true);
     setAuthOpen(false);
     navigate('/dashboard');
   };
@@ -125,6 +133,7 @@ export default function AboutUs() {
   return (
     <div className="lp-root about-root">
       <Header 
+<<<<<<< HEAD
         isAuthenticated={isSubmitted} 
         onOpenAuth={openAuthModal} 
         onGetStarted={handleGetStarted}
@@ -133,6 +142,12 @@ export default function AboutUs() {
           localStorage.removeItem('leafLifeAuthenticated');
           window.location.reload();
         }}
+=======
+        isAuthenticated={isAuthenticated}
+        onOpenAuth={openAuthModal}
+        onSwitchAccount={handleSwitchAccount}
+        onGetStarted={handleGetStarted}
+>>>>>>> f22f288fcc9965c2b390f95a5245b797e1638216
       />
 
       <AuthModal

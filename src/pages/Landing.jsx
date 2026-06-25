@@ -30,27 +30,17 @@ import Header from '../components/Header';
 export default function Landing() {
   const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(() => {
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
     if (typeof window === 'undefined') return false;
-    return localStorage.getItem('leafLifeSubmitted') === 'true';
-  });
-  const [activeNav, setActiveNav] = useState(() => {
-    if (typeof window === 'undefined') return 'landing';
-    return localStorage.getItem('leafLifeSubmitted') === 'true' ? 'features' : 'landing';
+    return localStorage.getItem('leafLifeAuthenticated') === 'true';
   });
 
   const openModal = () => {
     setShowModal(true);
   };
 
-  const handleLogoClick = () => {
-    if (isSubmitted) {
-      setActiveNav('landing');
-    }
-  };
-
   const handleGetStarted = () => {
-    if (!isSubmitted) {
+    if (!isAuthenticated) {
       openModal();
       return;
     }
@@ -58,7 +48,7 @@ export default function Landing() {
   };
 
   const handleFeatureNav = (path) => {
-    if (!isSubmitted) {
+    if (!isAuthenticated) {
       openModal();
       return;
     }
@@ -71,8 +61,7 @@ export default function Landing() {
     if (data.userId) localStorage.setItem('leafLifeUserId', data.userId);
     const nameToSet = data.fullName || data.email.split('@')[0];
     localStorage.setItem('leafLifeUserName', nameToSet);
-    setIsSubmitted(true);
-    setActiveNav('features');
+    setIsAuthenticated(true);
     setShowModal(false);
     navigate('/dashboard');
   };
@@ -80,6 +69,7 @@ export default function Landing() {
   return (
     <div className="lp-root">
       <Header 
+<<<<<<< HEAD
         isAuthenticated={isSubmitted} 
         onOpenAuth={openModal} 
         onGetStarted={handleGetStarted}
@@ -89,6 +79,12 @@ export default function Landing() {
           localStorage.removeItem('leafLifeUserName');
           window.location.reload();
         }}
+=======
+        isAuthenticated={isAuthenticated}
+        onOpenAuth={openModal}
+        onSwitchAccount={handleSwitchAccount}
+        onGetStarted={handleGetStarted}
+>>>>>>> f22f288fcc9965c2b390f95a5245b797e1638216
       />
 
       <AuthModal
