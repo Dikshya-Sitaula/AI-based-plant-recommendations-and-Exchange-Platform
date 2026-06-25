@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Outlet, NavLink, Link, useNavigate } from 'react-router-dom';
-import { Store, Camera, Trophy, LayoutDashboard, MapPin, LogOut, Settings } from 'lucide-react';
+import { Store, Camera, Trophy, LayoutDashboard, MapPin, LogOut, Settings, Sprout, ShieldCheck } from 'lucide-react';
 import './Layout.css';
 import logo from "../assets/Leaf and Life logo.png";
 import AuthModal from './AuthModal';
@@ -99,6 +99,14 @@ export default function Layout() {
             <NavLink to="/recommendation" className="sidebar-nav-item">
               <MapPin size={20} />
               <span>Smart Recs</span>
+            </NavLink>
+            <NavLink to="/nursery/dashboard" className="sidebar-nav-item">
+              <Sprout size={20} />
+              <span>Nursery Portal</span>
+            </NavLink>
+            <NavLink to="/admin/dashboard" className="sidebar-nav-item">
+              <ShieldCheck size={20} />
+              <span>Admin Portal</span>
             </NavLink>
             <div className="sidebar-divider"></div>
             <Link to="/" className="sidebar-nav-item exit-link">
