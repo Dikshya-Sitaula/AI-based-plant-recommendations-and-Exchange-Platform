@@ -29,6 +29,7 @@ import AuthModal from '../components/AuthModal';
 export default function Landing() {
   const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false);
+  const [showEntryChoice, setShowEntryChoice] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(() => {
     if (typeof window === 'undefined') return false;
     return localStorage.getItem('leafLifeSubmitted') === 'true';
@@ -42,6 +43,23 @@ export default function Landing() {
     setShowModal(true);
   };
 
+  const openEntryChoice = () => {
+    setShowEntryChoice(true);
+  };
+
+  const closeEntryChoice = () => {
+    setShowEntryChoice(false);
+  };
+
+  const handleEntryChoice = (choice) => {
+    setShowEntryChoice(false);
+    if (choice === 'nursery') {
+      navigate('/nursery/signin');
+      return;
+    }
+    openModal();
+  };
+
   const handleLogoClick = () => {
     if (isSubmitted) {
       setActiveNav('landing');
@@ -50,7 +68,7 @@ export default function Landing() {
 
   const handleGetStarted = () => {
     if (!isSubmitted) {
-      openModal();
+      openEntryChoice();
       return;
     }
     navigate('/dashboard');
@@ -96,6 +114,7 @@ export default function Landing() {
             <button type="button" className="lp-nav-link" onClick={() => navigate('/?landing=1')}>Home</button>
             <button type="button" className="lp-nav-link" onClick={() => navigate('/about')}>About Us</button>
             <button type="button" className="lp-nav-link" onClick={() => navigate('/contact')}>Contact</button>
+            <button type="button" className="lp-nav-link" onClick={() => navigate('/nursery/signin')}>Nursery</button>
           </div>
 
           <div className="lp-nav-actions">
@@ -124,6 +143,36 @@ export default function Landing() {
         onClose={() => setShowModal(false)}
         onSuccess={handleModalSubmit}
       />
+
+      {showEntryChoice && (
+        <div className="lp-entry-choice-backdrop" onClick={closeEntryChoice}>
+          <div className="lp-entry-choice-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="lp-entry-choice-header">
+              <h2>Choose your path</h2>
+              <p>Select whether you want to continue as a Plant Parent or sign in as a Nursery.</p>
+            </div>
+            <div className="lp-entry-choice-actions">
+              <button
+                type="button"
+                className="lp-entry-choice-button lp-entry-choice-button-primary"
+                onClick={() => handleEntryChoice('user')}
+              >
+                Continue as Plant Parent
+              </button>
+              <button
+                type="button"
+                className="lp-entry-choice-button lp-entry-choice-button-secondary"
+                onClick={() => handleEntryChoice('nursery')}
+              >
+                Login as Nursery
+              </button>
+            </div>
+            <button type="button" className="lp-entry-choice-close" onClick={closeEntryChoice}>
+              Close
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Hero Section */}
       <section className="lp-hero">

@@ -236,6 +236,76 @@
   margin-top: 4px;
 }
 
+.lp-entry-choice-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 24, 20, 0.68);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  z-index: 120;
+}
+
+.lp-entry-choice-modal {
+  width: min(480px, 100%);
+  background: #fff;
+  border-radius: 24px;
+  padding: 30px;
+  box-shadow: 0 28px 90px rgba(15, 38, 22, 0.18);
+  position: relative;
+}
+
+.lp-entry-choice-header h2 {
+  margin: 0 0 12px;
+  font-size: 1.75rem;
+  color: #10241f;
+}
+
+.lp-entry-choice-header p {
+  margin: 0;
+  color: #4f6358;
+  line-height: 1.6;
+}
+
+.lp-entry-choice-actions {
+  display: grid;
+  gap: 14px;
+  margin-top: 24px;
+}
+
+.lp-entry-choice-button {
+  width: 100%;
+  border: none;
+  border-radius: 9999px;
+  padding: 16px 20px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.lp-entry-choice-button-primary {
+  background: linear-gradient(135deg, #2d8f2e 0%, #1f5f2a 100%);
+  color: white;
+}
+
+.lp-entry-choice-button-secondary {
+  background: #f5f7f2;
+  color: #1c4126;
+}
+
+.lp-entry-choice-close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  border: none;
+  background: transparent;
+  color: #4f6358;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .lp-btn {
   border: 1px solid transparent;
   border-radius: 9999px;

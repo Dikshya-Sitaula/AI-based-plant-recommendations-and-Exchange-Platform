@@ -1,4 +1,4 @@
-import { Plus, Droplets, MapPin, Wind, Trophy, Leaf, ShoppingCart, X, Trash2, QrCode, Loader2, CheckCircle, Minus, ArrowLeftRight, Camera } from 'lucide-react';
+import { Plus, Droplets, MapPin, Wind, Trophy, Leaf, ShoppingCart, X, Trash2, QrCode, Loader2, CheckCircle, Minus, ArrowLeftRight, Camera, Heart, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import './Dashboard.css';

@@ -205,6 +205,7 @@ export default function Contact() {
             <button type="button" className="lp-nav-link" onClick={() => navigate('/?landing=1')}>Home</button>
             <button type="button" className="lp-nav-link" onClick={() => navigate('/about')}>About Us</button>
             <button type="button" className="lp-nav-link" onClick={() => navigate('/contact')}>Contact</button>
+            <button type="button" className="lp-nav-link" onClick={() => navigate('/nursery/signin')}>Nursery</button>
           </div>
 
           <div className="lp-nav-actions">

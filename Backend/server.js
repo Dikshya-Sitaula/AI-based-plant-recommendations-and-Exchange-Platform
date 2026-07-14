@@ -58,6 +58,8 @@ const plantDetailsMap = require('./plantDetails');
              full_name VARCHAR(255) NOT NULL,
              email VARCHAR(255) NOT NULL UNIQUE,
              password VARCHAR(255),
+             role VARCHAR(50) DEFAULT 'User',
+             profile_image VARCHAR(255),
              phone_number VARCHAR(20),
              preferred_location VARCHAR(255),
              google_id VARCHAR(255) UNIQUE,
@@ -72,6 +74,8 @@ const plantDetailsMap = require('./plantDetails');
            { name: 'apple_id', type: 'VARCHAR(255) UNIQUE' },
            { name: 'github_id', type: 'VARCHAR(255) UNIQUE' },
            { name: 'phone_number', type: 'VARCHAR(20)' },
+           { name: 'role', type: "VARCHAR(50) DEFAULT 'User'" },
+           { name: 'profile_image', type: 'VARCHAR(255)' },
            { name: 'preferred_location', type: 'VARCHAR(255)' },
            { name: 'github_handle', type: 'VARCHAR(255)' }
          ];
@@ -165,7 +169,13 @@ const plantDetailsMap = require('./plantDetails');
             { name: 'seller_id', type: 'INT' },
             { name: 'listing_type', type: 'VARCHAR(50)' }, // 'sale', 'exchange', 'both'
             { name: 'is_listed', type: 'TINYINT(1) DEFAULT 0' },
-            { name: 'original_price', type: 'VARCHAR(255)' }
+            { name: 'original_price', type: 'VARCHAR(255)' },
+            { name: 'available', type: 'TINYINT(1) DEFAULT 1' },
+            { name: 'nursery_id', type: 'INT' },
+            { name: 'nursery_name', type: 'VARCHAR(255)' },
+            { name: 'nursery_external_id', type: 'VARCHAR(255)' },
+            { name: 'nursery_location', type: 'VARCHAR(255)' },
+            { name: 'nursery_phone', type: 'VARCHAR(50)' }
           ];
 
           for (const col of p2pColumns) {
@@ -174,6 +184,34 @@ const plantDetailsMap = require('./plantDetails');
               console.log(`✅ Added P2P column: ${col.name}`);
             } catch (err) {}
           }
+
+          await db.execute(`
+            CREATE TABLE IF NOT EXISTS nurseries (
+              id INT AUTO_INCREMENT PRIMARY KEY,
+              external_id VARCHAR(255) UNIQUE,
+              nursery_name VARCHAR(255) NOT NULL,
+              owner_name VARCHAR(255),
+              email VARCHAR(255) UNIQUE,
+              phone VARCHAR(50),
+              address VARCHAR(255),
+              password VARCHAR(255),
+              role VARCHAR(50) DEFAULT 'User',
+              profile_image VARCHAR(255),
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+          `);
+          
+          // Migration: Add password column if it doesn't exist
+          try {
+            await db.execute('ALTER TABLE nurseries ADD COLUMN password VARCHAR(255)');
+            console.log('✅ Added password column to nurseries table');
+          } catch (err) {}
+
+          try {
+            await db.execute('ALTER TABLE nurseries ADD UNIQUE (email)');
+          } catch (err) {}
+
+          console.log('✅ Nurseries table initialized');
 
           // Create Trade Requests Table
           await db.execute(`
@@ -377,7 +415,7 @@ const plantDetailsMap = require('./plantDetails');
 
      app.get('/api/plants', async (req, res) => {
        try {
-         const [plants] = await db.execute('SELECT * FROM plants WHERE is_sold = 0');
+         const [plants] = await db.execute('SELECT * FROM plants WHERE is_sold = 0 AND (available IS NULL OR available = 1)');
          res.json(plants);
        } catch (error) {
          res.status(500).json({ error: 'Failed to fetch plants' });
@@ -471,46 +509,205 @@ const plantDetailsMap = require('./plantDetails');
        }
      });
 
-     // --- Payment Endpoints ---
+      app.post('/api/nursery/plants', async (req, res) => {
+        try {
+          const {
+            name,
+            category,
+            price,
+            description,
+            image,
+            available,
+            nurseryExternalId,
+            location,
+          } = req.body;
 
-     app.post('/api/payment/initiate', async (req, res) => {
-       try {
-         const { cartItems, userId, amount } = req.body;
-         const sessionId = `PAY-${Date.now()}`;
-         
-         await db.execute(
-           'INSERT INTO payment_sessions (id, user_id, cart_items, total_amount, status) VALUES (?, ?, ?, ?, ?)',
-           [sessionId, userId, JSON.stringify(cartItems), amount, 'pending']
-         );
+          if (!name || !price || !nurseryExternalId) {
+            return res.status(400).json({ error: 'Missing required nursery plant fields' });
+          }
 
-         res.json({ sessionId });
-       } catch (error) {
-         console.error('Payment initiation error:', error);
-         res.status(500).json({ error: 'Failed to initiate payment' });
-       }
-     });
+          const [nurseryRows] = await db.execute('SELECT * FROM nurseries WHERE external_id = ?', [nurseryExternalId]);
+          let nursery = nurseryRows[0];
+          if (!nursery) {
+            // Create a simple nursery record for the external nursery if not already present
+            await db.execute(
+              'INSERT INTO nurseries (external_id, nursery_name, owner_name, email, phone, address) VALUES (?, ?, ?, ?, ?, ?)',
+              [nurseryExternalId, req.body.nurseryName || 'Partner Nursery', req.body.ownerName || '', req.body.email || '', req.body.phone || '', req.body.location || '']
+            );
+            const [newNurseryRows] = await db.execute('SELECT * FROM nurseries WHERE external_id = ?', [nurseryExternalId]);
+            nursery = newNurseryRows[0];
+          }
 
-     app.get('/api/payment/status/:sessionId', async (req, res) => {
-       try {
-         const [rows] = await db.execute('SELECT status FROM payment_sessions WHERE id = ?', [req.params.sessionId]);
-         res.json({ status: rows[0]?.status || 'expired' });
-       } catch (error) {
-         res.status(500).json({ error: 'Failed to fetch payment status' });
-       }
-     });
+          const insertPlant = `INSERT INTO plants
+            (name, type, price, location, image, space_tag, sunlight_need, min_temp, max_temp, purification_score, rule, scientific_name, nepali_name, english_name, description, available, nursery_id, nursery_name, nursery_external_id, nursery_location, nursery_phone, is_sold)
+            VALUES (?, ?, ?, ?, ?, 'Any', '2', 10, 35, 5, '', '', '', '', ?, ?, ?, ?, ?, ?, ?, 0)`;
+          const [result] = await db.execute(insertPlant, [
+            name,
+            category || 'plant',
+            price,
+            location || 'Partner Nursery',
+            image || '/plants/default.jpg',
+            description || '',
+            available ? 1 : 0,
+            nursery.id,
+            nursery.nursery_name || 'Partner Nursery',
+            nurseryExternalId,
+            location || 'Partner Nursery',
+            req.body.phone || '',
+          ]);
 
-     app.get('/api/payment/bill/:sessionId', async (req, res) => {
-       try {
-         const [rows] = await db.execute('SELECT * FROM payment_sessions WHERE id = ?', [req.params.sessionId]);
-         const session = rows[0];
-         if (session) {
-           session.cart_items = JSON.parse(session.cart_items);
-         }
-         res.json(session);
-       } catch (error) {
-         res.status(500).json({ error: 'Failed to fetch bill' });
-       }
-     });
+          res.json({ success: true, plantId: result.insertId });
+        } catch (error) {
+          console.error('[NURSERY] Add plant error:', error);
+          res.status(500).json({ error: 'Failed to add nursery plant' });
+        }
+      });
+
+      app.put('/api/nursery/plants/:id', async (req, res) => {
+        try {
+          const { id } = req.params;
+          const {
+            name,
+            category,
+            price,
+            description,
+            image,
+            available,
+            location,
+          } = req.body;
+
+          const [rows] = await db.execute('SELECT * FROM plants WHERE id = ?', [id]);
+          const plant = rows[0];
+          if (!plant) return res.status(404).json({ error: 'Nursery plant not found' });
+
+          await db.execute(
+            `UPDATE plants SET
+              name = ?,
+              type = ?,
+              price = ?,
+              location = ?,
+              image = ?,
+              description = ?,
+              available = ?
+             WHERE id = ?`,
+            [
+              name || plant.name,
+              category || plant.type,
+              price || plant.price,
+              location || plant.location,
+              image || plant.image,
+              description || plant.description,
+              typeof available !== 'undefined' ? (available ? 1 : 0) : plant.available,
+              id,
+            ]
+          );
+
+          res.json({ success: true, plantId: Number(id) });
+        } catch (error) {
+          console.error('[NURSERY] Update plant error:', error);
+          res.status(500).json({ error: 'Failed to update nursery plant' });
+        }
+      });
+
+      app.patch('/api/nursery/plants/:id/availability', async (req, res) => {
+        try {
+          const { id } = req.params;
+          const { available } = req.body;
+          await db.execute('UPDATE plants SET available = ? WHERE id = ?', [available ? 1 : 0, id]);
+          res.json({ success: true });
+        } catch (error) {
+          console.error('[NURSERY] Availability update error:', error);
+          res.status(500).json({ error: 'Failed to update availability' });
+        }
+      });
+
+      app.delete('/api/nursery/plants/:id', async (req, res) => {
+        try {
+          const { id } = req.params;
+          await db.execute('DELETE FROM plants WHERE id = ?', [id]);
+          res.json({ success: true });
+        } catch (error) {
+          console.error('[NURSERY] Delete plant error:', error);
+          res.status(500).json({ error: 'Failed to delete nursery plant' });
+        }
+      });
+
+      app.get('/api/nursery/profile/:externalId', async (req, res) => {
+        try {
+          const { externalId } = req.params;
+          const [rows] = await db.execute('SELECT * FROM nurseries WHERE external_id = ?', [externalId]);
+          if (rows.length === 0) return res.status(404).json({ error: 'Nursery not found' });
+          res.json(rows[0]);
+        } catch (error) {
+          res.status(500).json({ error: 'Failed to fetch nursery profile' });
+        }
+      });
+
+      app.get('/api/nursery/plants/:externalId', async (req, res) => {
+        try {
+          const { externalId } = req.params;
+          const [rows] = await db.execute('SELECT * FROM plants WHERE nursery_external_id = ?', [externalId]);
+          res.json(rows);
+        } catch (error) {
+          res.status(500).json({ error: 'Failed to fetch nursery plants' });
+        }
+      });
+
+      app.get('/api/nursery/stats/:externalId', async (req, res) => {
+        try {
+          const { externalId } = req.params;
+          const [nurseryRows] = await db.execute('SELECT id FROM nurseries WHERE external_id = ?', [externalId]);
+          if (nurseryRows.length === 0) return res.status(404).json({ error: 'Nursery not found' });
+          
+          const [productRows] = await db.execute('SELECT COUNT(*) as count FROM plants WHERE nursery_external_id = ?', [externalId]);
+          const [orderRows] = await db.execute('SELECT COUNT(*) as count FROM trade_requests WHERE receiver_id = ? AND request_type = "buy"', [nurseryRows[0].id]);
+          // Simplified stats for now
+          res.json({
+            totalProducts: productRows[0].count,
+            totalOrders: orderRows[0].count,
+            totalPlantsSold: 0, 
+            totalRevenue: 0,
+            lowStock: 0,
+            recentOrders: [],
+            trending: []
+          });
+        } catch (error) {
+          console.error('[NURSERY] Stats error:', error);
+          res.status(500).json({ error: 'Failed to fetch nursery stats' });
+        }
+      });
+
+      app.get('/api/nursery/orders/:externalId', async (req, res) => {
+        try {
+          const { externalId } = req.params;
+          const [nurseryRows] = await db.execute('SELECT id FROM nurseries WHERE external_id = ?', [externalId]);
+          if (nurseryRows.length === 0) return res.status(404).json({ error: 'Nursery not found' });
+          
+          const [rows] = await db.execute(`
+            SELECT tr.*, p.name as plantName, u.full_name as customerName 
+            FROM trade_requests tr
+            JOIN plants p ON tr.plant_id = p.id
+            JOIN users u ON tr.sender_id = u.id
+            WHERE tr.receiver_id = ? AND tr.request_type = 'buy'
+            ORDER BY tr.created_at DESC
+          `, [nurseryRows[0].id]);
+          
+          const formattedOrders = rows.map(o => ({
+            id: o.id,
+            plantName: o.plantName,
+            quantity: 1, // Assume 1 for now or add quantity to trade_requests
+            orderDate: new Date(o.created_at).toISOString().split('T')[0],
+            customerName: o.customerName,
+            totalAmount: o.offer_details ? parseInt(o.offer_details.replace(/[^0-9]/g, '')) || 0 : 450,
+            status: o.status === 'approved' ? 'Completed' : (o.status === 'rejected' ? 'Cancelled' : 'Processing')
+          }));
+
+          res.json(formattedOrders);
+        } catch (error) {
+          console.error('[NURSERY] Orders error:', error);
+          res.status(500).json({ error: 'Failed to fetch nursery orders' });
+        }
+      });
 
      app.post('/api/payment/complete/:sessionId', async (req, res) => {
        try {
@@ -982,6 +1179,72 @@ const plantDetailsMap = require('./plantDetails');
      app.get('/', (req, res) => {      res.send('Leaf-Life API is running...');
     });
 
+      // --- Admin Dashboard Endpoints ---
+      app.get('/api/admin/stats', async (req, res) => {
+        try {
+          const [userCount] = await db.execute('SELECT COUNT(*) as count FROM users');
+          const [nurseryCount] = await db.execute('SELECT COUNT(*) as count FROM nurseries');
+          const [plantCount] = await db.execute('SELECT COUNT(*) as count FROM plants');
+          const [orderCount] = await db.execute('SELECT COUNT(*) as count FROM trade_requests WHERE request_type = "buy"');
+          const [revenue] = await db.execute('SELECT SUM(total_amount) as total FROM payment_sessions WHERE status = "completed"');
+          
+          res.json({
+            totalUsers: userCount[0].count,
+            totalNurseries: nurseryCount[0].count,
+            totalPlants: plantCount[0].count,
+            totalOrders: orderCount[0].count,
+            totalRevenue: revenue[0].total || 0,
+            pendingNurseries: 0 // Logic for pending nurseries can be added if needed
+          });
+        } catch (error) {
+          console.error('[ADMIN] Stats error:', error);
+          res.status(500).json({ error: 'Failed to fetch admin stats' });
+        }
+      });
+
+      app.get('/api/admin/users', async (req, res) => {
+        try {
+          const [rows] = await db.execute('SELECT id, full_name, email, role, created_at FROM users');
+          res.json(rows);
+        } catch (error) {
+          res.status(500).json({ error: 'Failed to fetch users' });
+        }
+      });
+
+      app.get('/api/admin/nurseries', async (req, res) => {
+        try {
+          const [rows] = await db.execute('SELECT * FROM nurseries');
+          res.json(rows);
+        } catch (error) {
+          res.status(500).json({ error: 'Failed to fetch nurseries' });
+        }
+      });
+
+      app.get('/api/admin/orders', async (req, res) => {
+        try {
+          const [rows] = await db.execute(`
+            SELECT tr.*, p.name as plantName, u.full_name as customerName, n.nursery_name 
+            FROM trade_requests tr
+            JOIN plants p ON tr.plant_id = p.id
+            JOIN users u ON tr.sender_id = u.id
+            LEFT JOIN nurseries n ON tr.receiver_id = n.id
+            ORDER BY tr.created_at DESC
+          `);
+          res.json(rows);
+        } catch (error) {
+          res.status(500).json({ error: 'Failed to fetch orders' });
+        }
+      });
+
+      app.get('/api/admin/plants', async (req, res) => {
+        try {
+          const [rows] = await db.execute('SELECT * FROM plants ORDER BY created_at DESC');
+          res.json(rows);
+        } catch (error) {
+          res.status(500).json({ error: 'Failed to fetch plants' });
+        }
+      });
+
     app.get('/api/network-info', (req, res) => {
       const interfaces = require('os').networkInterfaces();
       let ip = 'localhost';
@@ -1023,8 +1286,8 @@ const plantDetailsMap = require('./plantDetails');
     });
    
     app.listen(PORT, '0.0.0.0', () => {
-      console.log(`\n🚀 Leaf-Life API is running!`);
-      console.log(`🔗 Local:   http://localhost:${PORT}`);
-      console.log(`🌐 Network: http://${require('os').networkInterfaces()['Wi-Fi']?.[1]?.address || 'your-ip-address'}:${PORT}`);
-      console.log(`\n💡 Mobile Hint: Ensure Windows Firewall allows traffic on Port ${PORT}`);
+      console.log(` Leaf-Life API is running!`);
+      console.log(` Local:   http://localhost:${PORT}`);
+      console.log(` Network: http://${require('os').networkInterfaces()['Wi-Fi']?.[1]?.address || 'your-ip-address'}:${PORT}`);
+      console.log(` Mobile Hint: Ensure Windows Firewall allows traffic on Port ${PORT}`);
     });

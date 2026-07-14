@@ -1,0 +1,110 @@
+import { useEffect, useState } from 'react';
+import { getAdminPlants } from './AdminUtils';
+import './AdminModule.css';
+import { Package, Search, Tag, MapPin, Eye, Trash2 } from 'lucide-react';
+
+export default function AdminProducts() {
+  const [plants, setPlants] = useState([]);
+  const [query, setQuery] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPlants = async () => {
+      setLoading(true);
+      const data = await getAdminPlants();
+      setPlants(data);
+      setLoading(false);
+    };
+    fetchPlants();
+  }, []);
+
+  const filteredPlants = plants.filter(p => 
+    p.name.toLowerCase().includes(query.toLowerCase()) || 
+    p.type.toLowerCase().includes(query.toLowerCase())
+  );
+
+  return (
+    <div className="admin-content-inner animate-fade-in">
+      <div className="page-header">
+        <div>
+          <p className="eyebrow">ADMINISTRATION</p>
+          <h1>Marketplace Inventory</h1>
+          <p className="module-copy">Global view of all plant listings across nurseries and community sellers.</p>
+        </div>
+      </div>
+
+      <div className="filter-row mt-6">
+        <div className="search-box">
+          <Search size={18} />
+          <input 
+            type="text" 
+            placeholder="Filter by name or type..." 
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <div className="admin-products-table mt-6 panel-card">
+        <div className="table-scroll">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Plant</th>
+                <th>Category</th>
+                <th>Seller Info</th>
+                <th>Price</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredPlants.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="empty-row">No plants matching your search.</td>
+                </tr>
+              ) : (
+                filteredPlants.map((plant) => (
+                  <tr key={plant.id}>
+                    <td>
+                      <div className="plant-cell">
+                        <img 
+                          src={plant.image && plant.image.startsWith('http') ? plant.image : `http://${window.location.hostname}:5000${plant.image}`} 
+                          alt={plant.name} 
+                          className="plant-thumb"
+                        />
+                        <div className="plant-meta">
+                          <span className="font-semibold">{plant.name}</span>
+                          <span className="scientific-name">{plant.scientific_name}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td><span className="type-badge">{plant.type}</span></td>
+                    <td>
+                      <div className="seller-cell">
+                        <span className="seller-name">{plant.nursery_name || 'Community Seller'}</span>
+                        <div className="seller-loc"><MapPin size={12} /> {plant.location}</div>
+                      </div>
+                    </td>
+                    <td><strong>Rs. {plant.price}</strong></td>
+                    <td>
+                      <span className={`status-chip ${plant.is_sold ? 'sold' : 'available'}`}>
+                        {plant.is_sold ? 'Sold' : 'Available'}
+                      </span>
+                    </td>
+                    <td>
+                      <div className="action-btns">
+                        <button className="icon-btn" title="View Details"><Eye size={16} /></button>
+                        <button className="icon-btn text-danger" title="Remove Listing"><Trash2 size={16} /></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}

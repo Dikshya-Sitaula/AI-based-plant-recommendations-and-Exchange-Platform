@@ -196,7 +196,7 @@ export default function Marketplace() {
         if (Array.isArray(data)) {
           const transformedData = data.map(plant => ({
             ...plant,
-            image: plant.image ? `http://${window.location.hostname}:5000${encodeURI(plant.image)}` : plant.image
+            image: plant.image && !plant.image.startsWith('http') ? `http://${window.location.hostname}:5000${encodeURI(plant.image)}` : plant.image
           }));
           setPlants(transformedData);
         } else {

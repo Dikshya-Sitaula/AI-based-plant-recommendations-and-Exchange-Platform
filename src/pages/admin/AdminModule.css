@@ -1,0 +1,463 @@
+.admin-page {
+  display: flex;
+  min-height: 100vh;
+  margin: 0;
+  max-width: 100% !important;
+}
+
+.module-sidebar {
+  width: 280px;
+  background: white;
+  border-right: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  padding: 2rem 1.5rem;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 3rem;
+  font-weight: 800;
+  font-size: 1.25rem;
+  color: #1e293b;
+}
+
+.brand-icon.admin-brand {
+  background: #3b82f6;
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.875rem 1.25rem;
+  border-radius: 12px;
+  color: #64748b;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.nav-item:hover {
+  background: #f1f5f9;
+  color: #1e293b;
+}
+
+.nav-item.active {
+  background: #eff6ff;
+  color: #3b82f6;
+  font-weight: 600;
+}
+
+.module-main {
+  flex: 1;
+  padding: 2.5rem 3rem;
+  overflow-y: auto;
+}
+
+.admin-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.admin-stat-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  border: 1px solid #f1f5f9;
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stat-icon.users { background: #dbeafe; color: #3b82f6; }
+.stat-icon.nurseries { background: #fef3c7; color: #d97706; }
+.stat-icon.plants { background: #dcfce7; color: #16a34a; }
+.stat-icon.orders { background: #f3e8ff; color: #9333ea; }
+.stat-icon.revenue { background: #ecfdf5; color: #059669; }
+
+.stat-content span {
+  display: block;
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-bottom: 0.25rem;
+}
+
+.stat-content strong {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #1e293b;
+}
+
+.revenue-card {
+  grid-column: span 1;
+}
+
+.admin-content-split {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+}
+
+.management-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.mgmt-link {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: #f8fafc;
+  border-radius: 16px;
+  text-decoration: none;
+  color: #334155;
+  font-weight: 600;
+  transition: transform 0.2s;
+}
+/* Responsive Grid for Nurseries and Dashboard */
+.admin-grid-layout {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.nursery-admin-card {
+  padding: 1.5rem;
+  border-radius: 20px;
+  background: white;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.card-top {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.nursery-logo {
+  width: 48px;
+  height: 48px;
+  background: #3b82f6;
+  color: white;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.25rem;
+}
+
+.nursery-info h3 {
+  font-size: 1.125rem;
+  color: #1e293b;
+  margin: 0;
+}
+
+.id-tag {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-weight: 600;
+  display: block;
+}
+
+.status-pill {
+  margin-left: auto;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.status-pill.verified { background: #dcfce7; color: #16a34a; }
+.status-pill.pending { background: #fef2f2; color: #ef4444; }
+
+.card-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 12px;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.card-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.primary-inline, .secondary-inline {
+  padding: 0.625rem;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.primary-inline { background: #3b82f6; color: white; }
+.primary-inline:hover { background: #2563eb; }
+.secondary-inline { background: #f1f5f9; color: #64748b; }
+
+/* Product Table Enhancements */
+.plant-cell {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.plant-thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  object-fit: cover;
+  background: #f1f5f9;
+}
+
+.plant-meta {
+  display: flex;
+  flex-direction: column;
+}
+
+.scientific-name {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.type-badge {
+  background: #eff6ff;
+  color: #3b82f6;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.seller-cell {
+  display: flex;
+  flex-direction: column;
+}
+
+.seller-loc {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.status-chip.sold { background: #fee2e2; color: #ef4444; }
+.status-chip.available { background: #dcfce7; color: #16a34a; }
+
+.action-btns {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.icon-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.icon-btn:hover { background: #f1f5f9; }
+
+/* Trending Showcase */
+.trending-list-admin {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.trending-card-admin {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  gap: 1.5rem;
+}
+
+.trending-rank {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: #e2e8f0;
+  min-width: 40px;
+}
+
+.trending-img {
+  width: 64px;
+  height: 64px;
+  border-radius: 14px;
+  object-fit: cover;
+}
+
+.trending-info {
+  flex: 1;
+}
+
+.trending-info h3 { margin: 0; font-size: 1.125rem; }
+.trending-info p { margin: 0; font-size: 0.875rem; color: #64748b; }
+
+.trending-stats {
+  display: flex;
+  gap: 1rem;
+}
+
+.stat-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f1f5f9;
+  padding: 6px 12px;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.stat-pill.sales { background: #ecfdf5; color: #059669; }
+
+.trending-growth {
+  color: #16a34a;
+  opacity: 0.2;
+}
+
+/* Financial Reports */
+.report-sections {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 2rem;
+}
+
+.chart-placeholder {
+  height: 300px;
+  background: #f8fafc;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  border: 2px dashed #e2e8f0;
+  margin-top: 1rem;
+}
+
+.chart-icon { opacity: 0.3; margin-bottom: 1rem; }
+
+.sale-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.sale-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.sale-info strong { font-size: 0.9375rem; }
+.sale-info span { font-size: 0.75rem; color: #64748b; }
+
+.sale-date { font-size: 0.8125rem; color: #94a3b8; }
+.text-success { color: #16a34a; }
+
+/* Status Modern Badges */
+.status-badge-modern {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.status-badge-modern.approved { background: #dcfce7; color: #16a34a; }
+.status-badge-modern.pending { background: #fffbeb; color: #d97706; }
+
+/* Order ID Styling */
+.order-id {
+  font-family: monospace;
+  background: #f1f5f9;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-weight: 700;
+  color: #475569;
+}
+
+.user-icon-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+/* Responsive Overrides */
+@media (max-width: 1200px) {
+  .report-sections {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .admin-page { flex-direction: column; }
+  .module-sidebar { width: 100%; height: auto; position: relative; padding: 1rem; }
+}

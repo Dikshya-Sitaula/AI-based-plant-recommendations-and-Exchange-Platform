@@ -355,4 +355,61 @@ router.post('/profile/delete', async (req, res) => {
   }
 });
 
+// --- Nursery Auth Routes ---
+
+// Nursery Signup
+router.post('/nursery/signup', async (req, res) => {
+  const { nurseryName, ownerName, email, phone, address, password } = req.body;
+
+  if (!nurseryName || !email || !password) {
+    return res.status(400).json({ message: 'Nursery Name, Email and Password are required.' });
+  }
+
+  try {
+    const [existing] = await db.execute('SELECT email FROM nurseries WHERE email = ? LIMIT 1', [email]);
+    if (existing.length > 0) return res.status(400).json({ message: 'A nursery with this email already exists.' });
+
+    const externalId = `nursery-${Date.now()}`;
+    const [result] = await db.execute(
+      'INSERT INTO nurseries (external_id, nursery_name, owner_name, email, phone, address, password) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [externalId, nurseryName, ownerName, email, phone, address, password]
+    );
+
+    res.status(201).json({ 
+      message: 'Nursery account created successfully', 
+      nursery: { id: externalId, nurseryName, ownerName, email }
+    });
+  } catch (err) {
+    console.error('[NURSERY AUTH] Signup error:', err);
+    res.status(500).json({ message: 'Database error' });
+  }
+});
+
+// Nursery Login
+router.post('/nursery/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const [rows] = await db.execute('SELECT * FROM nurseries WHERE email = ? LIMIT 1', [email]);
+    const nursery = rows[0];
+
+    if (!nursery || nursery.password !== password) {
+      return res.status(401).json({ message: 'Invalid email or password.' });
+    }
+
+    res.status(200).json({ 
+      message: 'Login successful', 
+      nursery: {
+        id: nursery.external_id,
+        nurseryName: nursery.nursery_name,
+        ownerName: nursery.owner_name,
+        email: nursery.email
+      }
+    });
+  } catch (err) {
+    console.error('[NURSERY AUTH] Login error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router;

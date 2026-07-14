@@ -144,6 +144,7 @@ export default function AboutUs() {
             <Link className="lp-nav-link" to="/">Home</Link>
             <Link className="lp-nav-link" to="/about">About Us</Link>
             <Link className="lp-nav-link" to="/contact">Contact</Link>
+            <Link className="lp-nav-link" to="/nursery/signin">Nursery</Link>
           </div>
 
           <div className="lp-nav-actions">
