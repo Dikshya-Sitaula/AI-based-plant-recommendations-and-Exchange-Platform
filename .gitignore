@@ -29,3 +29,4 @@ plants_backup/
 memory/
 client secret OAuth.json
 *.json.local
+*.sql
