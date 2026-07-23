@@ -5,7 +5,7 @@ import {
   Maximize, Calendar, Scissors, Bug, Trophy, Globe, Thermometer, Wind,
   Sparkles, Minus, Plus, Trash2, QrCode
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import careTipsData from './careTips.json';
 import PLANT_DETAILS from './plantData';
 import './Scan.css';
@@ -62,6 +62,10 @@ const gridIconMap = {
 };
 
 export default function Scan() {
+  const navigate = useNavigate();
+  const outletContext = useOutletContext();
+  const openAuthModal = outletContext?.openAuthModal;
+  const isAuthenticated = outletContext?.isAuthenticated ?? (localStorage.getItem('leafLifeAuthenticated') === 'true');
   const [step, setStep] = useState('scan'); // 'scan', 'results'
   const [stream, setStream] = useState(null);
   const [isScanning, setIsScanning] = useState(false);
@@ -69,7 +73,6 @@ export default function Scan() {
   const [capturedImage, setCapturedImage] = useState(null);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
-  const navigate = useNavigate();
   
   const [cart, setCart] = useState(() => {
     try {
@@ -91,6 +94,13 @@ export default function Scan() {
   const [paymentStatus, setPaymentStatus] = useState('pending');
   const [success, setSuccess] = useState(false);
   const userId = localStorage.getItem('leafLifeUserId') || 1;
+
+  // In-app toast notification
+  const [toast, setToast] = useState(null);
+  const showToast = (message, type = 'info') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3500);
+  };
 
   const handleRemoveFromCart = (id) => {
     setCart(cart.filter(item => item.id !== id));
@@ -135,7 +145,7 @@ export default function Scan() {
           } else if (data.status === 'expired') {
             clearInterval(interval);
             setShowQRPrompt(false);
-            alert("Payment session expired. Please try again.");
+            showToast('Payment session expired. Please try again.', 'error');
           }
         } catch (err) {
           console.error("Polling error:", err);
@@ -148,7 +158,8 @@ export default function Scan() {
   const handleProceedToPayment = async () => {
     const userAuthenticated = localStorage.getItem('leafLifeAuthenticated') === 'true';
     if (!userAuthenticated) {
-      alert('Please log in to purchase.');
+      if (openAuthModal) openAuthModal();
+      else showToast('Please log in to purchase.', 'warn');
       return;
     }
     
@@ -169,7 +180,7 @@ export default function Scan() {
       setShowCart(false);
       setShowQRPrompt(true);
     } catch (err) {
-      alert("Failed to initiate payment.");
+      showToast('Failed to initiate payment. Please try again.', 'error');
     }
   };
 
@@ -184,11 +195,11 @@ export default function Scan() {
         setSuccess(true);
         setShowQRPrompt(false);
       } else {
-        alert("Failed to finalize checkout.");
+        showToast('Failed to finalize checkout. Please try again.', 'error');
       }
     } catch (err) {
       console.error("Checkout finalization error:", err);
-      alert("Something went wrong.");
+      showToast('Something went wrong. Please try again.', 'error');
     }
   };
 
@@ -241,6 +252,15 @@ export default function Scan() {
   }, [step]);
 
   const handleIdentify = async () => {
+    if (!isAuthenticated) {
+      const scanCount = parseInt(localStorage.getItem('leafLifeGuestScanCount') || '0', 10);
+      if (scanCount >= 1) {
+        showToast('Guest limit reached. Sign in to scan unlimited plants!', 'warn');
+        setTimeout(() => { if (openAuthModal) openAuthModal(); }, 1000);
+        return;
+      }
+    }
+
     if (!videoRef.current || !canvasRef.current) return;
     
     setIsScanning(true);
@@ -248,7 +268,7 @@ export default function Scan() {
     const video = videoRef.current;
     
     if (video.videoWidth === 0 || video.videoHeight === 0) {
-      alert("Camera feed not ready yet. Please try again in a moment.");
+      showToast('Camera not ready yet. Please wait a moment and try again.', 'warn');
       setIsScanning(false);
       return;
     }
@@ -283,12 +303,15 @@ export default function Scan() {
           throw new Error(data.error || 'Identification failed');
         }
         
+        if (!isAuthenticated) {
+          localStorage.setItem('leafLifeGuestScanCount', '1');
+        }
         setIdentification(data);
         setStep('results');
         setQuantity(1); // Reset quantity for new identification
       } catch (err) {
         console.error("Identify error:", err);
-        alert(err.message || "Identification failed. Please try again.");
+        showToast(err.message || 'Identification failed. Please try again.', 'error');
       } finally {
         setIsScanning(false);
       }
@@ -335,7 +358,7 @@ export default function Scan() {
 
   // Unified display plant object (Merges AI ID + DB Record + Botanical Details)
   const displayPlant = identification ? {
-    id: identification.localPlant?.id || (matched?.id ? `MATCHED-${matched.id}` : `SCAN-TEMP-${Date.now()}`),
+    id: identification.localPlant?.id || (matched?.id ? `MATCHED-${matched.id}` : `SCAN-TEMP-${identification.commonName || 'GENERIC'}`),
     name: identification.localPlant?.name || matched?.name || identification.commonName || 'Unknown Species',
     english_name: identification.localPlant?.english_name || matched?.englishName || identification.commonName || 'N/A',
     scientific_name: identification.scientificName || matched?.scientificName || 'N/A',
@@ -348,21 +371,23 @@ export default function Scan() {
 
   const specializedCareData = identification ? getSpecializedCareData(displayPlant?.name || identification.commonName || identification.scientificName, null) : {};
 
-  // Cart Helper
-  const addToCartAction = (plant, qty) => {
-    if (!plant) return;
-    const existingItem = cart.find(item => item.id == plant.id);
-    if (existingItem) {
-      setCart(cart.map(item => item.id == plant.id ? { ...item, quantity: item.quantity + qty } : item));
-    } else {
-      setCart([...cart, { ...plant, quantity: qty }]);
-    }
-    setShowQuantitySelector(false);
-    setShowCart(true);
-  };
-
   return (
     <div className="animate-fade-in scan-container">
+      {/* In-App Toast Notification */}
+      {toast && (
+        <div style={{
+          position: 'fixed', top: '24px', left: '50%', transform: 'translateX(-50%)',
+          zIndex: 99999, padding: '14px 24px', borderRadius: '12px', fontWeight: '600',
+          fontSize: '0.95rem', boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+          background: toast.type === 'error' ? '#FF4B4B' : toast.type === 'warn' ? '#F59E0B' : '#2D6A4F',
+          color: 'white', display: 'flex', alignItems: 'center', gap: '10px',
+          maxWidth: '90vw', animation: 'fadeInDown 0.3s ease',
+          pointerEvents: 'none'
+        }}>
+          <span>{toast.type === 'error' ? '❌' : toast.type === 'warn' ? '⚠️' : 'ℹ️'}</span>
+          {toast.message}
+        </div>
+      )}
       {/* Fixed Floating Cart Icon */}
       <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 1000 }}>
         <div className="header-cart-icon" onClick={() => setShowCart(true)} style={{ cursor: 'pointer', padding: '12px', background: 'white', borderRadius: '50%', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', color: 'var(--primary)', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -515,7 +540,14 @@ export default function Scan() {
           {displayPlant && (
             <div style={{ position: 'fixed', bottom: '0', left: '0', right: '0', padding: '1.5rem', background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(10px)', borderTop: '1px solid #eee', zIndex: 100 }}>
               <button 
-                onClick={() => setShowQuantitySelector(true)}
+                onClick={() => {
+                  if (!isAuthenticated) {
+                    if (openAuthModal) openAuthModal();
+                    else showToast('Please log in to add items to cart.', 'warn');
+                    return;
+                  }
+                  setShowQuantitySelector(true);
+                }}
                 className="add-to-cart-big-new"
                 style={{ width: '100%', maxWidth: '600px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', background: '#3D704D', color: 'white', padding: '1.25rem', borderRadius: '1rem', fontSize: '1.2rem', fontWeight: '700', border: 'none', cursor: 'pointer' }}
               >
@@ -602,7 +634,7 @@ export default function Scan() {
       {showQRPrompt && (
         <div className="modal-overlay" style={{ zIndex: 10000, display: 'flex' }} onClick={closeModals}>
           <div className="glass-panel modal-content text-center animate-scale-up" style={{ zIndex: 10001, background: 'white', color: 'black', opacity: 1, transform: 'none', padding: '2.5rem', borderRadius: '2rem', maxWidth: '420px', width: '95%' }} onClick={(e) => e.stopPropagation()}>
-            <button className="close-modal" type="button" onClick={closeModals} style={{ position: 'absolute', top: '15px', right: '15px', color: 'black', background: '#f5f5f5', borderRadius: '50%', padding: '5px', border: 'none', cursor: 'pointer' }} onClick={() => setShowQRPrompt(false)}><X size={20} /></button>
+            <button className="close-modal" type="button" onClick={closeModals} style={{ position: 'absolute', top: '15px', right: '15px', color: 'black', background: '#f5f5f5', borderRadius: '50%', padding: '5px', border: 'none', cursor: 'pointer' }}><X size={20} /></button>
             <div className="modal-header">
               <div className="qr-icon" style={{ marginBottom: '1rem', color: 'var(--primary)', display: 'flex', justifyContent: 'center' }}><QrCode size={48} /></div>
               <h3>Scan to Pay</h3>

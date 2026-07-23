@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useOutletContext } from 'react-router-dom';
 import { Search, Filter, Heart, MapPin, ShoppingCart, X, Minus, Plus, QrCode, CheckCircle, Loader2, Trash2, Users, ArrowLeftRight, Camera } from 'lucide-react';
 import './Marketplace.css';
 
@@ -114,6 +114,9 @@ function PlantCard({ plant, onBuyClick, onClick, isCommunity, isOwner, onDelete 
 
 export default function Marketplace() {
   const navigate = useNavigate();
+  const outletContext = useOutletContext();
+  const openAuthModal = outletContext?.openAuthModal;
+  const isAuthenticated = outletContext?.isAuthenticated ?? (localStorage.getItem('leafLifeAuthenticated') === 'true');
   const [searchParams, setSearchParams] = useSearchParams();
   const sellerId = searchParams.get('seller');
   const [plants, setPlants] = useState([]);
@@ -133,6 +136,13 @@ export default function Marketplace() {
   const [showCart, setShowCart] = useState(false);
 
   const [networkIp, setNetworkIp] = useState(window.location.hostname);
+
+  // In-app toast notification
+  const [toast, setToast] = useState(null);
+  const showToast = (message, type = 'info') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3500);
+  };
 
   useEffect(() => {
     // Only try to detect network IP if we are on localhost
@@ -339,16 +349,21 @@ export default function Marketplace() {
         // Remove from local state immediately so all views refresh
         setCommunityPlants(prev => prev.filter(p => p.id !== plantId));
       } else {
-        alert('Could not delete listing: ' + (data.error || 'Unknown error'));
+        showToast('Could not delete listing: ' + (data.error || 'Unknown error'), 'error');
       }
     } catch (err) {
       console.error('Delete listing error:', err);
-      alert('Failed to connect to server.');
+      showToast('Failed to connect to server.', 'error');
     }
   };
 
   const handleBuyClick = (e, plant) => {
     e.stopPropagation();
+    if (!isAuthenticated) {
+      if (openAuthModal) openAuthModal();
+      else showToast('Please log in or sign up to purchase or swap plants.', 'warn');
+      return;
+    }
     if (plant.isCommunity) {
       setTradePlant(plant);
       setTradeDetails('');
@@ -367,9 +382,9 @@ export default function Marketplace() {
   };
 
   const handleProceedToPayment = async () => {
-    const userStr = localStorage.getItem('leafLifeAuthenticated');
-    if (!userStr) {
-      alert('Please log in to purchase.');
+    if (!isAuthenticated) {
+      if (openAuthModal) openAuthModal();
+      else showToast('Please log in to purchase.', 'warn');
       return;
     }
 
@@ -396,7 +411,7 @@ export default function Marketplace() {
       setShowQRPrompt(true);
     } catch (err) {
       console.error("Payment initiation error:", err);
-      alert("Failed to initiate payment.");
+      showToast('Failed to initiate payment. Please try again.', 'error');
     }
   };
 
@@ -411,11 +426,11 @@ export default function Marketplace() {
         setSuccess(true);
         setShowQRPrompt(false);
       } else {
-        alert("Failed to finalize checkout.");
+        showToast('Failed to finalize checkout. Please try again.', 'error');
       }
     } catch (err) {
       console.error("Checkout finalization error:", err);
-      alert("Something went wrong.");
+      showToast('Something went wrong. Please try again.', 'error');
     }
   };
 
@@ -448,7 +463,7 @@ export default function Marketplace() {
 
   const detectLocation = () => {
     if (!navigator.geolocation) {
-      alert("Geolocation is not supported by your browser");
+      showToast('Geolocation is not supported by your browser', 'warn');
       return;
     }
 
@@ -470,13 +485,13 @@ export default function Marketplace() {
         setNewPlant({ ...newPlant, location: finalLocation });
       } catch (err) {
         console.error("Location detection error:", err);
-        alert("Failed to detect location address.");
+        showToast('Failed to detect location. Try entering it manually.', 'error');
       } finally {
         setDetectingLocation(false);
       }
     }, (error) => {
       console.error("Geolocation error:", error);
-      alert("Please enable location access to use this feature.");
+      showToast('Please enable location access to use this feature.', 'warn');
       setDetectingLocation(false);
     });
   };
@@ -484,7 +499,7 @@ export default function Marketplace() {
   const handleAddPlant = async (e) => {
     e.preventDefault();
     const userStr = localStorage.getItem('leafLifeAuthenticated');
-    if (!userStr) { alert('Please log in first.'); return; }
+    if (!userStr) { showToast('Please log in first.', 'warn'); return; }
 
     setAdding(true);
     const formData = new FormData();
@@ -504,7 +519,7 @@ export default function Marketplace() {
       });
       const data = await response.json();
       if (data.success) {
-        alert('Listing created successfully!');
+        showToast('Listing created successfully! 🌱', 'info');
         setShowAddModal(false);
         setNewPlant({ name: '', price: 'Rs. 450', listingType: 'exchange', type: 'plant', location: '', description: '', image: null });
         // Refresh community plants
@@ -523,7 +538,8 @@ export default function Marketplace() {
   const handleCommunityRequest = (plant) => {
     const userStr = localStorage.getItem('leafLifeAuthenticated');
     if (!userStr) {
-      alert('Please log in to contact community members.');
+      if (openAuthModal) openAuthModal();
+      else showToast('Please log in to contact community members.', 'warn');
       return;
     }
     setTradePlant(plant);
@@ -546,11 +562,11 @@ export default function Marketplace() {
       });
       const data = await response.json();
       if (data.success) {
-        alert('Request sent successfully!');
+        showToast('Request sent successfully! ✅', 'info');
         setShowTradeModal(false);
         setTradeDetails('');
       } else {
-        alert(data.error || 'Failed to send request');
+        showToast(data.error || 'Failed to send request', 'error');
       }
     } catch (err) {
       console.error("Trade request error:", err);
@@ -572,6 +588,21 @@ export default function Marketplace() {
 
   return (
     <>
+      {/* In-App Toast Notification */}
+      {toast && (
+        <div style={{
+          position: 'fixed', top: '24px', left: '50%', transform: 'translateX(-50%)',
+          zIndex: 99999, padding: '14px 24px', borderRadius: '12px', fontWeight: '600',
+          fontSize: '0.95rem', boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+          background: toast.type === 'error' ? '#FF4B4B' : toast.type === 'warn' ? '#F59E0B' : '#2D6A4F',
+          color: 'white', display: 'flex', alignItems: 'center', gap: '10px',
+          maxWidth: '90vw', animation: 'fadeInDown 0.3s ease',
+          pointerEvents: 'none'
+        }}>
+          <span>{toast.type === 'error' ? '❌' : toast.type === 'warn' ? '⚠️' : '✅'}</span>
+          {toast.message}
+        </div>
+      )}
       <div className="marketplace-container" style={{ animation: 'none' }}>
         {/* Fixed Floating Cart Icon */}
         <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 1000 }}>

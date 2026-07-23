@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, useOutletContext } from 'react-router-dom';
 import { 
   ArrowLeft, Thermometer, Sun, Wind, MapPin, ShoppingCart, X, Minus, Plus, 
   QrCode, CheckCircle, Loader2, Trash2, Leaf, Lock, Unlock, Droplets, 
@@ -64,11 +64,20 @@ const getSpecializedCareData = (plantName, answers) => {
 export default function PlantDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const outletContext = useOutletContext();
+  const openAuthModal = outletContext?.openAuthModal;
+  const isAuthenticated = outletContext?.isAuthenticated ?? (localStorage.getItem('leafLifeAuthenticated') === 'true');
   const [plant, setPlant] = useState(null);
   const [images, setImages] = useState([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [loading, setLoading] = useState(true);
   const currentUserId = localStorage.getItem('leafLifeUserId') || 1;
+  // In-app toast notification
+  const [toast, setToast] = useState(null);
+  const showToast = (message, type = 'info') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3500);
+  };
   const [cart, setCart] = useState(() => {
     try {
       const savedCart = localStorage.getItem('cart');
@@ -190,6 +199,11 @@ export default function PlantDetail() {
   }, [showQRPrompt, paymentSessionId, paymentStatus, networkIp]);
 
   const handleBuyClick = () => {
+    if (!isAuthenticated) {
+      if (openAuthModal) openAuthModal();
+      else showToast('Please log in or sign up to add items to cart.', 'warn');
+      return;
+    }
     setQuantity(1);
     setShowQuantitySelector(true);
   };
@@ -221,7 +235,8 @@ export default function PlantDetail() {
   const handleProceedToPayment = async () => {
     const userStr = localStorage.getItem('leafLifeAuthenticated');
     if (!userStr) {
-      alert('Please log in to purchase.');
+      if (openAuthModal) openAuthModal();
+      else showToast('Please log in to purchase.', 'warn');
       return;
     }
     
@@ -241,14 +256,14 @@ export default function PlantDetail() {
       setShowQRPrompt(true);
       setIsTipsPayment(false);
     } catch (err) {
-      alert("Failed to initiate payment.");
+      showToast('Failed to initiate payment. Please try again.', 'error');
     }
   };
 
   const handleUnlockTips = async () => {
-    const userStr = localStorage.getItem('leafLifeAuthenticated');
-    if (!userStr) {
-      alert('Please log in to unlock specialized tips.');
+    if (!isAuthenticated) {
+      if (openAuthModal) openAuthModal();
+      else showToast('Please log in or sign up to unlock specialized tips.', 'warn');
       return;
     }
 
@@ -273,14 +288,14 @@ export default function PlantDetail() {
       setShowQRPrompt(true);
       setIsTipsPayment(true);
     } catch (err) {
-      alert("Failed to initiate payment for tips.");
+      showToast('Failed to initiate payment for tips. Please try again.', 'error');
     }
   };
 
   const handleImmediateBuy = async () => {
-    const userStr = localStorage.getItem('leafLifeAuthenticated');
-    if (!userStr) {
-      alert('Please log in to purchase.');
+    if (!isAuthenticated) {
+      if (openAuthModal) openAuthModal();
+      else showToast('Please log in or sign up to purchase.', 'warn');
       return;
     }
     
@@ -307,7 +322,7 @@ export default function PlantDetail() {
       setIsTipsPayment(false);
     } catch (err) {
       console.error("Immediate purchase initiation error:", err);
-      alert("Failed to initiate payment.");
+      showToast('Failed to initiate payment. Please try again.', 'error');
     }
   };
 
@@ -325,11 +340,11 @@ export default function PlantDetail() {
         setShowQRPrompt(false);
         fetchPlantAndImages(); // Refresh to show tips or updated ownership
       } else {
-        alert("Failed to finalize checkout.");
+        showToast('Failed to finalize checkout. Please try again.', 'error');
       }
     } catch (err) {
       console.error("Checkout finalization error:", err);
-      alert("Something went wrong.");
+      showToast('Something went wrong. Please try again.', 'error');
     }
   };
 
@@ -345,9 +360,9 @@ export default function PlantDetail() {
   };
 
   const handleSwapOffer = () => {
-    const userStr = localStorage.getItem('leafLifeAuthenticated');
-    if (!userStr) {
-      alert('Please log in to send a swap offer.');
+    if (!isAuthenticated) {
+      if (openAuthModal) openAuthModal();
+      else showToast('Please log in or sign up to send a swap offer.', 'warn');
       return;
     }
     setShowTradeModal(true);
@@ -369,15 +384,15 @@ export default function PlantDetail() {
       });
       const data = await response.json();
       if (data.success) {
-        alert('Swap offer sent successfully!');
+        showToast('Swap offer sent successfully! ✅', 'info');
         setShowTradeModal(false);
         setTradeDetails('');
       } else {
-        alert(data.error || 'Failed to send offer');
+        showToast(data.error || 'Failed to send offer', 'error');
       }
     } catch (err) {
       console.error("Trade request error:", err);
-      alert('Something went wrong.');
+      showToast('Something went wrong. Please try again.', 'error');
     }
   };
 
@@ -429,6 +444,21 @@ export default function PlantDetail() {
 
   return (
     <>
+      {/* In-App Toast Notification */}
+      {toast && (
+        <div style={{
+          position: 'fixed', top: '24px', left: '50%', transform: 'translateX(-50%)',
+          zIndex: 99999, padding: '14px 24px', borderRadius: '12px', fontWeight: '600',
+          fontSize: '0.95rem', boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+          background: toast.type === 'error' ? '#FF4B4B' : toast.type === 'warn' ? '#F59E0B' : '#2D6A4F',
+          color: 'white', display: 'flex', alignItems: 'center', gap: '10px',
+          maxWidth: '90vw', animation: 'fadeInDown 0.3s ease',
+          pointerEvents: 'none'
+        }}>
+          <span>{toast.type === 'error' ? '❌' : toast.type === 'warn' ? '⚠️' : '✅'}</span>
+          {toast.message}
+        </div>
+      )}
       <div className="animate-fade-in plant-detail-container">
         {/* Fixed Floating Cart Icon */}
         <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 1000 }}>

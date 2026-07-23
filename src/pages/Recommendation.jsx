@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { MapPin, ArrowRight, ShoppingCart, X, Trash2, Plus, Minus, QrCode, Loader2, CheckCircle } from 'lucide-react';
 import RecommendationForm from '../components/RecommendationForm';
 import './Recommendation.css';
 
 export default function Recommendation() {
+  const navigate = useNavigate();
+  const outletContext = useOutletContext();
+  const openAuthModal = outletContext?.openAuthModal;
+  const isAuthenticated = outletContext?.isAuthenticated ?? (localStorage.getItem('leafLifeAuthenticated') === 'true');
   const [showResults, setShowResults] = useState(false);
   const [recommendedPlants, setRecommendedPlants] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -29,8 +33,6 @@ export default function Recommendation() {
   const [selectedPlant, setSelectedPlant] = useState(null);
   const [showQuantitySelector, setShowQuantitySelector] = useState(false);
   const [quantity, setQuantity] = useState(1);
-  
-  const navigate = useNavigate();
 
   const [networkIp, setNetworkIp] = useState(window.location.hostname);
 
@@ -82,6 +84,15 @@ export default function Recommendation() {
   }, [showQRPrompt, paymentSessionId, paymentStatus, networkIp]);
 
   const handleRecommendationSubmit = async (e, { location, selectedSpace, lightLevel }) => {
+    if (!isAuthenticated) {
+      const recCount = parseInt(localStorage.getItem('leafLifeGuestRecCount') || '0', 10);
+      if (recCount >= 1) {
+        alert('Guest recommendation limit reached (1 recommendation max). Please log in or sign up to get unlimited AI recommendations.');
+        if (openAuthModal) openAuthModal();
+        return;
+      }
+    }
+
     setLoading(true);
     
     const lightMap = { 0: 'Low', 1: 'Medium', 2: 'High' };
@@ -100,6 +111,9 @@ export default function Recommendation() {
       
       const data = await response.json();
       
+      if (!isAuthenticated) {
+        localStorage.setItem('leafLifeGuestRecCount', '1');
+      }
       setRecommendedPlants(data.plants || []);
       setSummaryData(data.summary || null);
       setShowResults(true);
@@ -117,6 +131,11 @@ export default function Recommendation() {
 
 
   const handleAddToCartClick = (plant) => {
+    if (!isAuthenticated) {
+      if (openAuthModal) openAuthModal();
+      else alert('Please log in or sign up to add items to cart.');
+      return;
+    }
     setSelectedPlant(plant);
     setQuantity(1);
     setShowQuantitySelector(true);

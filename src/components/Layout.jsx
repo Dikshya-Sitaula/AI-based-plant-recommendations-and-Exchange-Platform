@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Outlet, NavLink, Link, useNavigate } from 'react-router-dom';
-import { Store, Camera, Trophy, LayoutDashboard, MapPin, LogOut, Settings, Users } from 'lucide-react';
+import { Store, Camera, Trophy, LayoutDashboard, MapPin, LogOut, Settings, Users, LogIn } from 'lucide-react';
 import './Layout.css';
 import logo from "../assets/Leaf and Life logo.png";
 import AuthModal from './AuthModal';
@@ -47,6 +47,8 @@ export default function Layout() {
     localStorage.removeItem('leafLifeAuthenticated');
     localStorage.removeItem('leafLifeUserName');
     localStorage.removeItem('leafLifeUserId');
+    localStorage.removeItem('leafLifeGuestScanCount');
+    localStorage.removeItem('leafLifeGuestRecCount');
     setIsAuthenticated(false);
     setUserName('Guest');
     setUserId(1);
@@ -102,6 +104,8 @@ export default function Layout() {
         onClose={() => setAuthOpen(false)}
         onSuccess={(data) => {
           localStorage.setItem('leafLifeAuthenticated', 'true');
+          localStorage.removeItem('leafLifeGuestScanCount');
+          localStorage.removeItem('leafLifeGuestRecCount');
           const finalId = data.userId || 1;
           localStorage.setItem('leafLifeUserId', finalId);
           const nameToSet = data.fullName || data.email.split('@')[0];
@@ -175,33 +179,45 @@ export default function Layout() {
           </nav>
         </div>
         
-        <div className="sidebar-bottom">
+        <div className="sidebar-bottom" style={!isAuthenticated ? { flexDirection: 'column', alignItems: 'stretch', gap: '0.75rem' } : {}}>
           <div className="user-profile">
             <img 
-              src={userAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=E2E8CE&color=2D5A27`} 
-              alt={userName} 
+              src={isAuthenticated ? (userAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=E2E8CE&color=2D5A27`) : `https://ui-avatars.com/api/?name=Guest+User&background=E2E8CE&color=2D5A27`} 
+              alt={isAuthenticated ? userName : "Guest"} 
               className="user-avatar" 
             />
 
             <div className="user-info">
-              <span className="user-name">{userName}</span>
-              <span className="user-role">Plant Parent</span>
+              <span className="user-name">{isAuthenticated ? userName : 'Guest User'}</span>
+              <span className="user-role" style={!isAuthenticated ? { color: '#10B981', fontWeight: 600 } : {}}>{isAuthenticated ? 'Plant Parent' : 'Guest Mode'}</span>
             </div>
           </div>
-          <div className="sidebar-actions">
-            <button className="sidebar-action-btn" onClick={openSettingsModal}>
-              <Settings size={18} />
+
+          {!isAuthenticated ? (
+            <button 
+              type="button"
+              className="guest-auth-sidebar-btn"
+              onClick={openAuthModal}
+            >
+              <LogIn size={16} />
+              <span>Log In / Sign Up</span>
             </button>
-            <button className="sidebar-action-btn" onClick={handleSwitchAccount}>
-              <LogOut size={18} />
-            </button>
-          </div>
+          ) : (
+            <div className="sidebar-actions">
+              <button className="sidebar-action-btn" onClick={openSettingsModal} title="Settings">
+                <Settings size={18} />
+              </button>
+              <button className="sidebar-action-btn" onClick={handleSwitchAccount} title="Switch Account">
+                <LogOut size={18} />
+              </button>
+            </div>
+          )}
         </div>
       </aside>
 
       {/* Main Content Area */}
       <main className="main-content">
-        <Outlet />
+        <Outlet context={{ openAuthModal, isAuthenticated, userName, userId }} />
       </main>
 
       {/* Bottom Navigation for Mobile */}

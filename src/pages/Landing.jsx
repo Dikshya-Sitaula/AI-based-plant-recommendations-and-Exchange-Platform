@@ -75,10 +75,6 @@ export default function Landing() {
   };
 
   const handleFeatureNav = (path) => {
-    if (!isSubmitted) {
-      openModal();
-      return;
-    }
     navigate(path);
   };
 

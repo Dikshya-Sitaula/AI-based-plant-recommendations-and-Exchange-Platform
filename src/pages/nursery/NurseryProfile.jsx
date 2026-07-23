@@ -10,12 +10,14 @@ export default function NurseryProfile() {
   const [form, setForm] = useState({ nurseryName: '', ownerName: '', email: '', phone: '', address: '' });
   const [message, setMessage] = useState('');
 
+  const userId = session?.userId;
+
   useEffect(() => {
-    if (!session) {
+    if (!userId) {
       navigate('/nursery/signin');
       return;
     }
-    const storedProfile = getNurseryProfile(session.userId);
+    const storedProfile = getNurseryProfile(userId);
     setProfile(storedProfile);
     setForm({
       nurseryName: storedProfile.nurseryName || '',
@@ -24,7 +26,7 @@ export default function NurseryProfile() {
       phone: storedProfile.phone || '',
       address: storedProfile.address || '',
     });
-  }, [navigate, session]);
+  }, [navigate, userId]);
 
   const handleChange = (field) => (event) => {
     setForm({ ...form, [field]: event.target.value });

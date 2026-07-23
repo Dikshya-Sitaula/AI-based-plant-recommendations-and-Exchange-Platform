@@ -1,11 +1,14 @@
 import { Plus, Droplets, MapPin, Wind, Trophy, Leaf, ShoppingCart, X, Trash2, QrCode, Loader2, CheckCircle, Minus, ArrowLeftRight, Camera, Heart, Users } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import './Dashboard.css';
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const userName = localStorage.getItem('leafLifeUserName') || 'Alex';
+  const outletContext = useOutletContext();
+  const openAuthModal = outletContext?.openAuthModal;
+  const isAuthenticated = outletContext?.isAuthenticated ?? (localStorage.getItem('leafLifeAuthenticated') === 'true');
+  const userName = isAuthenticated ? (localStorage.getItem('leafLifeUserName') || 'Plant Parent') : 'Guest';
   const userId = localStorage.getItem('leafLifeUserId') || 1;
   const [ownedCount, setOwnedCount] = useState(0);
   const [totalCO2, setTotalCO2] = useState("0.0");
@@ -142,6 +145,14 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      setOwnedCount(0);
+      setTotalCO2("0.0");
+      setCollection([]);
+      setLoading(false);
+      return;
+    }
+
     const fetchDashboardData = async () => {
       try {
         const statsRes = await fetch(`http://${window.location.hostname}:5000/api/user/${userId}/stats`);
@@ -159,9 +170,14 @@ export default function Dashboard() {
       }
     };
     fetchDashboardData();
-  }, [userId]);
+  }, [userId, isAuthenticated]);
 
   const handleListPlant = async () => {
+    if (!isAuthenticated) {
+      if (openAuthModal) openAuthModal();
+      else alert('Please log in to list plants.');
+      return;
+    }
     try {
       const response = await fetch(`http://${window.location.hostname}:5000/api/marketplace/list`, {
         method: 'POST',
@@ -210,6 +226,21 @@ export default function Dashboard() {
 
   return (
     <div className="dashboard-content animate-fade-in">
+      {!isAuthenticated && (
+        <div style={{ background: 'linear-gradient(135deg, #10B981, #059669)', color: 'white', padding: '1.25rem 1.75rem', borderRadius: '1.25rem', marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 6px 16px rgba(16,185,129,0.25)', flexWrap: 'wrap', gap: '1rem' }}>
+          <div>
+            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800 }}>🌿 Guest Mode Preview</h3>
+            <p style={{ margin: '4px 0 0 0', fontSize: '0.95rem', opacity: 0.95 }}>Log in or sign up to add real plants, track health metrics, earn rewards, and personalize your garden!</p>
+          </div>
+          <button 
+            type="button" 
+            onClick={() => openAuthModal && openAuthModal()} 
+            style={{ background: 'white', color: '#059669', fontWeight: 800, border: 'none', padding: '10px 20px', borderRadius: '12px', cursor: 'pointer', whiteSpace: 'nowrap', fontSize: '0.95rem', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
+          >
+            Log In / Sign Up
+          </button>
+        </div>
+      )}
       {/* Fixed Floating Cart Icon */}
       <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 1000 }}>
         <div className="header-cart-icon" onClick={() => setShowCart(true)} style={{ cursor: 'pointer', padding: '12px', background: 'white', borderRadius: '50%', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', color: 'var(--primary)', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
