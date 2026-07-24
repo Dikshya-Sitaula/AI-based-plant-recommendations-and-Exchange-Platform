@@ -53,10 +53,10 @@ export default function RecommendationForm({
     const useIPFallback = async () => {
       try {
         console.log("Using IP-based location fallback...");
-        const res = await fetch('http://ip-api.com/json/');
+        const res = await fetch('https://ipapi.co/json/');
         const data = await res.json();
-        if (data.status === 'success') {
-          setLocation(`${data.city}, ${data.regionName}`);
+        if (data.city) {
+          setLocation(`${data.city}${data.region ? ', ' + data.region : ''}`);
         } else {
           setLocation("Kathmandu");
         }

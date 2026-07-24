@@ -221,9 +221,9 @@ const plantDetailsMap = require('./plantDetails');
           await db.execute(`
             CREATE TABLE IF NOT EXISTS trade_requests (
               id INT AUTO_INCREMENT PRIMARY KEY,
-              sender_id INT NOT NULL,
-              receiver_id INT NOT NULL,
-              plant_id INT NOT NULL,
+              sender_id VARCHAR(255) NOT NULL,
+              receiver_id VARCHAR(255),
+              plant_id VARCHAR(255) NOT NULL,
               request_type VARCHAR(50) NOT NULL, -- 'buy' or 'exchange'
               status VARCHAR(50) DEFAULT 'pending', -- 'pending', 'accepted', 'rejected'
               offer_details TEXT,
@@ -232,6 +232,16 @@ const plantDetailsMap = require('./plantDetails');
               created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
           `);
+
+          // Alter column types if table already existed with INT types
+          const columnTypeFixes = [
+            'ALTER TABLE trade_requests MODIFY sender_id VARCHAR(255) NOT NULL',
+            'ALTER TABLE trade_requests MODIFY receiver_id VARCHAR(255) NULL',
+            'ALTER TABLE trade_requests MODIFY plant_id VARCHAR(255) NOT NULL'
+          ];
+          for (const sql of columnTypeFixes) {
+            try { await db.execute(sql); } catch (e) {}
+          }
           console.log('✅ Trade requests table initialized');
 
           // Add missing columns if table already exists
@@ -961,11 +971,18 @@ const plantDetailsMap = require('./plantDetails');
       app.post('/api/trade/request', async (req, res) => {
         try {
           const { senderId, receiverId, plantId, requestType, offerDetails } = req.body;
+          if (!senderId || !plantId) {
+            return res.status(400).json({ error: 'Sender ID and Plant ID are required' });
+          }
           
+          const sId = String(senderId);
+          const rId = receiverId ? String(receiverId) : null;
+          const pId = String(plantId);
+
           // Check if already requested
           const [existing] = await db.execute(
             'SELECT id FROM trade_requests WHERE sender_id = ? AND plant_id = ? AND status = "pending"',
-            [senderId, plantId]
+            [sId, pId]
           );
           if (existing.length > 0) {
             return res.status(400).json({ error: 'Request already pending' });
@@ -973,7 +990,7 @@ const plantDetailsMap = require('./plantDetails');
 
           await db.execute(
             'INSERT INTO trade_requests (sender_id, receiver_id, plant_id, request_type, offer_details) VALUES (?, ?, ?, ?, ?)',
-            [senderId, receiverId, plantId, requestType, offerDetails || '']
+            [sId, rId, pId, requestType || 'buy', offerDetails || '']
           );
 
           res.json({ success: true, message: 'Request sent successfully' });
@@ -1017,18 +1034,20 @@ const plantDetailsMap = require('./plantDetails');
       app.get('/api/trade/notifications/count/:userId', async (req, res) => {
         try {
           const { userId } = req.params;
+          if (!userId) return res.json({ count: 0 });
           const [incoming] = await db.execute(
             'SELECT COUNT(*) as count FROM trade_requests WHERE receiver_id = ? AND receiver_seen = 0 AND status = "pending"',
-            [userId]
+            [String(userId)]
           );
           const [outgoing] = await db.execute(
             'SELECT COUNT(*) as count FROM trade_requests WHERE sender_id = ? AND sender_seen = 0 AND status IN ("accepted", "rejected")',
-            [userId]
+            [String(userId)]
           );
-          const total = (incoming[0].count || 0) + (outgoing[0].count || 0);
+          const total = (incoming[0]?.count || 0) + (outgoing[0]?.count || 0);
           res.json({ count: total });
         } catch (error) {
-          res.status(500).json({ error: 'Failed to fetch notification count' });
+          console.error('[TRADE] Notifications count error:', error);
+          res.json({ count: 0 });
         }
       });
 
