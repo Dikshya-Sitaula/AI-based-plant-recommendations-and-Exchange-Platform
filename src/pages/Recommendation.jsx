@@ -37,6 +37,13 @@ export default function Recommendation() {
 
   const [networkIp, setNetworkIp] = useState(window.location.hostname);
 
+  // In-App Toast Notification
+  const [toast, setToast] = useState(null);
+  const showToast = (message, type = 'info') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3500);
+  };
+
   useEffect(() => {
     // Only try to detect network IP if we are on localhost
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
@@ -74,7 +81,7 @@ export default function Recommendation() {
           } else if (data.status === 'expired') {
             clearInterval(interval);
             setShowQRPrompt(false);
-            alert("Payment session expired. Please try again.");
+            showToast("Payment session expired. Please try again.", 'error');
           }
         } catch (err) {
           console.error("Polling error:", err);
@@ -88,7 +95,7 @@ export default function Recommendation() {
     if (!isAuthenticated) {
       const recCount = parseInt(localStorage.getItem('leafLifeGuestRecCount') || '0', 10);
       if (recCount >= 1) {
-        alert('Guest recommendation limit reached (1 recommendation max). Please log in or sign up to get unlimited AI recommendations.');
+        showToast('Guest recommendation limit reached (1 max). Please sign in!', 'warn');
         if (openAuthModal) openAuthModal();
         return;
       }
@@ -124,7 +131,7 @@ export default function Recommendation() {
       }, 100);
     } catch (error) {
       console.error('RECOMMENDATION ERROR:', error);
-      alert(`Error: ${error.message}. Please ensure the backend is running.`);
+      showToast(error.message || 'Failed to fetch recommendations', 'error');
     } finally {
       setLoading(false);
     }
@@ -134,7 +141,7 @@ export default function Recommendation() {
   const handleAddToCartClick = (plant) => {
     if (!isAuthenticated) {
       if (openAuthModal) openAuthModal();
-      else alert('Please log in or sign up to add items to cart.');
+      else showToast('Please log in or sign up to add items to cart.', 'warn');
       return;
     }
     setSelectedPlant(plant);
@@ -178,7 +185,8 @@ export default function Recommendation() {
   const handleProceedToPayment = async () => {
     const userStr = localStorage.getItem('leafLifeAuthenticated');
     if (!userStr) {
-      alert('Please log in to purchase.');
+      if (openAuthModal) openAuthModal();
+      else showToast('Please log in to purchase.', 'warn');
       return;
     }
     
@@ -193,12 +201,16 @@ export default function Recommendation() {
       });
       const data = await response.json();
 
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to initiate payment');
+      }
+
       setPaymentSessionId(data.sessionId);
       setPaymentStatus('pending');
       setShowCart(false);
       setShowQRPrompt(true);
     } catch (err) {
-      alert("Failed to initiate payment.");
+      showToast(err.message || "Failed to initiate payment.", 'error');
     }
   };
 
@@ -213,11 +225,11 @@ export default function Recommendation() {
         setSuccess(true);
         setShowQRPrompt(false);
       } else {
-        alert("Failed to finalize checkout.");
+        showToast("Failed to finalize checkout.", 'error');
       }
     } catch (err) {
       console.error("Checkout finalization error:", err);
-      alert("Something went wrong.");
+      showToast("Something went wrong.", 'error');
     }
   };
 
@@ -236,6 +248,21 @@ export default function Recommendation() {
 
   return (
     <div className="rec-page">
+      {/* In-App Toast Notification */}
+      {toast && (
+        <div style={{
+          position: 'fixed', top: '24px', left: '50%', transform: 'translateX(-50%)',
+          zIndex: 99999, padding: '14px 24px', borderRadius: '12px', fontWeight: '600',
+          fontSize: '0.95rem', boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+          background: toast.type === 'error' ? '#FF4B4B' : toast.type === 'warn' ? '#F59E0B' : '#2D6A4F',
+          color: 'white', display: 'flex', alignItems: 'center', gap: '10px',
+          maxWidth: '90vw', animation: 'fadeInDown 0.3s ease',
+          pointerEvents: 'none'
+        }}>
+          <span>{toast.type === 'error' ? '❌' : toast.type === 'warn' ? '⚠️' : '✅'}</span>
+          {toast.message}
+        </div>
+      )}
       <div className="rec-blob rec-blob1" />
       <div className="rec-blob rec-blob2" />
 

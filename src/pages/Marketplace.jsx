@@ -257,7 +257,7 @@ export default function Marketplace() {
           } else if (data.status === 'expired') {
             clearInterval(interval);
             closeModals();
-            alert("Payment session expired. Please try again.");
+            showToast("Payment session expired. Please try again.", 'error');
           }
         } catch (err) {
           console.error("Polling error:", err);

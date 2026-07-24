@@ -887,6 +887,93 @@ const plantDetailsMap = require('./plantDetails');
        }
       });
 
+       // --- Payment Endpoints ---
+
+       // 1. Initiate payment session
+       app.post('/api/payment/initiate', async (req, res) => {
+         try {
+           const { cartItems, userId, amount } = req.body;
+           const sessionId = 'PAY-' + Date.now() + '-' + Math.round(Math.random() * 1000);
+           
+           await db.execute(
+             'INSERT INTO payment_sessions (id, user_id, cart_items, total_amount, status) VALUES (?, ?, ?, ?, "pending")',
+             [sessionId, userId || 1, JSON.stringify(cartItems || []), amount || 0]
+           );
+
+           res.json({ sessionId, status: 'pending' });
+         } catch (error) {
+           console.error('[PAYMENT] Initiate error:', error);
+           res.status(500).json({ error: 'Failed to initiate payment session' });
+         }
+       });
+
+       // 2. Check payment status
+       app.get('/api/payment/status/:sessionId', async (req, res) => {
+         try {
+           const { sessionId } = req.params;
+           const [rows] = await db.execute('SELECT * FROM payment_sessions WHERE id = ?', [sessionId]);
+           if (rows.length === 0) {
+             return res.status(404).json({ error: 'Payment session not found' });
+           }
+           res.json({ status: rows[0].status });
+         } catch (error) {
+           res.status(500).json({ error: 'Failed to fetch payment status' });
+         }
+       });
+
+       // 3. Get bill details for mobile payment view
+       app.get('/api/payment/bill/:sessionId', async (req, res) => {
+         try {
+           const { sessionId } = req.params;
+           const [rows] = await db.execute('SELECT * FROM payment_sessions WHERE id = ?', [sessionId]);
+           if (rows.length === 0) {
+             return res.status(404).json({ error: 'Bill not found' });
+           }
+           const session = rows[0];
+           try {
+             session.cart_items = typeof session.cart_items === 'string' ? JSON.parse(session.cart_items) : (session.cart_items || []);
+           } catch (e) {
+             session.cart_items = [];
+           }
+           res.json(session);
+         } catch (error) {
+           res.status(500).json({ error: 'Failed to fetch bill' });
+         }
+       });
+
+       // 4. Complete payment session
+       app.post('/api/payment/complete/:sessionId', async (req, res) => {
+         try {
+           const { sessionId } = req.params;
+           const [rows] = await db.execute('SELECT * FROM payment_sessions WHERE id = ?', [sessionId]);
+           if (rows.length === 0) {
+             return res.status(404).json({ error: 'Session not found' });
+           }
+           const session = rows[0];
+           await db.execute('UPDATE payment_sessions SET status = "completed" WHERE id = ?', [sessionId]);
+
+           let cartItems = [];
+           try {
+             cartItems = typeof session.cart_items === 'string' ? JSON.parse(session.cart_items) : (session.cart_items || []);
+           } catch (e) {}
+           
+           const userId = session.user_id;
+
+           for (const item of cartItems) {
+             try {
+               if (item.id && typeof item.id === 'number') {
+                 await db.execute('UPDATE plants SET is_sold = 1, buyer_id = ? WHERE id = ?', [userId, item.id]);
+               }
+             } catch (e) {}
+           }
+
+           res.json({ success: true, message: 'Payment completed successfully' });
+         } catch (error) {
+           console.error('[PAYMENT] Complete error:', error);
+           res.status(500).json({ error: 'Failed to complete payment' });
+         }
+       });
+
       // --- P2P / Community Endpoints ---
 
       // List a plant in the community marketplace

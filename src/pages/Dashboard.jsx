@@ -38,6 +38,13 @@ export default function Dashboard() {
   const [listingType, setListingType] = useState('sale');
   const [listingPrice, setListingPrice] = useState('Rs. 450');
 
+  // In-App Toast Notification
+  const [toast, setToast] = useState(null);
+  const showToast = (message, type = 'info') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3500);
+  };
+
   useEffect(() => {
     localStorage.setItem('cart', JSON.stringify(cart));
   }, [cart]);
@@ -75,7 +82,7 @@ export default function Dashboard() {
           } else if (data.status === 'expired') {
             clearInterval(interval);
             setShowQRPrompt(false);
-            alert("Payment session expired. Please try again.");
+            showToast("Payment session expired. Please try again.", 'error');
           }
         } catch (err) {
           console.error("Polling error:", err);
@@ -98,27 +105,31 @@ export default function Dashboard() {
   const handleProceedToPayment = async () => {
     const userAuthenticated = localStorage.getItem('leafLifeAuthenticated') === 'true';
     if (!userAuthenticated) {
-      alert('Please log in to purchase.');
+      if (openAuthModal) openAuthModal();
+      else showToast('Please log in to purchase.', 'warn');
       return;
     }
     
     const amount = cart.reduce((sum, item) => sum + (parsePrice(item.price) * (item.quantity || 1)), 0);
 
     try {
-      const baseUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? `http://${networkIp}:5000` : API_BASE_URL;
-      const response = await fetch(`${baseUrl}/api/payment/initiate`, {
+      const response = await fetch(`${API_BASE_URL}/api/payment/initiate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ cartItems: cart, userId, amount })
       });
       const data = await response.json();
 
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to initiate payment');
+      }
+
       setPaymentSessionId(data.sessionId);
       setPaymentStatus('pending');
       setShowCart(false);
       setShowQRPrompt(true);
     } catch (err) {
-      alert("Failed to initiate payment.");
+      showToast(err.message || "Failed to initiate payment.", 'error');
     }
   };
 
@@ -133,11 +144,11 @@ export default function Dashboard() {
         setSuccess(true);
         setShowQRPrompt(false);
       } else {
-        alert("Failed to finalize checkout.");
+        showToast("Failed to finalize checkout.", 'error');
       }
     } catch (err) {
       console.error("Checkout finalization error:", err);
-      alert("Something went wrong.");
+      showToast("Something went wrong.", 'error');
     }
   };
 
@@ -175,12 +186,18 @@ export default function Dashboard() {
     fetchDashboardData();
   }, [userId, isAuthenticated]);
 
-  const handleListPlant = async () => {
+  const handleListPlant = (plant) => {
     if (!isAuthenticated) {
       if (openAuthModal) openAuthModal();
-      else alert('Please log in to list plants.');
+      else showToast('Please log in to list plants.', 'warn');
       return;
     }
+    setPlantToList(plant);
+    setListingPrice(plant.price || 'Rs. 450');
+    setShowListingModal(true);
+  };
+
+  const submitPlantListing = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/marketplace/list`, {
         method: 'POST',
@@ -192,14 +209,17 @@ export default function Dashboard() {
           price: listingPrice
         })
       });
-      const data = await response.json();
-      if (data.success) {
-        alert('Plant listed in Community Marketplace!');
+
+      if (response.ok) {
+        showToast('Plant listed in Community Marketplace! ✅', 'info');
         setShowListingModal(false);
+        setPlantToList(null);
         // Refresh collection
         const collectionRes = await fetch(`${API_BASE_URL}/api/user/${userId}/collection`);
         const collectionData = await collectionRes.json();
         setCollection(collectionData || []);
+      } else {
+        showToast('Failed to list plant. Please try again.', 'error');
       }
     } catch (err) {
       console.error("Listing error:", err);
@@ -228,7 +248,22 @@ export default function Dashboard() {
   const cartCount = cart.reduce((sum, item) => sum + (item.quantity || 0), 0);
 
   return (
-    <div className="dashboard-content animate-fade-in">
+    <div className="animate-fade-in dashboard-container">
+      {/* In-App Toast Notification */}
+      {toast && (
+        <div style={{
+          position: 'fixed', top: '24px', left: '50%', transform: 'translateX(-50%)',
+          zIndex: 99999, padding: '14px 24px', borderRadius: '12px', fontWeight: '600',
+          fontSize: '0.95rem', boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+          background: toast.type === 'error' ? '#FF4B4B' : toast.type === 'warn' ? '#F59E0B' : '#2D6A4F',
+          color: 'white', display: 'flex', alignItems: 'center', gap: '10px',
+          maxWidth: '90vw', animation: 'fadeInDown 0.3s ease',
+          pointerEvents: 'none'
+        }}>
+          <span>{toast.type === 'error' ? '❌' : toast.type === 'warn' ? '⚠️' : '✅'}</span>
+          {toast.message}
+        </div>
+      )}
       {!isAuthenticated && (
         <div style={{ background: 'linear-gradient(135deg, #10B981, #059669)', color: 'white', padding: '1.25rem 1.75rem', borderRadius: '1.25rem', marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 6px 16px rgba(16,185,129,0.25)', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
