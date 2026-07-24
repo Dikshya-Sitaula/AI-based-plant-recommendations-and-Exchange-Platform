@@ -71,6 +71,7 @@ export default function Scan() {
   const [stream, setStream] = useState(null);
   const [isScanning, setIsScanning] = useState(false);
   const [identification, setIdentification] = useState(null);
+  const [capturedImage, setCapturedImage] = useState(null);
   const [cameraError, setCameraError] = useState('');
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
