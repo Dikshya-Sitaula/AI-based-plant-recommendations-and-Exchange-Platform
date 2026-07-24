@@ -3,7 +3,7 @@ import {
   Camera, MapPin, Search, Leaf, ArrowLeft, ArrowRight, Home, Loader2, CheckCircle, 
   ShoppingCart, RefreshCw, X, Info, Droplets, Sun, Sprout, 
   Maximize, Calendar, Scissors, Bug, Trophy, Globe, Thermometer, Wind,
-  Sparkles, Minus, Plus, Trash2, QrCode
+  Sparkles, Minus, Plus, Trash2, QrCode, Upload
 } from 'lucide-react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import careTipsData from './careTips.json';
@@ -71,9 +71,10 @@ export default function Scan() {
   const [stream, setStream] = useState(null);
   const [isScanning, setIsScanning] = useState(false);
   const [identification, setIdentification] = useState(null);
-  const [capturedImage, setCapturedImage] = useState(null);
+  const [cameraError, setCameraError] = useState('');
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+  const fileInputRef = useRef(null);
   
   const [cart, setCart] = useState(() => {
     try {
@@ -216,18 +217,29 @@ export default function Scan() {
   }, [cart]);
 
   const startCamera = async () => {
+    setCameraError('');
     try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' } 
-      });
-      setStream(mediaStream);
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
+      let mediaStream;
+      try {
+        mediaStream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: { ideal: 'environment' } } 
+        });
+      } catch (err1) {
+        // Fallback for laptop/desktop webcams
+        mediaStream = await navigator.mediaDevices.getUserMedia({ video: true });
       }
+      setStream(mediaStream);
     } catch (err) {
       console.error("Error accessing camera:", err);
+      setCameraError('Camera access unavailable. Grant permission or upload a photo below.');
     }
   };
+
+  useEffect(() => {
+    if (stream && videoRef.current) {
+      videoRef.current.srcObject = stream;
+    }
+  }, [stream]);
 
   const stopCamera = () => {
     if (stream) {
@@ -317,6 +329,49 @@ export default function Scan() {
         setIsScanning(false);
       }
     }, 'image/jpeg', 0.8);
+  };
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!isAuthenticated) {
+      const scanCount = parseInt(localStorage.getItem('leafLifeGuestScanCount') || '0', 10);
+      if (scanCount >= 1) {
+        showToast('Guest limit reached. Sign in to scan unlimited plants!', 'warn');
+        setTimeout(() => { if (openAuthModal) openAuthModal(); }, 1000);
+        return;
+      }
+    }
+
+    setIsScanning(true);
+    const imageUrl = URL.createObjectURL(file);
+    setCapturedImage(imageUrl);
+
+    const formData = new FormData();
+    formData.append('image', file, file.name);
+
+    fetch(`${API_BASE_URL}/api/identify`, {
+      method: 'POST',
+      body: formData
+    })
+      .then(res => res.json().then(data => ({ ok: res.ok, data })))
+      .then(({ ok, data }) => {
+        if (!ok) throw new Error(data.error || 'Identification failed');
+        if (!isAuthenticated) {
+          localStorage.setItem('leafLifeGuestScanCount', '1');
+        }
+        setIdentification(data);
+        setStep('results');
+        setQuantity(1);
+      })
+      .catch(err => {
+        console.error("Identify error:", err);
+        showToast(err.message || 'Identification failed. Please try again.', 'error');
+      })
+      .finally(() => {
+        setIsScanning(false);
+      });
   };
 
   const handleLocalPlantClick = (id) => {
@@ -411,12 +466,34 @@ export default function Scan() {
           </div>
           
           <div className="camera-container">
-            {stream ? (
-              <video ref={videoRef} autoPlay playsInline className="camera-feed" />
-            ) : (
-              <div className="camera-fallback">
-                <Loader2 className="animate-spin" size={48} color="var(--primary)" />
-                <p>Initializing Camera...</p>
+            <video 
+              ref={videoRef} 
+              autoPlay 
+              playsInline 
+              muted
+              className="camera-feed" 
+              style={{ display: stream ? 'block' : 'none', width: '100%', height: '100%', objectFit: 'cover' }} 
+            />
+            {!stream && (
+              <div className="camera-fallback" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', padding: '1rem', textAlign: 'center' }}>
+                {cameraError ? (
+                  <div style={{ color: '#666' }}>
+                    <p style={{ fontWeight: '600', marginBottom: '0.75rem', fontSize: '0.95rem' }}>{cameraError}</p>
+                    <button 
+                      type="button" 
+                      onClick={() => fileInputRef.current?.click()}
+                      className="btn-primary"
+                      style={{ padding: '0.6rem 1.2rem', fontSize: '0.9rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', borderRadius: '9999px' }}
+                    >
+                      <Upload size={16} /> Choose Photo File
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <Loader2 className="animate-spin" size={48} color="var(--primary)" />
+                    <p style={{ marginTop: '1rem', color: '#666', fontWeight: '500' }}>Initializing Camera...</p>
+                  </>
+                )}
               </div>
             )}
             
@@ -436,12 +513,42 @@ export default function Scan() {
             )}
           </div>
           
-          <div className="scan-controls">
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            accept="image/*" 
+            style={{ display: 'none' }} 
+            onChange={handleFileUpload} 
+          />
+
+          <div className="scan-controls" style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', justifyContent: 'center', marginTop: '1rem' }}>
             <button className="btn-capture" onClick={handleIdentify} disabled={isScanning || !stream}>
               <div className="inner-circle"><Camera size={32} /></div>
             </button>
-            <p className="capture-label">Tap to Identify</p>
+
+            <button 
+              type="button" 
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isScanning}
+              style={{
+                background: 'rgba(255,255,255,0.9)',
+                border: '1px solid #ddd',
+                borderRadius: '50%',
+                width: '56px',
+                height: '56px',
+                display: 'flex',
+                alignItems: 'center',
+                justify: 'center',
+                cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                color: 'var(--primary)'
+              }}
+              title="Upload photo from device"
+            >
+              <Upload size={24} />
+            </button>
           </div>
+          <p className="capture-label" style={{ marginTop: '0.5rem' }}>Tap camera to scan or upload photo</p>
         </div>
       )}
 
