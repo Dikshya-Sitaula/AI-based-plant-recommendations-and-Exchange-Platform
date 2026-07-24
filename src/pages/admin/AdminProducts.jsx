@@ -3,6 +3,8 @@ import { getAdminPlants } from './AdminUtils';
 import './AdminModule.css';
 import { Package, Search, Tag, MapPin, Eye, Trash2 } from 'lucide-react';
 
+import { API_BASE_URL } from '../../apiConfig';
+
 export default function AdminProducts() {
   const [plants, setPlants] = useState([]);
   const [query, setQuery] = useState('');
@@ -69,7 +71,7 @@ export default function AdminProducts() {
                     <td>
                       <div className="plant-cell">
                         <img 
-                          src={plant.image && plant.image.startsWith('http') ? plant.image : `http://${window.location.hostname}:5000${plant.image}`} 
+                          src={plant.image && plant.image.startsWith('http') ? plant.image : `${API_BASE_URL}${plant.image}`} 
                           alt={plant.name} 
                           className="plant-thumb"
                         />

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { CheckCircle, XCircle, ShoppingBag, CreditCard, Loader2, ArrowLeft } from 'lucide-react';
+import { API_BASE_URL } from '../apiConfig';
 
 export default function MobileBill() {
   const { sessionId } = useParams();
@@ -13,7 +14,7 @@ export default function MobileBill() {
   useEffect(() => {
     const fetchBill = async () => {
       try {
-        const response = await fetch(`http://${window.location.hostname}:5000/api/payment/bill/${sessionId}`);
+        const response = await fetch(`${API_BASE_URL}/api/payment/bill/${sessionId}`);
         const data = await response.json();
         if (data) {
           setSession(data);
@@ -34,7 +35,7 @@ export default function MobileBill() {
     // Simulate bank processing delay
     setTimeout(async () => {
       try {
-        const response = await fetch(`http://${window.location.hostname}:5000/api/payment/complete/${sessionId}`, {
+        const response = await fetch(`${API_BASE_URL}/api/payment/complete/${sessionId}`, {
           method: 'POST'
         });
         if (response.ok) {
@@ -99,7 +100,7 @@ export default function MobileBill() {
             {session.cart_items.map((item, idx) => (
               <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                 <img 
-                  src={item.image?.startsWith('http') ? item.image.replace('localhost', window.location.hostname) : `http://${window.location.hostname}:5000${item.image}`} 
+                  src={item.image?.startsWith('http') ? item.image : `${API_BASE_URL}${item.image}`} 
                   alt={item.name} 
                   style={{ width: '60px', height: '60px', borderRadius: '12px', objectFit: 'cover' }}
                 />

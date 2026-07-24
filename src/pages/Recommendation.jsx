@@ -3,6 +3,7 @@ import { useNavigate, useOutletContext } from 'react-router-dom';
 import { MapPin, ArrowRight, ShoppingCart, X, Trash2, Plus, Minus, QrCode, Loader2, CheckCircle } from 'lucide-react';
 import RecommendationForm from '../components/RecommendationForm';
 import './Recommendation.css';
+import { API_BASE_URL } from '../apiConfig';
 
 export default function Recommendation() {
   const navigate = useNavigate();
@@ -41,7 +42,7 @@ export default function Recommendation() {
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
       const fetchNetworkIp = async () => {
         try {
-          const response = await fetch(`http://${window.location.hostname}:5000/api/network-info`);
+          const response = await fetch(`${API_BASE_URL}/api/network-info`);
           const data = await response.json();
           if (data.ip && data.ip !== 'localhost') {
             setNetworkIp(data.ip);
@@ -64,7 +65,7 @@ export default function Recommendation() {
     if (showQRPrompt && paymentSessionId && paymentStatus === 'pending') {
       interval = setInterval(async () => {
         try {
-          const response = await fetch(`http://${networkIp}:5000/api/payment/status/${paymentSessionId}`);
+          const response = await fetch(`${API_BASE_URL}/api/payment/status/${paymentSessionId}`);
           const data = await response.json();
           if (data.status === 'completed') {
             setPaymentStatus('completed');
@@ -106,7 +107,7 @@ export default function Recommendation() {
         location: location
       });
 
-      const response = await fetch(`http://${window.location.hostname}:5000/api/recommend?${params.toString()}`);
+      const response = await fetch(`${API_BASE_URL}/api/recommend?${params.toString()}`);
       if (!response.ok) throw new Error('Failed to fetch recommendations');
       
       const data = await response.json();
@@ -185,7 +186,7 @@ export default function Recommendation() {
     const amount = cart.reduce((sum, item) => sum + (parsePrice(item.price) * (item.quantity || 1)), 0);
 
     try {
-      const response = await fetch(`http://${window.location.hostname}:5000/api/payment/initiate`, {
+      const response = await fetch(`${API_BASE_URL}/api/payment/initiate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ cartItems: cart, userId, amount })
@@ -203,7 +204,7 @@ export default function Recommendation() {
 
   const handleFinalizePurchase = async () => {
     try {
-      const response = await fetch(`http://${window.location.hostname}:5000/api/payment/complete/${paymentSessionId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/payment/complete/${paymentSessionId}`, {
         method: 'POST'
       });
       if (response.ok) {
@@ -359,7 +360,7 @@ export default function Recommendation() {
                       onClick={() => handlePlantCardClick(plant.id)}
                       style={{ height: '200px', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', cursor: 'pointer' }}
                     >
-                      <img src={`http://${window.location.hostname}:5000${plant.image}`} alt={plant.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <img src={plant.image?.startsWith('http') ? plant.image : `${API_BASE_URL}${plant.image}`} alt={plant.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </div>
                     <div style={{ padding: '1.25rem' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
@@ -510,7 +511,7 @@ export default function Recommendation() {
                   {cart.map((item, index) => (
                     <div key={item.id || `cart-${index}`} style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', padding: '15px 0', borderBottom: '1px solid #eee' }}>
                       <img 
-                        src={item.image.startsWith('http') ? item.image.replace('localhost', window.location.hostname) : `http://${window.location.hostname}:5000${item.image}`} 
+                        src={item.image?.startsWith('http') ? item.image : `${API_BASE_URL}${item.image}`} 
                         alt={item.name} 
                         style={{ width: '70px', height: '70px', borderRadius: '14px', objectFit: 'cover' }}
                         onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1416879598555-259160a2bece?q=80&w=400'; }}

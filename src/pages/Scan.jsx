@@ -9,6 +9,7 @@ import { useNavigate, useOutletContext } from 'react-router-dom';
 import careTipsData from './careTips.json';
 import PLANT_DETAILS from './plantData';
 import './Scan.css';
+import { API_BASE_URL } from '../apiConfig';
 
 // Specialized Care Data Generator (duplicated for direct use in results)
 const getSpecializedCareData = (plantName, answers) => {
@@ -117,7 +118,7 @@ export default function Scan() {
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
       const fetchNetworkIp = async () => {
         try {
-          const response = await fetch(`http://${window.location.hostname}:5000/api/network-info`);
+          const response = await fetch(`${API_BASE_URL}/api/network-info`);
           const data = await response.json();
           if (data.ip && data.ip !== 'localhost') {
             setNetworkIp(data.ip);
@@ -136,7 +137,7 @@ export default function Scan() {
     if (showQRPrompt && paymentSessionId && paymentStatus === 'pending') {
       interval = setInterval(async () => {
         try {
-          const response = await fetch(`http://${networkIp}:5000/api/payment/status/${paymentSessionId}`);
+          const response = await fetch(`${API_BASE_URL}/api/payment/status/${paymentSessionId}`);
           const data = await response.json();
           if (data.status === 'completed') {
             setPaymentStatus('completed');
@@ -168,7 +169,7 @@ export default function Scan() {
     const amount = cart.reduce((sum, item) => sum + (parsePrice(item.price) * (item.quantity || 1)), 0);
 
     try {
-      const response = await fetch(`http://${networkIp}:5000/api/payment/initiate`, {
+      const response = await fetch(`${API_BASE_URL}/api/payment/initiate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ cartItems: cart, userId: currentUserId, amount })
@@ -186,7 +187,7 @@ export default function Scan() {
 
   const handleFinalizePurchase = async () => {
     try {
-      const response = await fetch(`http://${window.location.hostname}:5000/api/payment/complete/${paymentSessionId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/payment/complete/${paymentSessionId}`, {
         method: 'POST'
       });
       if (response.ok) {
@@ -292,7 +293,7 @@ export default function Scan() {
       formData.append('image', blob, 'capture.jpg');
 
       try {
-        const response = await fetch(`http://${networkIp}:5000/api/identify`, {
+        const response = await fetch(`${API_BASE_URL}/api/identify`, {
           method: 'POST',
           body: formData
         });
@@ -600,7 +601,7 @@ export default function Scan() {
                 <div className="cart-items-list" style={{ maxHeight: '350px', overflowY: 'auto', textAlign: 'left', paddingRight: '5px' }}>
                   {cart.map((item, index) => (
                     <div key={item.id || `cart-${index}`} style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', padding: '15px 0', borderBottom: '1px solid #eee' }}>
-                      <img src={item.image?.startsWith('http') ? item.image.replace('localhost', networkIp) : `http://${networkIp}:5000${item.image}`} alt={item.name} style={{ width: '70px', height: '70px', borderRadius: '14px', objectFit: 'cover' }} onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1416879598555-259160a2bece?q=80&w=400'; }} />
+                      <img src={item.image?.startsWith('http') ? item.image : `${API_BASE_URL}${item.image}`} alt={item.name} style={{ width: '70px', height: '70px', borderRadius: '14px', objectFit: 'cover' }} onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1416879598555-259160a2bece?q=80&w=400'; }} />
                       <div style={{ flex: 1 }}>
                         <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '600' }}>{item.name}</h4>
                         <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: '5px' }}>

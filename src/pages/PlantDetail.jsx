@@ -9,6 +9,7 @@ import {
 import PLANT_DETAILS from './plantData';
 import CARE_TIPS from './careTips.json';
 import './PlantDetail.css';
+import { API_BASE_URL } from '../apiConfig';
 
 // Specialized Care Data Generator
 const getSpecializedCareData = (plantName, answers) => {
@@ -113,7 +114,7 @@ export default function PlantDetail() {
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
       const fetchNetworkIp = async () => {
         try {
-          const response = await fetch(`http://${window.location.hostname}:5000/api/network-info`);
+          const response = await fetch(`${API_BASE_URL}/api/network-info`);
           const data = await response.json();
           if (data.ip && data.ip !== 'localhost') {
             setNetworkIp(data.ip);
@@ -128,14 +129,14 @@ export default function PlantDetail() {
 
   const fetchPlantAndImages = async () => {
     try {
-      const response = await fetch(`http://${networkIp}:5000/api/plants`);
+      const response = await fetch(`${API_BASE_URL}/api/plants`);
       const data = await response.json();
       // Also fetch from collection if not in marketplace
-      const collResponse = await fetch(`http://${networkIp}:5000/api/user/${currentUserId}/collection`);
+      const collResponse = await fetch(`${API_BASE_URL}/api/user/${currentUserId}/collection`);
       const collData = await collResponse.json();
       
       // Also fetch from community marketplace to get seller info
-      const commResponse = await fetch(`http://${networkIp}:5000/api/marketplace/community`);
+      const commResponse = await fetch(`${API_BASE_URL}/api/marketplace/community`);
       const commData = await commResponse.json();
       
       const plantsArr = Array.isArray(data) ? data : [];
@@ -147,7 +148,7 @@ export default function PlantDetail() {
       
       if (found) {
         setPlant(found);
-        const imagesResponse = await fetch(`http://${networkIp}:5000/api/plants/${plantId}/images`);
+        const imagesResponse = await fetch(`${API_BASE_URL}/api/plants/${plantId}/images`);
         const imagesData = await imagesResponse.json();
         setImages(imagesData);
       }
@@ -179,7 +180,7 @@ export default function PlantDetail() {
     if (showQRPrompt && paymentSessionId && paymentStatus === 'pending') {
       interval = setInterval(async () => {
         try {
-          const response = await fetch(`http://${networkIp}:5000/api/payment/status/${paymentSessionId}`);
+          const response = await fetch(`${API_BASE_URL}/api/payment/status/${paymentSessionId}`);
           const data = await response.json();
           if (data.status === 'completed') {
             setPaymentStatus('completed');
@@ -243,7 +244,7 @@ export default function PlantDetail() {
     const amount = cart.reduce((sum, item) => sum + (parsePrice(item.price) * (item.quantity || 1)), 0);
 
     try {
-      const response = await fetch(`http://${networkIp}:5000/api/payment/initiate`, {
+      const response = await fetch(`${API_BASE_URL}/api/payment/initiate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ cartItems: cart, userId: currentUserId, amount })
@@ -276,7 +277,7 @@ export default function PlantDetail() {
     };
 
     try {
-      const response = await fetch(`http://${networkIp}:5000/api/payment/initiate`, {
+      const response = await fetch(`${API_BASE_URL}/api/payment/initiate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ cartItems: [tipsItem], userId: currentUserId, amount: 50 })
@@ -304,7 +305,7 @@ export default function PlantDetail() {
     const immediateItem = { ...plant, quantity: 1 };
 
     try {
-      const response = await fetch(`http://${networkIp}:5000/api/payment/initiate`, {
+      const response = await fetch(`${API_BASE_URL}/api/payment/initiate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -328,7 +329,7 @@ export default function PlantDetail() {
 
   const handleFinalizePurchase = async () => {
     try {
-      const response = await fetch(`http://${window.location.hostname}:5000/api/payment/complete/${paymentSessionId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/payment/complete/${paymentSessionId}`, {
         method: 'POST'
       });
       if (response.ok) {
@@ -371,7 +372,7 @@ export default function PlantDetail() {
   const submitTradeRequest = async (type) => {
     const currentUserId = localStorage.getItem('leafLifeUserId') || 1;
     try {
-      const response = await fetch(`http://${networkIp}:5000/api/trade/request`, {
+      const response = await fetch(`${API_BASE_URL}/api/trade/request`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -414,7 +415,7 @@ export default function PlantDetail() {
   const isOwned = plant?.buyer_id === parseInt(currentUserId);
   const careTips = plant?.name ? (CARE_TIPS[plant.name] || CARE_TIPS[plant.name.split(' (')[0]]) : {};
   
-  const API_BASE = `http://${networkIp}:5000`;
+  const API_BASE = API_BASE_URL;
   const HOST_URL = `${window.location.protocol}//${networkIp}${window.location.port ? ':' + window.location.port : ''}`;
   const billURL = `${HOST_URL}/bill/${paymentSessionId}`;
 
@@ -487,7 +488,7 @@ export default function PlantDetail() {
           <div className="carousel-section">
             <div className="carousel-container">
               <img 
-                src={carouselImages[currentSlide]?.startsWith('http') ? carouselImages[currentSlide] : `http://${networkIp}:5000${encodeURI(carouselImages[currentSlide])}`} 
+                src={carouselImages[currentSlide]?.startsWith('http') ? carouselImages[currentSlide] : `${API_BASE_URL}${encodeURI(carouselImages[currentSlide])}`} 
                 alt={plant.name} 
                 className="carousel-img" 
                 onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1416879598555-259160a2bece?q=80&w=400'; }} 
@@ -802,7 +803,7 @@ export default function PlantDetail() {
                 <div className="cart-items-list" style={{ maxHeight: '350px', overflowY: 'auto', textAlign: 'left', paddingRight: '5px' }}>
                   {cart.map((item, index) => (
                     <div key={item.id || `cart-${index}`} style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', padding: '15px 0', borderBottom: '1px solid #eee' }}>
-                      <img src={item.image?.startsWith('http') ? item.image.replace('localhost', networkIp) : `http://${networkIp}:5000${item.image || ''}`} alt={item.name} style={{ width: '70px', height: '70px', borderRadius: '14px', objectFit: 'cover' }} onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1416879598555-259160a2bece?q=80&w=400'; }} />
+                      <img src={item.image?.startsWith('http') ? item.image : `${API_BASE_URL}${item.image || ''}`} alt={item.name} style={{ width: '70px', height: '70px', borderRadius: '14px', objectFit: 'cover' }} onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1416879598555-259160a2bece?q=80&w=400'; }} />
                       <div style={{ flex: 1 }}>
                         <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '600' }}>{item.name}</h4>
                         <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: '5px' }}>

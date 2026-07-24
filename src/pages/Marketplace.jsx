@@ -248,7 +248,7 @@ export default function Marketplace() {
     if (showQRPrompt && paymentSessionId && paymentStatus === 'pending') {
       interval = setInterval(async () => {
         try {
-          const response = await fetch(`http://${networkIp}:5000/api/payment/status/${paymentSessionId}`);
+          const response = await fetch(`${API_BASE_URL}/api/payment/status/${paymentSessionId}`);
           const data = await response.json();
           if (data.status === 'completed') {
             setPaymentStatus('completed');

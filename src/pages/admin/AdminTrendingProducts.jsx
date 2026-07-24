@@ -38,7 +38,7 @@ export default function AdminTrendingProducts() {
               <div key={plant.id} className="panel-card trending-card-admin">
                 <div className="trending-rank">#{index + 1}</div>
                 <img 
-                  src={plant.image && plant.image.startsWith('http') ? plant.image : `http://${window.location.hostname}:5000${plant.image}`} 
+                  src={plant.image && plant.image.startsWith('http') ? plant.image : `${API_BASE_URL}${plant.image}`} 
                   alt={plant.name} 
                   className="trending-img"
                 />
