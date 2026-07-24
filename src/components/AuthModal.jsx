@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { API_BASE_URL } from '../apiConfig';
 import logo from '../assets/Leaf and Life logo.png';
+import './AuthModal.css';
 
 export default function AuthModal({ open, onClose, onSuccess }) {
   const titleId = useId();
