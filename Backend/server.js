@@ -138,7 +138,11 @@ const plantDetailsMap = require('./plantDetails');
             is_sold TINYINT(1) DEFAULT 0,
             buyer_id INT,
             tips_unlocked TINYINT(1) DEFAULT 0
-          )`);
+          ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
+
+          try {
+            await db.execute('ALTER TABLE plants CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');
+          } catch (e) {}
 
           // Alter table dynamically to add new columns if they do not exist
           const columnsToFix = [
@@ -271,15 +275,15 @@ const plantDetailsMap = require('./plantDetails');
             console.log('✅ MVP seed plants added to database');
           }
 
-          // Backfill details for all existing plants
-          console.log('Backfilling plant details into database...');
+          // Backfill & repair details for all existing plants (overwriting any question mark corruptions)
+          console.log('Backfilling and repairing plant details into database...');
           for (const [name, detail] of Object.entries(plantDetailsMap)) {
             await db.execute(
-              'UPDATE plants SET scientific_name = ?, nepali_name = ?, english_name = ?, description = ? WHERE name = ? AND (scientific_name IS NULL OR nepali_name IS NULL OR english_name IS NULL OR description IS NULL OR scientific_name = \'\' OR nepali_name = \'\' OR english_name = \'\' OR description = \'\')',
+              'UPDATE plants SET scientific_name = ?, nepali_name = ?, english_name = ?, description = ? WHERE LOWER(name) = LOWER(?) OR nepali_name LIKE "%?%"',
               [detail.scientificName, detail.nepaliName, detail.englishName, detail.description, name]
             );
           }
-          console.log('✅ Backfilling completed successfully');
+          console.log('✅ Backfilling & UTF-8 repair completed successfully');
           
           // Comprehensive Fix for Peace Lily image path inconsistency
           await db.execute(
