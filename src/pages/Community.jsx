@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users, ArrowLeftRight, ShoppingCart, Check, X, Clock, MapPin, Search, MessageCircle, ExternalLink, Loader2 } from 'lucide-react';
 import './Community.css';
+import { API_BASE_URL } from '../apiConfig';
 
 export default function Community() {
   const navigate = useNavigate();
@@ -16,12 +17,12 @@ export default function Community() {
     setLoading(true);
     try {
       // Fetch users
-      const usersRes = await fetch(`http://${window.location.hostname}:5000/api/community/users?currentUserId=${userId}`);
+      const usersRes = await fetch(`${API_BASE_URL}/api/community/users?currentUserId=${userId}`);
       const usersData = await usersRes.json();
       setUsers(usersData);
 
       // Fetch requests
-      const requestsRes = await fetch(`http://${window.location.hostname}:5000/api/trade/requests/${userId}`);
+      const requestsRes = await fetch(`${API_BASE_URL}/api/trade/requests/${userId}`);
       const requestsData = await requestsRes.json();
       setRequests(requestsData);
     } catch (err) {
@@ -34,7 +35,7 @@ export default function Community() {
   useEffect(() => {
     fetchCommunityData();
     if (activeTab === 'requests') {
-      fetch(`http://${window.location.hostname}:5000/api/trade/notifications/clear/${userId}`, { method: 'POST' })
+      fetch(`${API_BASE_URL}/api/trade/notifications/clear/${userId}`, { method: 'POST' })
         .then(() => {
           // Notify the sidebar to refresh its count
           window.dispatchEvent(new Event('refreshNotifications'));
@@ -47,7 +48,7 @@ export default function Community() {
 
   const handleRespond = async (requestId, status) => {
     try {
-      const response = await fetch(`http://${window.location.hostname}:5000/api/trade/respond`, {
+      const response = await fetch(`${API_BASE_URL}/api/trade/respond`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ requestId, status, userId })
@@ -121,7 +122,7 @@ export default function Community() {
                     <div className="user-card-header">
                       <img 
                         src={user.profile_image 
-                          ? `http://${window.location.hostname}:5000${user.profile_image}` 
+                          ? (user.profile_image.startsWith('http') ? user.profile_image : `${API_BASE_URL}${user.profile_image}`)
                           : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&background=E2E8CE&color=2D5A27`
                         } 
                         alt={user.full_name} 
@@ -173,7 +174,7 @@ export default function Community() {
                       <div key={req.id} className="request-card glass-panel">
                         <div className="request-info">
                           <img 
-                             src={`http://${window.location.hostname}:5000${encodeURI(req.plant_image)}`}
+                             src={req.plant_image?.startsWith('http') ? req.plant_image : `${API_BASE_URL}${encodeURI(req.plant_image)}`}
                              alt={req.plant_name}
                              className="request-plant-img"
                           />
@@ -229,7 +230,7 @@ export default function Community() {
                       <div key={req.id} className="request-card glass-panel">
                         <div className="request-info">
                           <img 
-                             src={`http://${window.location.hostname}:5000${encodeURI(req.plant_image)}`}
+                             src={req.plant_image?.startsWith('http') ? req.plant_image : `${API_BASE_URL}${encodeURI(req.plant_image)}`}
                              alt={req.plant_name}
                              className="request-plant-img"
                           />

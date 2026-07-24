@@ -5,6 +5,7 @@ import './Layout.css';
 import logo from "../assets/Leaf and Life logo.png";
 import AuthModal from './AuthModal';
 import SettingsModal from './SettingsModal';
+import { API_BASE_URL } from '../apiConfig';
 
 export default function Layout() {
   const navigate = useNavigate();
@@ -66,7 +67,7 @@ export default function Layout() {
 
   const fetchNotifCount = () => {
     if (!isAuthenticated || !userId) return;
-    fetch(`http://${window.location.hostname}:5000/api/trade/notifications/count/${userId}`)
+    fetch(`${API_BASE_URL}/api/trade/notifications/count/${userId}`)
       .then(res => res.json())
       .then(data => setCommNotifCount(data.count || 0))
       .catch(err => console.error("Notif fetch error:", err));
@@ -74,11 +75,11 @@ export default function Layout() {
 
   useEffect(() => {
     if (isAuthenticated && userId) {
-      fetch(`http://${window.location.hostname}:5000/api/auth/profile/${userId}`)
+      fetch(`${API_BASE_URL}/api/auth/profile/${userId}`)
         .then(res => res.json())
         .then(data => {
           if (data.profile_image) {
-            setUserAvatar(`http://${window.location.hostname}:5000${data.profile_image}`);
+            setUserAvatar(data.profile_image.startsWith('http') ? data.profile_image : `${API_BASE_URL}${data.profile_image}`);
           }
         })
         .catch(err => console.error("Profile fetch error:", err));
@@ -116,11 +117,11 @@ export default function Layout() {
           setUserId(finalId);
           
           // Initial fetch for avatar after login
-          fetch(`http://${window.location.hostname}:5000/api/auth/profile/${finalId}`)
+          fetch(`${API_BASE_URL}/api/auth/profile/${finalId}`)
             .then(res => res.json())
             .then(userData => {
               if (userData.profile_image) {
-                setUserAvatar(`http://${window.location.hostname}:5000${userData.profile_image}`);
+                setUserAvatar(userData.profile_image.startsWith('http') ? userData.profile_image : `${API_BASE_URL}${userData.profile_image}`);
               }
             });
 

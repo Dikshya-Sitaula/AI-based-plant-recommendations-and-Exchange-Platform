@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, User, Shield, Bell, Trash2, MapPin, Phone, Lock, Heart, Star, Zap, Clock, Leaf, CloudRain, Camera, Edit2 } from 'lucide-react';
 import './SettingsModal.css';
+import { API_BASE_URL } from '../apiConfig';
 
 export default function SettingsModal({ open, onClose, userId, currentUserName, onUpdateName, onUpdateAvatar }) {
   const navigate = useNavigate();
@@ -54,7 +55,7 @@ export default function SettingsModal({ open, onClose, userId, currentUserName, 
 
   const fetchProfile = async () => {
     try {
-      const response = await fetch(`http://${window.location.hostname}:5000/api/auth/profile/${userId}`);
+      const response = await fetch(`${API_BASE_URL}/api/auth/profile/${userId}`);
       const data = await response.json();
       if (response.ok) {
         setProfileData({
@@ -67,7 +68,7 @@ export default function SettingsModal({ open, onClose, userId, currentUserName, 
           profileImage: data.profile_image || ''
         });
         if (data.profile_image) {
-          setAvatarPreview(`http://${window.location.hostname}:5000${data.profile_image}`);
+          setAvatarPreview(data.profile_image.startsWith('http') ? data.profile_image : `${API_BASE_URL}${data.profile_image}`);
         }
       }
     } catch (err) {
@@ -77,7 +78,7 @@ export default function SettingsModal({ open, onClose, userId, currentUserName, 
 
   const fetchStats = async () => {
     try {
-      const statsRes = await fetch(`http://${window.location.hostname}:5000/api/user/${userId}/stats`);
+      const statsRes = await fetch(`${API_BASE_URL}/api/user/${userId}/stats`);
       const statsData = await statsRes.json();
       setStats({
         ownedCount: statsData.ownedCount || 0,
@@ -113,7 +114,7 @@ export default function SettingsModal({ open, onClose, userId, currentUserName, 
         formData.append('profileImage', avatarFile);
       }
 
-      const response = await fetch(`http://${window.location.hostname}:5000/api/auth/profile/update`, {
+      const response = await fetch(`${API_BASE_URL}/api/auth/profile/update`, {
         method: 'POST',
         body: formData
         // Note: Content-Type header should NOT be set manually for FormData so boundary is generated
@@ -125,7 +126,7 @@ export default function SettingsModal({ open, onClose, userId, currentUserName, 
         if (onUpdateName) onUpdateName(profileData.fullName);
         
         if (data.profileImage && onUpdateAvatar) {
-          onUpdateAvatar(`http://${window.location.hostname}:5000${data.profileImage}`);
+          onUpdateAvatar(data.profileImage.startsWith('http') ? data.profileImage : `${API_BASE_URL}${data.profileImage}`);
         }
         
         showMessage('Profile updated successfully!');
@@ -152,7 +153,7 @@ export default function SettingsModal({ open, onClose, userId, currentUserName, 
     setLoading(true);
     setMessage({ text: '', type: '' });
     try {
-      const response = await fetch(`http://${window.location.hostname}:5000/api/auth/profile/change-password`, {
+      const response = await fetch(`${API_BASE_URL}/api/auth/profile/change-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -179,7 +180,7 @@ export default function SettingsModal({ open, onClose, userId, currentUserName, 
   const handleDeleteAccount = async () => {
     if (window.confirm('Are you sure you want to permanently delete your account? This action cannot be undone.')) {
       try {
-        const response = await fetch(`http://${window.location.hostname}:5000/api/auth/profile/delete`, {
+        const response = await fetch(`${API_BASE_URL}/api/auth/profile/delete`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId })

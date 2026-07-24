@@ -119,9 +119,11 @@ function writeStorage(key, value) {
   window.localStorage.setItem(key, JSON.stringify(value));
 }
 
+import { API_BASE_URL } from '../../apiConfig';
+
 export async function registerNurseryUser(user) {
   try {
-    const response = await fetch(`http://${window.location.hostname}:5000/api/auth/nursery/signup`, {
+    const response = await fetch(`${API_BASE_URL}/api/auth/nursery/signup`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(user),
@@ -136,7 +138,7 @@ export async function registerNurseryUser(user) {
 
 export async function loginNurseryUser(email, password) {
   try {
-    const response = await fetch(`http://${window.location.hostname}:5000/api/auth/nursery/login`, {
+    const response = await fetch(`${API_BASE_URL}/api/auth/nursery/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
@@ -151,7 +153,7 @@ export async function loginNurseryUser(email, password) {
 
 export async function getNurseryProfile(userId) {
   try {
-    const response = await fetch(`http://${window.location.hostname}:5000/api/nursery/profile/${userId}`);
+    const response = await fetch(`${API_BASE_URL}/api/nursery/profile/${userId}`);
     return await response.json();
   } catch (err) {
     return {};
@@ -160,7 +162,7 @@ export async function getNurseryProfile(userId) {
 
 export async function getNurseryStats(userId) {
   try {
-    const response = await fetch(`http://${window.location.hostname}:5000/api/nursery/stats/${userId}`);
+    const response = await fetch(`${API_BASE_URL}/api/nursery/stats/${userId}`);
     return await response.json();
   } catch (err) {
     return {
@@ -177,12 +179,12 @@ export async function getNurseryStats(userId) {
 
 export async function getNurseryProducts(userId) {
   try {
-    const response = await fetch(`http://${window.location.hostname}:5000/api/nursery/plants/${userId}`);
+    const response = await fetch(`${API_BASE_URL}/api/nursery/plants/${userId}`);
     const data = await response.json();
     if (Array.isArray(data)) {
       return data.map(p => ({
         ...p,
-        image: p.image && !p.image.startsWith('http') ? `http://${window.location.hostname}:5000${p.image}` : p.image
+        image: p.image && !p.image.startsWith('http') ? `${API_BASE_URL}${p.image}` : p.image
       }));
     }
     return [];
@@ -199,7 +201,7 @@ export function findNurseryUser(email, password) {
 
 export async function getNurseryOrders(userId) {
   try {
-    const response = await fetch(`http://${window.location.hostname}:5000/api/nursery/orders/${userId}`);
+    const response = await fetch(`${API_BASE_URL}/api/nursery/orders/${userId}`);
     return await response.json();
   } catch (err) {
     return [];
@@ -244,7 +246,7 @@ export async function syncNurseryProductToServer(userId, product) {
     phone: profile?.phone || '',
   };
 
-  const response = await fetch(`http://${window.location.hostname}:5000${endpoint}`, {
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     method,
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -257,7 +259,7 @@ export async function syncNurseryProductToServer(userId, product) {
 
 export async function deleteNurseryProductFromServer(backendPlantId) {
   if (typeof window === 'undefined' || !backendPlantId) return null;
-  const response = await fetch(`http://${window.location.hostname}:5000/api/nursery/plants/${backendPlantId}`, {
+  const response = await fetch(`${API_BASE_URL}/api/nursery/plants/${backendPlantId}`, {
     method: 'DELETE',
   });
   return await response.json();
@@ -265,7 +267,7 @@ export async function deleteNurseryProductFromServer(backendPlantId) {
 
 export async function setNurseryProductAvailabilityOnServer(backendPlantId, available) {
   if (typeof window === 'undefined' || !backendPlantId) return null;
-  const response = await fetch(`http://${window.location.hostname}:5000/api/nursery/plants/${backendPlantId}/availability`, {
+  const response = await fetch(`${API_BASE_URL}/api/nursery/plants/${backendPlantId}/availability`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ available: !!available }),

@@ -2,6 +2,7 @@ import { Plus, Droplets, MapPin, Wind, Trophy, Leaf, ShoppingCart, X, Trash2, Qr
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import './Dashboard.css';
+import { API_BASE_URL } from '../apiConfig';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -45,7 +46,7 @@ export default function Dashboard() {
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
       const fetchNetworkIp = async () => {
         try {
-          const response = await fetch(`http://${window.location.hostname}:5000/api/network-info`);
+          const response = await fetch(`${API_BASE_URL}/api/network-info`);
           const data = await response.json();
           if (data.ip && data.ip !== 'localhost') {
             setNetworkIp(data.ip);
@@ -64,7 +65,8 @@ export default function Dashboard() {
     if (showQRPrompt && paymentSessionId && paymentStatus === 'pending') {
       interval = setInterval(async () => {
         try {
-          const response = await fetch(`http://${networkIp}:5000/api/payment/status/${paymentSessionId}`);
+          const baseUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? `http://${networkIp}:5000` : API_BASE_URL;
+          const response = await fetch(`${baseUrl}/api/payment/status/${paymentSessionId}`);
           const data = await response.json();
           if (data.status === 'completed') {
             setPaymentStatus('completed');
@@ -103,7 +105,8 @@ export default function Dashboard() {
     const amount = cart.reduce((sum, item) => sum + (parsePrice(item.price) * (item.quantity || 1)), 0);
 
     try {
-      const response = await fetch(`http://${networkIp}:5000/api/payment/initiate`, {
+      const baseUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? `http://${networkIp}:5000` : API_BASE_URL;
+      const response = await fetch(`${baseUrl}/api/payment/initiate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ cartItems: cart, userId, amount })
@@ -121,7 +124,7 @@ export default function Dashboard() {
 
   const handleFinalizePurchase = async () => {
     try {
-      const response = await fetch(`http://${window.location.hostname}:5000/api/payment/complete/${paymentSessionId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/payment/complete/${paymentSessionId}`, {
         method: 'POST'
       });
       if (response.ok) {
@@ -155,12 +158,12 @@ export default function Dashboard() {
 
     const fetchDashboardData = async () => {
       try {
-        const statsRes = await fetch(`http://${window.location.hostname}:5000/api/user/${userId}/stats`);
+        const statsRes = await fetch(`${API_BASE_URL}/api/user/${userId}/stats`);
         const statsData = await statsRes.json();
         setOwnedCount(statsData.ownedCount || 0);
         setTotalCO2(statsData.totalCO2 || "0.0");
 
-        const collectionRes = await fetch(`http://${window.location.hostname}:5000/api/user/${userId}/collection`);
+        const collectionRes = await fetch(`${API_BASE_URL}/api/user/${userId}/collection`);
         const collectionData = await collectionRes.json();
         setCollection(collectionData || []);
       } catch (err) {
@@ -179,7 +182,7 @@ export default function Dashboard() {
       return;
     }
     try {
-      const response = await fetch(`http://${window.location.hostname}:5000/api/marketplace/list`, {
+      const response = await fetch(`${API_BASE_URL}/api/marketplace/list`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -194,7 +197,7 @@ export default function Dashboard() {
         alert('Plant listed in Community Marketplace!');
         setShowListingModal(false);
         // Refresh collection
-        const collectionRes = await fetch(`http://${window.location.hostname}:5000/api/user/${userId}/collection`);
+        const collectionRes = await fetch(`${API_BASE_URL}/api/user/${userId}/collection`);
         const collectionData = await collectionRes.json();
         setCollection(collectionData || []);
       }
@@ -351,9 +354,9 @@ export default function Dashboard() {
                   src={
                     plant.image.startsWith('http') 
                       ? (plant.image.includes('/plants/') 
-                          ? plant.image.replace(/http:\/\/[^\/:]+(:\d+)?/, `http://${window.location.hostname}:5000`)
+                          ? plant.image.replace(/http:\/\/[^\/:]+(:\d+)?/, API_BASE_URL)
                           : plant.image)
-                      : `http://${window.location.hostname}:5000${encodeURI(plant.image)}`
+                      : `${API_BASE_URL}${encodeURI(plant.image)}`
                   } 
                   alt={plant.name} 
                   className="plant-image" 
@@ -423,7 +426,7 @@ export default function Dashboard() {
                 <div className="cart-items-list" style={{ maxHeight: '350px', overflowY: 'auto', textAlign: 'left', paddingRight: '5px' }}>
                   {cart.map((item, index) => (
                     <div key={item.id || `cart-${index}`} style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', padding: '15px 0', borderBottom: '1px solid #eee' }}>
-                      <img src={item.image?.startsWith('http') ? item.image.replace('localhost', networkIp) : `http://${networkIp}:5000${item.image}`} alt={item.name} style={{ width: '70px', height: '70px', borderRadius: '14px', objectFit: 'cover' }} onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1416879598555-259160a2bece?q=80&w=400'; }} />
+                      <img src={item.image?.startsWith('http') ? item.image.replace('localhost', (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? networkIp : window.location.hostname) : `${API_BASE_URL}${item.image}`} alt={item.name} style={{ width: '70px', height: '70px', borderRadius: '14px', objectFit: 'cover' }} onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1416879598555-259160a2bece?q=80&w=400'; }} />
                       <div style={{ flex: 1 }}>
                         <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '600' }}>{item.name}</h4>
                         <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: '5px' }}>

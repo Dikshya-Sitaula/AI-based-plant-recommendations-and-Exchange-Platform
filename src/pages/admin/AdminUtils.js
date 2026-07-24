@@ -1,5 +1,5 @@
-// Admin utilities for Leaf-Life
-const API_BASE = `http://${window.location.hostname}:5000/api/admin`;
+import { API_BASE_URL } from '../../apiConfig';
+const API_BASE = `${API_BASE_URL}/api/admin`;
 
 export async function getAdminStats() {
   try {

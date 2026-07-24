@@ -9,7 +9,7 @@ import {
   Mail,
   X,
 } from 'lucide-react';
-import './AuthModal.css';
+import { API_BASE_URL } from '../apiConfig';
 import logo from '../assets/Leaf and Life logo.png';
 
 export default function AuthModal({ open, onClose, onSuccess }) {
@@ -43,7 +43,7 @@ export default function AuthModal({ open, onClose, onSuccess }) {
         });
         const googleUser = await resInfo.json();
 
-        const response = await fetch(`http://${window.location.hostname}:5000/api/auth/google`, {
+        const response = await fetch(`${API_BASE_URL}/api/auth/google`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
@@ -106,7 +106,7 @@ export default function AuthModal({ open, onClose, onSuccess }) {
       const { identityToken, user } = response;
       
       setSubmitting(true);
-      const res = await fetch(`http://${window.location.hostname}:5000/api/auth/apple`, {
+      const res = await fetch(`${API_BASE_URL}/api/auth/apple`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -199,7 +199,7 @@ export default function AuthModal({ open, onClose, onSuccess }) {
     setSubmitting(true);
     try {
       const endpoint = mode === 'signIn' ? '/api/auth/login' : '/api/auth/signup';
-      const response = await fetch(`http://${window.location.hostname}:5000${endpoint}`, {
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

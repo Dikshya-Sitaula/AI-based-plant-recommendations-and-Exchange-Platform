@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, useOutletContext } from 'react-router-dom';
 import { Search, Filter, Heart, MapPin, ShoppingCart, X, Minus, Plus, QrCode, CheckCircle, Loader2, Trash2, Users, ArrowLeftRight, Camera } from 'lucide-react';
 import './Marketplace.css';
+import { API_BASE_URL } from '../apiConfig';
 
 function PlantCard({ plant, onBuyClick, onClick, isCommunity, isOwner, onDelete }) {
   const handleAction = (e) => {
@@ -37,7 +38,7 @@ function PlantCard({ plant, onBuyClick, onClick, isCommunity, isOwner, onDelete 
     <div className={`plant-card ${isCommunity ? 'community-item' : ''}`} onClick={() => onClick(plant.id)}>
       <div className="plant-image-wrap">
         <img
-          src={plant.image && plant.image.startsWith('http') ? plant.image : plant.image ? `http://${window.location.hostname}:5000${encodeURI(plant.image)}` : 'https://images.unsplash.com/photo-1416879598555-259160a2bece?q=80&w=400'}
+          src={plant.image && plant.image.startsWith('http') ? plant.image : plant.image ? `${API_BASE_URL}${encodeURI(plant.image)}` : 'https://images.unsplash.com/photo-1416879598555-259160a2bece?q=80&w=400'}
           alt={plant.name}
           className="marketplace-img"
           onError={(e) => { 
@@ -149,7 +150,7 @@ export default function Marketplace() {
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
       const fetchNetworkIp = async () => {
         try {
-          const response = await fetch(`http://${window.location.hostname}:5000/api/network-info`);
+          const response = await fetch(`${API_BASE_URL}/api/network-info`);
           const data = await response.json();
           if (data.ip && data.ip !== 'localhost') {
             setNetworkIp(data.ip);
@@ -199,14 +200,14 @@ export default function Marketplace() {
   useEffect(() => {
     const fetchPlants = async () => {
       try {
-        const response = await fetch(`http://${window.location.hostname}:5000/api/plants`);
+        const response = await fetch(`${API_BASE_URL}/api/plants`);
         const data = await response.json();
 
         // Safety check to ensure data is an array before mapping
         if (Array.isArray(data)) {
           const transformedData = data.map(plant => ({
             ...plant,
-            image: plant.image && !plant.image.startsWith('http') ? `http://${window.location.hostname}:5000${encodeURI(plant.image)}` : plant.image
+            image: plant.image && !plant.image.startsWith('http') ? `${API_BASE_URL}${encodeURI(plant.image)}` : plant.image
           }));
           setPlants(transformedData);
         } else {
@@ -224,12 +225,12 @@ export default function Marketplace() {
     const fetchCommunityPlants = async () => {
       const uId = localStorage.getItem('leafLifeUserId') || 1;
       try {
-        const response = await fetch(`http://${window.location.hostname}:5000/api/marketplace/community?userId=${uId}`);
+        const response = await fetch(`${API_BASE_URL}/api/marketplace/community?userId=${uId}`);
         const data = await response.json();
         if (Array.isArray(data)) {
           const transformedData = data.map(p => ({
             ...p,
-            image: p.image && !p.image.startsWith('http') ? `http://${window.location.hostname}:5000${encodeURI(p.image)}` : p.image
+            image: p.image && !p.image.startsWith('http') ? `${API_BASE_URL}${encodeURI(p.image)}` : p.image
           }));
           setCommunityPlants(transformedData);
         }
@@ -339,7 +340,7 @@ export default function Marketplace() {
   const handleDeleteListing = async (plantId) => {
     const userId = parseInt(localStorage.getItem('leafLifeUserId')) || 1;
     try {
-      const res = await fetch(`http://${window.location.hostname}:5000/api/marketplace/listing/${plantId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/marketplace/listing/${plantId}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId })
@@ -394,7 +395,7 @@ export default function Marketplace() {
     const userId = localStorage.getItem('leafLifeUserId') || 1;
 
     try {
-      const response = await fetch(`http://${window.location.hostname}:5000/api/payment/initiate`, {
+      const response = await fetch(`${API_BASE_URL}/api/payment/initiate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -417,7 +418,7 @@ export default function Marketplace() {
 
   const handleFinalizePurchase = async () => {
     try {
-      const response = await fetch(`http://${window.location.hostname}:5000/api/payment/complete/${paymentSessionId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/payment/complete/${paymentSessionId}`, {
         method: 'POST'
       });
       if (response.ok) {
@@ -513,7 +514,7 @@ export default function Marketplace() {
     if (newPlant.image) formData.append('image', newPlant.image);
 
     try {
-      const response = await fetch(`http://${window.location.hostname}:5000/api/marketplace/add`, {
+      const response = await fetch(`${API_BASE_URL}/api/marketplace/add`, {
         method: 'POST',
         body: formData
       });
@@ -524,7 +525,7 @@ export default function Marketplace() {
         setNewPlant({ name: '', price: 'Rs. 450', listingType: 'exchange', type: 'plant', location: '', description: '', image: null });
         // Refresh community plants
         const uId = localStorage.getItem('leafLifeUserId') || 1;
-        const commRes = await fetch(`http://${window.location.hostname}:5000/api/marketplace/community?userId=${uId}`);
+        const commRes = await fetch(`${API_BASE_URL}/api/marketplace/community?userId=${uId}`);
         const commData = await commRes.json();
         setCommunityPlants(commData);
       }
@@ -549,7 +550,7 @@ export default function Marketplace() {
   const submitTradeRequest = async (type) => {
     const uId = localStorage.getItem('leafLifeUserId') || 1;
     try {
-      const response = await fetch(`http://${window.location.hostname}:5000/api/trade/request`, {
+      const response = await fetch(`${API_BASE_URL}/api/trade/request`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -580,7 +581,7 @@ export default function Marketplace() {
   };
 
   // Determine host for mobile access
-  const API_BASE = `http://${window.location.hostname}:5000`;
+  const API_BASE = API_BASE_URL;
   const HOST_URL = `${window.location.protocol}//${networkIp}${window.location.port ? ':' + window.location.port : ''}`;
   const billURL = `${HOST_URL}/bill/${paymentSessionId}`;
 
@@ -930,7 +931,7 @@ export default function Marketplace() {
                   {cart.map((item, index) => (
                     <div key={item.id || `cart-${index}`} style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', padding: '15px 0', borderBottom: '1px solid #eee' }}>
                       <img
-                        src={item.image.startsWith('http') ? item.image.replace('localhost', window.location.hostname) : `http://${window.location.hostname}:5000${item.image}`}
+                        src={item.image.startsWith('http') ? item.image.replace('localhost', window.location.hostname) : `${API_BASE_URL}${item.image}`}
                         alt={item.name}
                         style={{ width: '70px', height: '70px', borderRadius: '14px', objectFit: 'cover' }}
                         onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1416879598555-259160a2bece?q=80&w=400'; }}
